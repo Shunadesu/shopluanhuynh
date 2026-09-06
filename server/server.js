@@ -14,6 +14,7 @@ import depositRoutes from './routes/deposits.js';
 import adminRoutes from './routes/admin.js';
 import settingsRoutes from './routes/settings.js';
 import uploadRoutes from './routes/upload.js';
+import sitemapRoutes from './routes/sitemap.js';
 
 dotenv.config();
 
@@ -47,6 +48,7 @@ app.use('/api/deposits', depositRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/', sitemapRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

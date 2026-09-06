@@ -6,6 +6,7 @@ import { useAuthStore } from '../store/authStore';
 import { useCartStore } from '../store/cartStore';
 import Loading from '../components/Loading';
 import { FiCheckCircle } from 'react-icons/fi';
+import SEOHead from '../components/SEOHead';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -60,6 +61,11 @@ const Checkout = () => {
   if (items.length === 0) {
     return (
       <div className="min-h-screen pt-20 pb-12">
+        <SEOHead
+          title="Giỏ hàng trống"
+          description="Giỏ hàng của bạn đang trống. Hãy tiếp tục mua sắm tài khoản game chất lượng cao tại Shop Luan Huỳnh."
+          type="website"
+        />
         <div className="container-custom">
           <div className="card text-center py-20">
             <p className="text-slate-400 text-lg mb-6">Giỏ hàng trống</p>
@@ -74,6 +80,11 @@ const Checkout = () => {
 
   return (
     <div className="min-h-screen pt-20 pb-12">
+      <SEOHead
+        title="Thanh toán"
+        description={`Thanh toán ${items.length} tài khoản game với tổng cộng ${totalAmount.toLocaleString('vi-VN')}đ tại Shop Luan Huỳnh.`}
+        type="website"
+      />
       <div className="container-custom">
         <h1 className="text-3xl font-bold text-white mb-8">Thanh toán</h1>
 

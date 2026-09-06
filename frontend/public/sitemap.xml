@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Trang chủ -->
+  <url>
+    <loc>https://luanhuynhfc.shop/</loc>
+    <priority>1.0</priority>
+    <changefreq>daily</changefreq>
+  </url>
+  <!-- Cửa hàng -->
+  <url>
+    <loc>https://luanhuynhfc.shop/shop</loc>
+    <priority>0.9</priority>
+    <changefreq>daily</changefreq>
+  </url>
+  <!-- Giỏ hàng -->
+  <url>
+    <loc>https://luanhuynhfc.shop/cart</loc>
+    <priority>0.7</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <!-- Thanh toán -->
+  <url>
+    <loc>https://luanhuynhfc.shop/checkout</loc>
+    <priority>0.6</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+  <!--
+  NOTE: Các trang động (danh mục /shop/:slug, tài khoản /account/:id)
+  nên được thêm vào sitemap.xml bằng route server động.
+  Liên hệ admin để cập nhật sitemap khi thêm danh mục hoặc tài khoản mới.
+  -->
+</urlset>

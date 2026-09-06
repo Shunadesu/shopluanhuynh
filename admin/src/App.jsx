@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import AdminLayout from './layouts/AdminLayout';
 import Login from './pages/Login';
@@ -16,31 +17,52 @@ import Sliders from './pages/Sliders';
 import Notifications from './pages/Notifications';
 import Settings from './pages/Settings';
 import { useAuthStore } from './store/authStore';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1,
-      staleTime: 5 * 60 * 1000,
-    },
-  },
-});
+import SEOHead from './components/SEOHead';
+import api from './utils/api';
 
 function ProtectedRoute({ children }) {
   const { user, isAuthenticated } = useAuthStore();
-  
+
   if (!isAuthenticated || user?.role !== 'admin') {
     return <Navigate to="/login" replace />;
   }
-  
+
   return children;
 }
 
 function App() {
+  // Fetch site settings for SEO and favicon
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: async () => {
+      const { data } = await api.get('/admin/settings');
+      return data;
+    },
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    enabled: false, // Only fetch when needed, admin panel loads faster
+  });
+
+  // Update favicon dynamically from settings
+  useEffect(() => {
+    if (settings?.favicon) {
+      const faviconLink = document.querySelector('link[rel="icon"]');
+      if (faviconLink) {
+        faviconLink.href = settings.favicon;
+      }
+    }
+  }, [settings?.favicon]);
+
   return (
-    <QueryClientProvider client={queryClient}>
+    <>
       <BrowserRouter>
+        <SEOHead
+          title={settings?.seoTitle}
+          description={settings?.seoDescription}
+          keywords={settings?.seoKeywords}
+          ogImage={settings?.ogImage}
+          favicon={settings?.favicon}
+          twitterCard={settings?.twitterCard || 'summary'}
+        />
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route
@@ -91,7 +113,7 @@ function App() {
           }}
         />
       </BrowserRouter>
-    </QueryClientProvider>
+    </>
   );
 }
 
