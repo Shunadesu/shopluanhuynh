@@ -138,7 +138,18 @@ export const deleteSlider = async (req, res) => {
 // @access  Public
 export const getNotifications = async (req, res) => {
   try {
-    const notifications = await Notification.find({ isActive: true }).sort({ order: 1 });
+    const now = new Date();
+    
+    const notifications = await Notification.find({
+      isActive: true,
+      $or: [
+        { startDate: null, endDate: null },
+        { startDate: { $lte: now }, endDate: null },
+        { startDate: null, endDate: { $gte: now } },
+        { startDate: { $lte: now }, endDate: { $gte: now } }
+      ]
+    }).sort({ order: 1 });
+    
     res.json(notifications);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -162,13 +173,19 @@ export const getAllNotifications = async (req, res) => {
 // @access  Private/Admin
 export const createNotification = async (req, res) => {
   try {
-    const { type, content, order, isActive } = req.body;
+    const { type, title, content, image, order, isActive, startDate, endDate, dismissible, dismissDuration } = req.body;
 
     const notification = await Notification.create({
       type,
+      title,
       content,
+      image,
       order,
-      isActive
+      isActive,
+      startDate: startDate ? new Date(startDate) : null,
+      endDate: endDate ? new Date(endDate) : null,
+      dismissible: dismissible !== undefined ? dismissible : true,
+      dismissDuration: dismissDuration || 24
     });
 
     res.status(201).json(notification);
@@ -188,12 +205,18 @@ export const updateNotification = async (req, res) => {
       return res.status(404).json({ message: 'Notification not found' });
     }
 
-    const { type, content, order, isActive } = req.body;
+    const { type, title, content, image, order, isActive, startDate, endDate, dismissible, dismissDuration } = req.body;
 
     notification.type = type || notification.type;
+    notification.title = title !== undefined ? title : notification.title;
     notification.content = content || notification.content;
+    notification.image = image !== undefined ? image : notification.image;
     notification.order = order !== undefined ? order : notification.order;
     notification.isActive = isActive !== undefined ? isActive : notification.isActive;
+    notification.startDate = startDate !== undefined ? (startDate ? new Date(startDate) : null) : notification.startDate;
+    notification.endDate = endDate !== undefined ? (endDate ? new Date(endDate) : null) : notification.endDate;
+    notification.dismissible = dismissible !== undefined ? dismissible : notification.dismissible;
+    notification.dismissDuration = dismissDuration || notification.dismissDuration;
 
     const updatedNotification = await notification.save();
     res.json(updatedNotification);

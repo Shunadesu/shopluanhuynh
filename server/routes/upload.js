@@ -46,6 +46,14 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB
 });
 
+// Helper to get full URL for uploaded files
+const getFileUrl = (req, filename) => {
+  // Check for forwarded protocol (when behind proxy like Nginx)
+  const protocol = req.get('X-Forwarded-Proto') || req.protocol;
+  const host = req.get('X-Forwarded-Host') || req.get('host');
+  return `${protocol}://${host}/uploads/${filename}`;
+};
+
 // Upload single image
 router.post('/image', adminAuth, upload.single('image'), (req, res) => {
   try {
@@ -53,7 +61,7 @@ router.post('/image', adminAuth, upload.single('image'), (req, res) => {
       return res.status(400).json({ message: 'Vui lòng chọn file' });
     }
 
-    const imageUrl = `/uploads/${req.file.filename}`;
+    const imageUrl = getFileUrl(req, req.file.filename);
     res.json({ 
       message: 'Upload thành công',
       url: imageUrl,
@@ -72,7 +80,7 @@ router.post('/images', adminAuth, upload.array('images', 10), (req, res) => {
       return res.status(400).json({ message: 'Vui lòng chọn file' });
     }
 
-    const imageUrls = req.files.map(file => `/uploads/${file.filename}`);
+    const imageUrls = req.files.map(file => getFileUrl(req, file.filename));
     
     res.json({ 
       message: 'Upload thành công',

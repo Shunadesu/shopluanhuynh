@@ -3,11 +3,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../utils/api';
+import { useAuthStore } from '../store/authStore';
 import Loading from '../components/Loading';
 import { FiDollarSign, FiCopy } from 'react-icons/fi';
 
-const Deposit = () => {
+const Deposit = ({ onOpenAuth }) => {
   const queryClient = useQueryClient();
+  const { isAuthenticated, user: authUser } = useAuthStore();
   const [amount, setAmount] = useState('');
   const [selectedBank, setSelectedBank] = useState(null);
 
@@ -20,13 +22,15 @@ const Deposit = () => {
     }
   });
 
-  // Fetch user info
+  // Fetch user info - only when authenticated
   const { data: user } = useQuery({
     queryKey: ['user-me'],
     queryFn: async () => {
       const res = await api.get('/auth/me');
       return res.data;
-    }
+    },
+    enabled: isAuthenticated,
+    staleTime: 30000,
   });
 
   // Create deposit request mutation
@@ -48,6 +52,13 @@ const Deposit = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Check if not authenticated
+    if (!isAuthenticated) {
+      window.dispatchEvent(new CustomEvent('openAuthDrawer', { detail: { view: 'login' } }));
+      toast.error('Vui lòng đăng nhập để nạp tiền');
+      return;
+    }
     
     if (!amount || parseFloat(amount) < 10000) {
       toast.error('Số tiền nạp tối thiểu là 10,000đ');
@@ -92,40 +103,58 @@ const Deposit = () => {
                 <div>
                   <p className="text-white/80 mb-2">Số dư hiện tại</p>
                   <p className="text-3xl font-bold text-white">
-                    {user?.balance?.toLocaleString('vi-VN')}đ
+                    {isAuthenticated && user?.balance ? `${user.balance.toLocaleString('vi-VN')}đ` : '---'}
                   </p>
                 </div>
                 <FiDollarSign className="w-16 h-16 text-white/30" />
               </div>
             </div>
 
-            {/* Amount Input */}
-            <div className="card mb-6">
-              <h2 className="text-xl font-bold text-white mb-4">Số tiền muốn nạp</h2>
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="input-field text-2xl font-bold text-center mb-4"
-                placeholder="0"
-                min="10000"
-                step="10000"
-              />
-              <div className="grid grid-cols-3 gap-2">
-                {[50000, 100000, 200000, 500000, 1000000, 2000000].map((amt) => (
+            {/* Login Prompt - Show when not authenticated */}
+            {!isAuthenticated && (
+              <div className="card mb-6 bg-slate-800/50 border border-slate-700">
+                <div className="text-center py-8">
+                  <p className="text-slate-300 mb-4">Vui lòng đăng nhập để nạp tiền</p>
                   <button
-                    key={amt}
-                    onClick={() => setAmount(amt.toString())}
-                    className="btn-secondary text-sm"
+                    onClick={() => window.dispatchEvent(new CustomEvent('openAuthDrawer', { detail: { view: 'login' } }))}
+                    className="btn-primary"
                   >
-                    {(amt / 1000).toLocaleString('vi-VN')}K
+                    Đăng nhập
                   </button>
-                ))}
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Amount Input */}
+            {isAuthenticated && (
+              <div className="card mb-6">
+                <h2 className="text-xl font-bold text-white mb-4">Số tiền muốn nạp</h2>
+                <input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="input-field text-2xl font-bold text-center mb-4"
+                  placeholder="0"
+                  min="10000"
+                  step="10000"
+                />
+                <div className="grid grid-cols-3 gap-2">
+                  {[50000, 100000, 200000, 500000, 1000000, 2000000].map((amt) => (
+                    <button
+                      key={amt}
+                      onClick={() => setAmount(amt.toString())}
+                      className="btn-secondary text-sm"
+                    >
+                      {(amt / 1000).toLocaleString('vi-VN')}K
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Bank Selection */}
-            <div className="card">
+            {isAuthenticated && (
+              <div className="card">
               <h2 className="text-xl font-bold text-white mb-4">Chọn tài khoản ngân hàng</h2>
               {!bankAccounts || bankAccounts.length === 0 ? (
                 <p className="text-slate-400">Hiện chưa có tài khoản ngân hàng nào</p>
@@ -169,6 +198,7 @@ const Deposit = () => {
                 </div>
               )}
             </div>
+            )}
           </div>
 
           {/* Instructions */}
@@ -176,7 +206,17 @@ const Deposit = () => {
             <div className="card sticky top-24">
               <h3 className="text-xl font-bold text-white mb-4">Hướng dẫn nạp tiền</h3>
 
-              {selectedBank && amount ? (
+              {!isAuthenticated ? (
+                <div className="text-center py-4">
+                  <p className="text-slate-400 mb-4">Vui lòng đăng nhập để nạp tiền</p>
+                  <button
+                    onClick={() => window.dispatchEvent(new CustomEvent('openAuthDrawer', { detail: { view: 'login' } }))}
+                    className="btn-primary w-full"
+                  >
+                    Đăng nhập
+                  </button>
+                </div>
+              ) : selectedBank && amount ? (
                 <div className="space-y-2 mb-2">
                   <div className="bg-slate-800 rounded-lg p-4">
                     <p className="text-slate-400 text-sm mb-2">Số tiền chuyển</p>

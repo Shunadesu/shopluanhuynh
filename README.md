@@ -1,238 +1,174 @@
-# Shopluanhuynh - Hệ thống bán tài khoản game
+# Shop Luan Huynh
 
-Dự án bao gồm 3 phần: Backend API, Frontend (Khách hàng), và Admin Panel.
+Shop bán tài khoản game với các tính năng: mua bán tài khoản game, hệ thống nạp tiền, quản lý đơn hàng và Admin panel.
 
-## 🚀 Cấu trúc dự án
+## Công nghệ sử dụng
 
-```
-shopluanhuynh/
-├── server/          # Backend API (Node.js + Express + MongoDB)
-├── frontend/        # Giao diện khách hàng (React + Vite)
-└── admin/          # Giao diện quản trị (React + Vite)
-```
-
-## 📋 Yêu cầu hệ thống
-
-- Node.js >= 18.x
-- MongoDB
-- npm hoặc yarn
-
-## 🔧 Cài đặt
-
-### 1. Backend Server
-
-```bash
-cd server
-npm install
-```
-
-Tạo file `.env` trong thư mục `server`:
-
-```env
-PORT=9003
-MONGODB_URI=mongodb://localhost:27017/shopluanhuynh
-JWT_SECRET=your_jwt_secret_key_here
-CLIENT_URL=http://localhost:9010
-ADMIN_URL=http://localhost:5174
-NODE_ENV=development
-```
-
-### 2. Frontend (Khách hàng)
-
-```bash
-cd frontend
-npm install
-```
-
-### 3. Admin Panel
-
-```bash
-cd admin
-npm install
-```
-
-## 🎯 Chạy dự án
-
-### Chạy tất cả (3 terminal riêng biệt)
-
-**Terminal 1 - Backend:**
-```bash
-cd server
-npm run dev
-```
-Server chạy tại: http://localhost:9003
-
-**Terminal 2 - Frontend:**
-```bash
-cd frontend
-npm run dev
-```
-Frontend chạy tại: http://localhost:9010
-
-**Terminal 3 - Admin:**
-```bash
-cd admin
-npm run dev
-```
-Admin chạy tại: http://localhost:5174
-
-## 👤 Tài khoản mặc định
-
-Sau khi chạy server lần đầu, cần tạo tài khoản admin:
-
-1. Truy cập frontend và đăng ký tài khoản mới
-2. Vào MongoDB và set `isAdmin: true` cho tài khoản đó
-3. Hoặc chạy script seed (nếu có)
-
-## 📱 Tính năng
-
-### Frontend (Khách hàng)
-- ✅ Xem danh sách tài khoản game
-- ✅ Lọc theo danh mục
-- ✅ Chi tiết sản phẩm
-- ✅ Giỏ hàng
-- ✅ Đặt hàng
-- ✅ Nạp tiền qua chuyển khoản
-- ✅ Quản lý đơn hàng cá nhân
-- ✅ Lịch sử nạp tiền
-
-### Admin Panel
-- ✅ Dashboard tổng quan
-- ✅ Quản lý danh mục
-- ✅ Quản lý tài khoản game
-- ✅ Quản lý đơn hàng
-- ✅ Duyệt yêu cầu nạp tiền
-- ✅ Quản lý người dùng
-- ✅ Quản lý banner slider
-- ✅ Cài đặt hệ thống
-
-## 🛠️ Tech Stack
+### Frontend
+- React + Vite
+- Tailwind CSS
+- React Router DOM
+- TanStack Query
+- Zustand (state management)
+- Framer Motion (animations)
+- Swiper (carousel)
 
 ### Backend
-- Express.js
+- Node.js + Express
 - MongoDB + Mongoose
 - JWT Authentication
-- Express Validator
-- Multer (upload file)
-- Nodemailer
+- bcryptjs (password hashing)
+- AES-256-CBC (credentials encryption)
+- Multer (file upload)
 
-### Frontend & Admin
-- React 18/19
-- Vite
-- TailwindCSS
-- React Router
-- React Query (TanStack Query)
-- Zustand (State Management)
+### Admin Panel
+- React + Vite
+- Tailwind CSS
+- Recharts (dashboard charts)
 - React Hook Form
-- Axios
-- React Hot Toast
-- React Icons
-- Date-fns
 
-### Frontend specific
-- Swiper (slider)
-- Framer Motion (animations)
-- Yup (validation)
-
-### Admin specific
-- Recharts (charts/graphs)
-
-## 📝 API Endpoints
-
-### Auth
-- POST `/api/auth/register` - Đăng ký
-- POST `/api/auth/login` - Đăng nhập
-- GET `/api/auth/profile` - Lấy thông tin user
-
-### Categories
-- GET `/api/categories` - Danh sách danh mục
-- POST `/api/admin/categories` - Tạo danh mục (Admin)
-- PUT `/api/admin/categories/:id` - Sửa danh mục (Admin)
-- DELETE `/api/admin/categories/:id` - Xóa danh mục (Admin)
-
-### Accounts (Game Accounts)
-- GET `/api/accounts` - Danh sách tài khoản
-- GET `/api/accounts/:id` - Chi tiết tài khoản
-- POST `/api/admin/accounts` - Tạo tài khoản (Admin)
-- PUT `/api/admin/accounts/:id` - Sửa tài khoản (Admin)
-- DELETE `/api/admin/accounts/:id` - Xóa tài khoản (Admin)
-
-### Orders
-- POST `/api/orders` - Tạo đơn hàng
-- GET `/api/orders` - Lịch sử đơn hàng
-- GET `/api/orders/:id` - Chi tiết đơn hàng
-- GET `/api/admin/orders` - Tất cả đơn hàng (Admin)
-- PUT `/api/admin/orders/:id/status` - Cập nhật trạng thái (Admin)
-
-### Deposits
-- POST `/api/deposits` - Tạo yêu cầu nạp tiền
-- GET `/api/deposits` - Lịch sử nạp tiền
-- GET `/api/admin/deposits` - Tất cả yêu cầu (Admin)
-- PUT `/api/admin/deposits/:id` - Duyệt/từ chối (Admin)
-
-### Settings
-- GET `/api/settings` - Lấy cài đặt
-- PUT `/api/admin/settings` - Cập nhật cài đặt (Admin)
-- GET `/api/settings/sliders` - Danh sách banner
-- POST `/api/admin/sliders` - Tạo banner (Admin)
-- PUT `/api/admin/sliders/:id` - Sửa banner (Admin)
-- DELETE `/api/admin/sliders/:id` - Xóa banner (Admin)
-
-## 🎨 Giao diện
-
-### Màu sắc chính
-- Primary: `#D84315` (Deep Orange)
-- Dark: `#0B0E14` (Deep Navy)
-- Dark Light: `#0F172A` (Slate 900)
-- Accent: `#22D3EE` (Cyan 400)
-
-### Font
-- Inter (Google Fonts)
-
-## 📦 Build Production
+## Cài đặt
 
 ### Backend
 ```bash
 cd server
-npm start
+npm install
+npm run dev
 ```
 
 ### Frontend
 ```bash
 cd frontend
-npm run build
-npm run preview
+npm install
+npm run dev
 ```
 
-### Admin
+### Admin Panel
 ```bash
 cd admin
-npm run build
-npm run preview
+npm install
+npm run dev
 ```
 
-## 🐛 Troubleshooting
+## Environment Variables
 
-### Lỗi kết nối MongoDB
-- Kiểm tra MongoDB đã chạy chưa
-- Kiểm tra MONGODB_URI trong file .env
+### Backend (.env)
+```env
+PORT=9003
+MONGODB_URI=mongodb://localhost:27017/shopluanhuynh
+JWT_SECRET=your_jwt_secret_here
+JWT_EXPIRE=7d
+ENCRYPTION_KEY=32_character_encryption_key_here
+```
 
-### Lỗi CORS
-- Kiểm tra CLIENT_URL và ADMIN_URL trong .env
-- Đảm bảo port khớp với port đang chạy
+### Frontend (.env)
+```env
+VITE_API_URL=http://localhost:9003
+```
 
-### Lỗi port đã được sử dụng
-- Frontend và Admin tự động tìm port khác nếu bị trùng
-- Backend cần thay đổi PORT trong .env nếu bị trùng
+### Admin (.env)
+```env
+VITE_API_URL=http://localhost:9003
+```
 
-## 📄 License
+## Tính năng chính
+
+### Frontend
+- Hero slider với banner quảng cáo
+- Danh sách tài khoản game theo danh mục
+- Bộ lọc và tìm kiếm nâng cao
+- Giỏ hàng và thanh toán
+- Hệ thống nạp tiền qua chuyển khoản
+- Xem chi tiết tài khoản đã mua
+- Thông báo popup
+- Responsive design (mobile-first)
+
+### Admin Panel
+- Dashboard với thống kê doanh thu
+- Quản lý danh mục game
+- Quản lý tài khoản game
+- Quản lý đơn hàng
+- Quản lý người dùng
+- Quản lý nạp tiền
+- Quản lý sliders
+- Quản lý thông báo
+- Quản lý tài khoản ngân hàng
+- Quản lý logo
+- Quản lý mạng xã hội
+
+## Đăng nhập mặc định
+
+- **Email:** admin@shopluanhuynh.com
+- **Password:** admin123
+
+## API Endpoints
+
+### Authentication
+- `POST /api/auth/register` - Đăng ký
+- `POST /api/auth/verify-otp` - Xác thực OTP
+- `POST /api/auth/login` - Đăng nhập
+- `GET /api/auth/me` - Lấy thông tin user hiện tại
+
+### Accounts
+- `GET /api/accounts` - Danh sách tài khoản
+- `GET /api/accounts/:id` - Chi tiết tài khoản
+
+### Categories
+- `GET /api/categories` - Danh sách danh mục
+
+### Cart
+- `GET /api/cart` - Lấy giỏ hàng
+- `POST /api/cart` - Thêm vào giỏ hàng
+- `DELETE /api/cart/:accountId` - Xóa khỏi giỏ hàng
+
+### Orders
+- `POST /api/orders` - Tạo đơn hàng
+- `GET /api/orders` - Danh sách đơn hàng của user
+- `GET /api/orders/:id` - Chi tiết đơn hàng
+
+### Deposits
+- `POST /api/deposits` - Tạo yêu cầu nạp tiền
+- `GET /api/deposits` - Lịch sử nạp tiền
+
+### Bank Accounts
+- `GET /api/bank-accounts` - Danh sách tài khoản ngân hàng
+
+### Settings
+- `GET /api/settings` - Lấy cài đặt site
+- `GET /api/social-links` - Lấy links mạng xã hội
+
+### Uploads
+- `POST /api/upload/image` - Upload hình ảnh
+
+## Cấu trúc thư mục
+
+```
+shopluanhuynh/
+├── server/                 # Backend
+│   ├── models/            # MongoDB models
+│   ├── routes/            # API routes
+│   ├── middleware/        # Middlewares
+│   ├── src/              # Source code (controllers, models, routes)
+│   ├── utils/            # Utilities
+│   └── index.js          # Entry point
+├── frontend/              # Frontend
+│   ├── src/
+│   │   ├── components/   # React components
+│   │   ├── pages/       # Page components
+│   │   ├── store/       # Zustand stores
+│   │   └── utils/       # Utilities
+│   └── index.html
+├── admin/                 # Admin Panel
+│   ├── src/
+│   │   ├── components/   # React components
+│   │   ├── pages/       # Page components
+│   │   ├── store/       # Zustand stores
+│   │   └── utils/       # Utilities
+│   └── index.html
+├── README.md
+└── .env.example
+```
+
+## License
 
 MIT
-
-## 👨‍💻 Developer
-
-Shopluanhuynh - LuanHuynhFCO
-
----
-
-**Chúc bạn thành công! 🎉**

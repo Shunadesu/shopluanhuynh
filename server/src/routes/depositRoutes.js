@@ -10,7 +10,8 @@ import {
   createBankAccount,
   updateBankAccount,
   deleteBankAccount,
-  toggleBankAccount
+  toggleBankAccount,
+  getTopDepositors
 } from '../controllers/depositController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 
@@ -18,6 +19,7 @@ const router = express.Router();
 
 // Public/User routes
 router.get('/bank-accounts', getBankAccounts);
+router.get('/top-depositors', getTopDepositors);
 router.post('/request', protect, createDepositRequest);
 router.get('/my-requests', protect, getMyDepositRequests);
 

@@ -1,5 +1,7 @@
 import express from 'express';
 import SiteSetting from '../models/SiteSetting.js';
+import Notification from '../models/Notification.js';
+import Slider from '../models/Slider.js';
 
 const router = express.Router();
 
@@ -37,6 +39,37 @@ router.get('/logo-footer', async (req, res) => {
     res.json({ logo: logo?.value || null });
   } catch (error) {
     res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
+// Get active sliders
+router.get('/sliders', async (req, res) => {
+  try {
+    const sliders = await Slider.find({ isActive: true }).sort({ order: 1 });
+    res.json(sliders);
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
+// Get active notifications
+router.get('/notifications', async (req, res) => {
+  try {
+    const now = new Date();
+    
+    const notifications = await Notification.find({
+      isActive: true,
+      $or: [
+        { startDate: null, endDate: null },
+        { startDate: { $lte: now }, endDate: null },
+        { startDate: null, endDate: { $gte: now } },
+        { startDate: { $lte: now }, endDate: { $gte: now } }
+      ]
+    }).sort({ order: 1 });
+    
+    res.json(notifications);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 

@@ -6,6 +6,7 @@ import {
 } from 'react-icons/fi';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { StatsSkeleton, OrderTableSkeleton, QuickStatsSkeleton } from '../components/SkeletonLoader';
 
 export default function Dashboard() {
   const { data: stats, isLoading } = useQuery({
@@ -74,8 +75,27 @@ export default function Dashboard() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
+      <div className="space-y-6">
+        {/* Header Skeleton */}
+        <div>
+          <div className="h-9 bg-slate-700 rounded w-48 animate-pulse" />
+          <div className="h-5 bg-slate-800 rounded w-32 mt-2 animate-pulse" />
+        </div>
+        
+        {/* Stats Skeleton */}
+        <StatsSkeleton />
+        
+        {/* Recent Orders Skeleton */}
+        <div className="card">
+          <div className="flex items-center justify-between mb-4">
+            <div className="h-6 bg-slate-700 rounded w-40 animate-pulse" />
+            <div className="h-6 bg-slate-700 rounded w-6 animate-pulse" />
+          </div>
+          <OrderTableSkeleton rows={5} />
+        </div>
+        
+        {/* Quick Stats Skeleton */}
+        <QuickStatsSkeleton />
       </div>
     );
   }

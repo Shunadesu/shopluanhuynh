@@ -15,12 +15,16 @@ import depositRoutes from './routes/deposits.js';
 import settingRoutes from './routes/settings.js';
 import uploadRoutes from './routes/upload.js';
 import adminRoutes from './routes/admin.js';
+import socialLinksRoutes from './routes/socialLinks.js';
 
 dotenv.config();
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Trust proxy (for rate limiting behind reverse proxy)
+app.set('trust proxy', 1);
 
 // Rate limiting
 const limiter = rateLimit({
@@ -31,7 +35,7 @@ const limiter = rateLimit({
 
 // Middleware
 app.use(cors({
-  origin: [process.env.CLIENT_URL, process.env.ADMIN_URL],
+  origin: true, // Allow all origins
   credentials: true
 }));
 app.use(express.json());
@@ -50,6 +54,8 @@ app.use('/api/deposits', depositRoutes);
 app.use('/api/settings', settingRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/social-links', socialLinksRoutes);
+app.use('/api/admin/social-links', socialLinksRoutes);
 
 // Health check
 app.get('/', (req, res) => {

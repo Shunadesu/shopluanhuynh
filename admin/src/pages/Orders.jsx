@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { FiSearch, FiEye, FiCheck, FiX } from 'react-icons/fi';
+import { TableSkeleton, FilterSkeleton } from '../components/SkeletonLoader';
 
 export default function Orders() {
   const queryClient = useQueryClient();
@@ -52,8 +53,18 @@ export default function Orders() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
+      <div className="space-y-6">
+        {/* Header Skeleton */}
+        <div>
+          <div className="h-9 bg-slate-700 rounded w-32 animate-pulse" />
+          <div className="h-5 bg-slate-800 rounded w-28 mt-2 animate-pulse" />
+        </div>
+        
+        {/* Filter Skeleton */}
+        <FilterSkeleton />
+        
+        {/* Table Skeleton */}
+        <TableSkeleton rows={8} />
       </div>
     );
   }

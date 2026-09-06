@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { FiSearch, FiEye, FiUserCheck, FiUserX } from 'react-icons/fi';
+import { TableSkeleton } from '../components/SkeletonLoader';
 
 export default function Users() {
   const queryClient = useQueryClient();
@@ -40,8 +41,18 @@ export default function Users() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-500"></div>
+      <div className="space-y-6">
+        {/* Header Skeleton */}
+        <div>
+          <div className="h-9 bg-slate-700 rounded w-32 animate-pulse" />
+          <div className="h-5 bg-slate-800 rounded w-28 mt-2 animate-pulse" />
+        </div>
+        
+        {/* Search Skeleton */}
+        <div className="h-10 bg-slate-800 rounded-lg w-full max-w-md animate-pulse" />
+        
+        {/* Table Skeleton */}
+        <TableSkeleton rows={8} />
       </div>
     );
   }
@@ -74,6 +85,7 @@ export default function Users() {
               <th>Tên đăng nhập</th>
               <th>Email</th>
               <th>Số dư</th>
+              <th>Số acc đã mua</th>
               <th>Quyền</th>
               <th>Ngày tạo</th>
               <th>Thao tác</th>
@@ -87,6 +99,11 @@ export default function Users() {
                   <td className="text-slate-400">{user.email}</td>
                   <td className="font-semibold text-cyan-400">
                     {user.balance?.toLocaleString('vi-VN')}đ
+                  </td>
+                  <td>
+                    <span className="text-cyan-400 font-semibold">
+                      {user.purchasedAccountsCount || 0}
+                    </span>
                   </td>
                   <td>
                     {user.isAdmin ? (

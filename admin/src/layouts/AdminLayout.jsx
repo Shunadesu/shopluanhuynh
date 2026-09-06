@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { 
   FiHome, FiGrid, FiShoppingBag, FiShoppingCart, 
-  FiDollarSign, FiUsers, FiImage, FiSettings, FiLogOut 
+  FiDollarSign, FiUsers, FiImage, FiBell, FiSettings, FiLogOut, FiCreditCard 
 } from 'react-icons/fi';
 import { useAuthStore } from '../store/authStore';
 import toast from 'react-hot-toast';
@@ -22,8 +22,10 @@ export default function AdminLayout() {
     { path: '/accounts', icon: FiShoppingBag, label: 'Tài khoản' },
     { path: '/orders', icon: FiShoppingCart, label: 'Đơn hàng' },
     { path: '/deposits', icon: FiDollarSign, label: 'Nạp tiền' },
+    { path: '/bank-accounts', icon: FiCreditCard, label: 'Tài khoản NH' },
     { path: '/users', icon: FiUsers, label: 'Người dùng' },
     { path: '/sliders', icon: FiImage, label: 'Banner' },
+    { path: '/notifications', icon: FiBell, label: 'Thông báo' },
     { path: '/settings', icon: FiSettings, label: 'Cài đặt' },
   ];
 
@@ -79,7 +81,7 @@ export default function AdminLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto scrollbar-hide">
         <div className="p-4">
           <Outlet />
         </div>

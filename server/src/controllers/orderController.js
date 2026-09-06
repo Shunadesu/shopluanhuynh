@@ -4,12 +4,21 @@ import Order from '../models/Order.js';
 import User from '../models/User.js';
 import mongoose from 'mongoose';
 
+// Helper function to get cart query based on auth state
+const getCartQuery = (user, guestId) => {
+  if (user) {
+    return { user: user._id };
+  }
+  return { guestId };
+};
+
 // @desc    Add item to cart
 // @route   POST /api/cart/add
-// @access  Private
+// @access  Public (optional auth)
 export const addToCart = async (req, res) => {
   try {
     const { accountId } = req.body;
+    const guestId = req.headers['x-guest-id'];
 
     // Check if account exists and is available
     const account = await GameAccount.findById(accountId);
@@ -21,12 +30,22 @@ export const addToCart = async (req, res) => {
       return res.status(400).json({ message: 'Account is not available' });
     }
 
-    // Find or create cart
-    let cart = await Cart.findOne({ user: req.user._id });
+    // Require auth for checkout but allow guest for cart
+    if (!req.user && !guestId) {
+      return res.status(401).json({ 
+        message: 'Please login to add items to cart',
+        requiresAuth: true 
+      });
+    }
+
+    // Find cart by user or guestId
+    const cartQuery = getCartQuery(req.user, guestId);
+    let cart = await Cart.findOne(cartQuery);
 
     if (!cart) {
       cart = await Cart.create({
-        user: req.user._id,
+        user: req.user?._id || null,
+        guestId: req.user ? null : guestId,
         items: [{ account: accountId }]
       });
     } else {
@@ -56,10 +75,18 @@ export const addToCart = async (req, res) => {
 
 // @desc    Get cart
 // @route   GET /api/cart
-// @access  Private
+// @access  Public (optional auth)
 export const getCart = async (req, res) => {
   try {
-    let cart = await Cart.findOne({ user: req.user._id })
+    const guestId = req.headers['x-guest-id'];
+    
+    // Require auth or guestId
+    if (!req.user && !guestId) {
+      return res.json({ items: [], user: null, guestId: null });
+    }
+
+    const cartQuery = getCartQuery(req.user, guestId);
+    let cart = await Cart.findOne(cartQuery)
       .populate({
         path: 'items.account',
         select: '-username -password',
@@ -67,7 +94,7 @@ export const getCart = async (req, res) => {
       });
 
     if (!cart) {
-      cart = await Cart.create({ user: req.user._id, items: [] });
+      return res.json({ items: [], user: null, guestId: null });
     }
 
     // Filter out sold/unavailable accounts
@@ -88,10 +115,18 @@ export const getCart = async (req, res) => {
 
 // @desc    Remove item from cart
 // @route   DELETE /api/cart/:accountId
-// @access  Private
+// @access  Public (optional auth)
 export const removeFromCart = async (req, res) => {
   try {
-    const cart = await Cart.findOne({ user: req.user._id });
+    const guestId = req.headers['x-guest-id'];
+
+    // Require auth or guestId
+    if (!req.user && !guestId) {
+      return res.status(401).json({ message: 'No cart to remove from' });
+    }
+
+    const cartQuery = getCartQuery(req.user, guestId);
+    const cart = await Cart.findOne(cartQuery);
 
     if (!cart) {
       return res.status(404).json({ message: 'Cart not found' });
@@ -104,6 +139,70 @@ export const removeFromCart = async (req, res) => {
     await cart.save();
 
     const populatedCart = await Cart.findById(cart._id)
+      .populate({
+        path: 'items.account',
+        select: '-username -password',
+        populate: { path: 'category', select: 'name slug' }
+      });
+
+    res.json(populatedCart);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Merge guest cart with user cart (called after login)
+// @route   POST /api/cart/merge
+// @access  Private
+export const mergeCart = async (req, res) => {
+  try {
+    const { guestId } = req.body;
+
+    if (!guestId) {
+      return res.status(400).json({ message: 'Guest ID required' });
+    }
+
+    // Find guest cart
+    const guestCart = await Cart.findOne({ guestId });
+    const userCart = await Cart.findOne({ user: req.user._id });
+
+    if (!guestCart || guestCart.items.length === 0) {
+      return res.json(userCart || { items: [] });
+    }
+
+    if (!userCart) {
+      // Simply convert guest cart to user cart
+      guestCart.user = req.user._id;
+      guestCart.guestId = null;
+      await guestCart.save();
+      
+      const populatedCart = await Cart.findById(guestCart._id)
+        .populate({
+          path: 'items.account',
+          select: '-username -password',
+          populate: { path: 'category', select: 'name slug' }
+        });
+      
+      return res.json(populatedCart);
+    }
+
+    // Merge items from guest cart to user cart
+    for (const guestItem of guestCart.items) {
+      const existsInUserCart = userCart.items.some(
+        item => item.account.toString() === guestItem.account.toString()
+      );
+      
+      if (!existsInUserCart) {
+        userCart.items.push(guestItem);
+      }
+    }
+
+    await userCart.save();
+
+    // Delete guest cart
+    await Cart.deleteOne({ guestId });
+
+    const populatedCart = await Cart.findById(userCart._id)
       .populate({
         path: 'items.account',
         select: '-username -password',
@@ -308,6 +407,64 @@ export const getAllOrders = async (req, res) => {
       pages: Math.ceil(total / Number(limit)),
       total
     });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get all purchased accounts for user
+// @route   GET /api/orders/purchased-accounts
+// @access  Private
+export const getPurchasedAccounts = async (req, res) => {
+  try {
+    // Get all completed orders for this user
+    const orders = await Order.find({ 
+      user: req.user._id, 
+      status: 'completed' 
+    })
+      .populate({
+        path: 'items.account',
+        populate: { path: 'category', select: 'name slug' }
+      })
+      .sort({ createdAt: -1 });
+
+    // Extract and decrypt accounts
+    const purchasedAccounts = [];
+
+    for (const order of orders) {
+      for (const item of order.items) {
+        if (item.account) {
+          // Get full account with encrypted credentials
+          const fullAccount = await GameAccount.findById(item.account._id);
+          
+          if (fullAccount) {
+            const credentials = fullAccount.decryptCredentials();
+            
+            purchasedAccounts.push({
+              orderId: order._id,
+              orderNumber: order.orderNumber,
+              orderDate: order.createdAt,
+              account: {
+                _id: fullAccount._id,
+                title: fullAccount.title,
+                images: fullAccount.images,
+                rank: fullAccount.rank,
+                server: fullAccount.server,
+                price: item.price,
+                category: fullAccount.category,
+                categoryId: item.account.categoryId,
+                username: credentials.username,
+                password: credentials.password,
+                additionalInfo: fullAccount.additionalInfo,
+                purchasedAt: order.createdAt
+              }
+            });
+          }
+        }
+      }
+    }
+
+    res.json(purchasedAccounts);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

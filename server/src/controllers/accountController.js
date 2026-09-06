@@ -127,8 +127,11 @@ export const createAccount = async (req, res) => {
       price,
       originalPrice,
       images,
-      rank,
-      server,
+      teamValue,
+      bp,
+      phone,
+      email,
+      cccd,
       additionalInfo
     } = req.body;
 
@@ -141,8 +144,11 @@ export const createAccount = async (req, res) => {
       price,
       originalPrice,
       images,
-      rank,
-      server,
+      teamValue,
+      bp,
+      phone,
+      email,
+      cccd,
       additionalInfo
     });
 
@@ -197,8 +203,11 @@ export const updateAccount = async (req, res) => {
       price,
       originalPrice,
       images,
-      rank,
-      server,
+      teamValue,
+      bp,
+      phone,
+      email,
+      cccd,
       additionalInfo,
       status
     } = req.body;
@@ -211,8 +220,11 @@ export const updateAccount = async (req, res) => {
     account.price = price !== undefined ? price : account.price;
     account.originalPrice = originalPrice !== undefined ? originalPrice : account.originalPrice;
     account.images = images || account.images;
-    account.rank = rank !== undefined ? rank : account.rank;
-    account.server = server !== undefined ? server : account.server;
+    account.teamValue = teamValue !== undefined ? teamValue : account.teamValue;
+    account.bp = bp !== undefined ? bp : account.bp;
+    account.phone = phone !== undefined ? phone : account.phone;
+    account.email = email !== undefined ? email : account.email;
+    account.cccd = cccd !== undefined ? cccd : account.cccd;
     account.additionalInfo = additionalInfo !== undefined ? additionalInfo : account.additionalInfo;
     account.status = status || account.status;
 

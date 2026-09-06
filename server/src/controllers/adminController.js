@@ -183,13 +183,36 @@ export const getAllUsers = async (req, res) => {
     const users = await User.find(query)
       .select('-password')
       .sort({ createdAt: -1 })
-      .limit(Number(limit))
-      .skip((Number(page) - 1) * Number(limit));
+      .lean();
 
-    const total = await User.countDocuments(query);
+    // Get purchased accounts count for each user
+    const usersWithStats = await Promise.all(
+      users.map(async (user) => {
+        const completedOrders = await Order.find({ 
+          user: user._id, 
+          status: 'completed' 
+        });
+        
+        // Count total accounts purchased
+        let purchasedAccountsCount = 0;
+        completedOrders.forEach(order => {
+          purchasedAccountsCount += order.items.length;
+        });
+
+        return {
+          ...user,
+          purchasedAccountsCount
+        };
+      })
+    );
+
+    // Apply pagination after adding stats
+    const startIndex = (Number(page) - 1) * Number(limit);
+    const paginatedUsers = usersWithStats.slice(startIndex, startIndex + Number(limit));
+    const total = usersWithStats.length;
 
     res.json({
-      users,
+      users: paginatedUsers,
       page: Number(page),
       pages: Math.ceil(total / Number(limit)),
       total

@@ -3,13 +3,16 @@ import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../utils/api';
 import { useCartStore } from '../store/cartStore';
+import { useAuthStore } from '../store/authStore';
 import Loading from '../components/Loading';
 import { FiTrash2, FiShoppingBag } from 'react-icons/fi';
+import SEOHead from '../components/SEOHead';
 
-const Cart = () => {
+const Cart = ({ onOpenAuth }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { setCartCount } = useCartStore();
+  const { isAuthenticated } = useAuthStore();
 
   // Fetch cart
   const { data: cartData, isLoading } = useQuery({
@@ -19,7 +22,13 @@ const Cart = () => {
       return res.data;
     },
     onSuccess: (data) => {
-      setCartCount(data.items?.length || 0);
+      setCartCount(data?.items?.length || 0);
+    },
+    onError: (error) => {
+      if (error.response?.status === 401) {
+        // User not logged in and no guest cart - that's ok
+        setCartCount(0);
+      }
     }
   });
 
@@ -34,7 +43,12 @@ const Cart = () => {
       queryClient.invalidateQueries(['cart']);
     },
     onError: (error) => {
-      toast.error(error.response?.data?.message || 'Không thể xóa khỏi giỏ hàng');
+      if (error.response?.status === 401) {
+        toast.error('Vui lòng đăng nhập');
+        onOpenAuth?.('login');
+      } else {
+        toast.error(error.response?.data?.message || 'Không thể xóa khỏi giỏ hàng');
+      }
     }
   });
 
@@ -52,6 +66,11 @@ const Cart = () => {
   if (items.length === 0) {
     return (
       <div className="min-h-screen pt-20 pb-12">
+        <SEOHead
+          title="Giỏ Hàng Trống"
+          description="Giỏ hàng của bạn đang trống. Hãy chọn tài khoản game yêu thích để thêm vào giỏ hàng."
+          type="website"
+        />
         <div className="container-custom">
           <h1 className="text-3xl font-bold text-white mb-8">Giỏ hàng</h1>
           <div className="card text-center py-20">
@@ -68,6 +87,11 @@ const Cart = () => {
 
   return (
     <div className="min-h-screen pt-20 pb-12">
+      <SEOHead
+        title={`Giỏ Hàng (${items.length} sản phẩm)`}
+        description={`Bạn có ${items.length} tài khoản game trong giỏ hàng. Tiếp tục mua sắm hoặc tiến hành thanh toán.`}
+        type="website"
+      />
       <div className="container-custom">
         <h1 className="text-3xl font-bold text-white mb-8">Giỏ hàng ({items.length})</h1>
 
@@ -152,7 +176,13 @@ const Cart = () => {
               </div>
 
               <button
-                onClick={() => navigate('/checkout')}
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    onOpenAuth?.('login');
+                    return;
+                  }
+                  navigate('/checkout');
+                }}
                 className="btn-primary w-full"
               >
                 Thanh toán

@@ -161,6 +161,19 @@ router.get('/categories', adminAuth, async (req, res) => {
   }
 });
 
+// Get category by ID
+router.get('/categories/:id', adminAuth, async (req, res) => {
+  try {
+    const category = await Category.findById(req.params.id);
+    if (!category) {
+      return res.status(404).json({ message: 'Danh mục không tồn tại' });
+    }
+    res.json(category);
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
 // Create category
 router.post('/categories', adminAuth, async (req, res) => {
   try {
@@ -221,6 +234,12 @@ router.get('/accounts', adminAuth, async (req, res) => {
       const accObj = acc.toObject();
       accObj.username = decrypt(accObj.username);
       accObj.password = decrypt(accObj.password);
+      // Create loginInfo for frontend compatibility
+      accObj.loginInfo = `Username: ${accObj.username}\nPassword: ${accObj.password}`;
+      // Map categoryId to category for frontend compatibility
+      accObj.category = accObj.categoryId;
+      // Add thumbnail (first image)
+      accObj.thumbnail = accObj.images?.[0] || null;
       return accObj;
     });
 
@@ -244,16 +263,55 @@ router.get('/accounts', adminAuth, async (req, res) => {
 // Create account
 router.post('/accounts', adminAuth, async (req, res) => {
   try {
-    const accountData = { ...req.body };
+    const { loginInfo, ...restData } = req.body;
     
-    // Encrypt credentials
-    accountData.username = encrypt(accountData.username);
-    accountData.password = encrypt(accountData.password);
+    // Parse loginInfo to extract username and password
+    let username = '';
+    let password = '';
+    
+    if (loginInfo) {
+      const lines = loginInfo.split('\n');
+      lines.forEach(line => {
+        const lowerLine = line.toLowerCase();
+        if (lowerLine.includes('username:') || lowerLine.includes('user:')) {
+          const match = line.match(/(?:username|user)[:\s]*([^\n|]+)/i);
+          if (match) username = match[1].trim();
+        }
+        if (lowerLine.includes('password:') || lowerLine.includes('pass:')) {
+          const match = line.match(/(?:password|pass)[:\s]*([^\n|]+)/i);
+          if (match) password = match[1].trim();
+        }
+      });
+      
+      // If still empty, try to get from line format "user:pass"
+      if (!username || !password) {
+        const simpleFormat = loginInfo.match(/^([^\n:]+):([^\n]+)$/);
+        if (simpleFormat) {
+          username = username || simpleFormat[1];
+          password = password || simpleFormat[2];
+        }
+      }
+    }
+    
+    const accountData = {
+      ...restData,
+      categoryId: restData.category || restData.categoryId, // Map category to categoryId
+      username: username || 'N/A',
+      password: password || 'N/A'
+    };
+    delete accountData.category; // Remove category if exists
 
     const account = new GameAccount(accountData);
     await account.save();
 
-    res.status(201).json(account);
+    // Populate category for response
+    await account.populate('categoryId', 'name');
+
+    // Build response with category for frontend compatibility
+    const accountObj = account.toObject();
+    accountObj.category = accountObj.categoryId;
+
+    res.status(201).json(accountObj);
   } catch (error) {
     console.error('Create account error:', error);
     res.status(500).json({ message: 'Lỗi server', error: error.message });
@@ -263,24 +321,51 @@ router.post('/accounts', adminAuth, async (req, res) => {
 // Update account
 router.put('/accounts/:id', adminAuth, async (req, res) => {
   try {
-    const updateData = { ...req.body };
+    const { loginInfo, ...restData } = req.body;
     
-    // Encrypt credentials if provided
-    if (updateData.username) {
-      updateData.username = encrypt(updateData.username);
+    const updateData = { ...restData };
+    
+    // Parse loginInfo to extract username and password if provided
+    if (loginInfo) {
+      let username = '';
+      let password = '';
+      
+      const lines = loginInfo.split('\n');
+      lines.forEach(line => {
+        const lowerLine = line.toLowerCase();
+        if (lowerLine.includes('username:') || lowerLine.includes('user:')) {
+          const match = line.match(/(?:username|user)[:\s]*([^\n|]+)/i);
+          if (match) username = match[1].trim();
+        }
+        if (lowerLine.includes('password:') || lowerLine.includes('pass:')) {
+          const match = line.match(/(?:password|pass)[:\s]*([^\n|]+)/i);
+          if (match) password = match[1].trim();
+        }
+      });
+      
+      if (username) updateData.username = username;
+      if (password) updateData.password = password;
     }
-    if (updateData.password) {
-      updateData.password = encrypt(updateData.password);
+    
+    // Map category to categoryId for database compatibility
+    if (updateData.category) {
+      updateData.categoryId = updateData.category;
+      delete updateData.category;
     }
 
     const account = await GameAccount.findByIdAndUpdate(
       req.params.id,
       updateData,
       { new: true }
-    );
+    ).populate('categoryId', 'name');
 
-    res.json(account);
+    // Build response with category for frontend compatibility
+    const accountObj = account ? account.toObject() : null;
+    if (accountObj) accountObj.category = accountObj.categoryId;
+
+    res.json(accountObj);
   } catch (error) {
+    console.error('Update account error:', error);
     res.status(500).json({ message: 'Lỗi server', error: error.message });
   }
 });
@@ -290,6 +375,21 @@ router.delete('/accounts/:id', adminAuth, async (req, res) => {
   try {
     await GameAccount.findByIdAndDelete(req.params.id);
     res.json({ message: 'Đã xóa tài khoản' });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
+// Toggle hot status
+router.put('/accounts/:id/toggle-hot', adminAuth, async (req, res) => {
+  try {
+    const account = await GameAccount.findById(req.params.id);
+    if (!account) {
+      return res.status(404).json({ message: 'Tài khoản không tồn tại' });
+    }
+    account.isHot = !account.isHot;
+    await account.save();
+    res.json({ message: account.isHot ? 'Đã đánh dấu Hot' : 'Đã bỏ đánh dấu Hot', account });
   } catch (error) {
     res.status(500).json({ message: 'Lỗi server', error: error.message });
   }
@@ -705,6 +805,27 @@ router.put('/settings/logo', adminAuth, async (req, res) => {
     }
 
     res.json({ message: 'Đã cập nhật logo' });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
+// Update single logo
+router.put('/logo', adminAuth, async (req, res) => {
+  try {
+    const { logo } = req.body;
+
+    if (!logo) {
+      return res.status(400).json({ message: 'Logo URL is required' });
+    }
+
+    await SiteSetting.findOneAndUpdate(
+      { key: 'logo' },
+      { key: 'logo', value: logo, type: 'image' },
+      { upsert: true, new: true }
+    );
+
+    res.json({ message: 'Đã cập nhật logo', logo });
   } catch (error) {
     res.status(500).json({ message: 'Lỗi server', error: error.message });
   }

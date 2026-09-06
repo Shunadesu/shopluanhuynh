@@ -39,10 +39,17 @@ router.get('/', async (req, res) => {
       .skip(skip)
       .limit(parseInt(limit));
 
+    // Map categoryId to category for frontend compatibility
+    const mappedAccounts = accounts.map(acc => {
+      const accObj = acc.toObject();
+      accObj.category = accObj.categoryId;
+      return accObj;
+    });
+
     const total = await GameAccount.countDocuments(query);
 
     res.json({
-      accounts,
+      accounts: mappedAccounts,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -66,17 +73,21 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Tài khoản không tồn tại' });
     }
 
+    // Map categoryId to category for frontend compatibility
+    const accountObj = account.toObject();
+    accountObj.category = accountObj.categoryId;
+
     // If account is sold and user owns it, decrypt credentials
     if (account.status === 'sold' && req.user && account.soldTo && account.soldTo.toString() === req.user._id.toString()) {
-      account.username = decrypt(account.username);
-      account.password = decrypt(account.password);
+      accountObj.username = decrypt(accountObj.username);
+      accountObj.password = decrypt(accountObj.password);
     } else {
       // Hide credentials if not purchased
-      account.username = undefined;
-      account.password = undefined;
+      accountObj.username = undefined;
+      accountObj.password = undefined;
     }
 
-    res.json(account);
+    res.json(accountObj);
   } catch (error) {
     console.error('Get account error:', error);
     res.status(500).json({ message: 'Lỗi server', error: error.message });

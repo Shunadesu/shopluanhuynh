@@ -48,7 +48,9 @@ router.post('/register', async (req, res) => {
 
     res.status(201).json({
       message: 'Đăng ký thành công! Vui lòng kiểm tra email để xác thực.',
-      email
+      email,
+      userId: user._id,
+      otp
     });
   } catch (error) {
     console.error('Register error:', error);
@@ -59,9 +61,9 @@ router.post('/register', async (req, res) => {
 // Verify OTP
 router.post('/verify-otp', async (req, res) => {
   try {
-    const { email, otp } = req.body;
+    const { userId, otp } = req.body;
 
-    const user = await User.findOne({ email });
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: 'User không tồn tại' });
     }
@@ -97,9 +99,9 @@ router.post('/verify-otp', async (req, res) => {
 // Resend OTP
 router.post('/resend-otp', async (req, res) => {
   try {
-    const { email } = req.body;
+    const { userId } = req.body;
 
-    const user = await User.findOne({ email });
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: 'User không tồn tại' });
     }
@@ -120,7 +122,7 @@ router.post('/resend-otp', async (req, res) => {
 
     console.log(`New OTP for ${email}: ${otp}`);
 
-    res.json({ message: 'Đã gửi lại mã OTP' });
+    res.json({ message: 'Đã gửi lại mã OTP', otp });
   } catch (error) {
     console.error('Resend OTP error:', error);
     res.status(500).json({ message: 'Lỗi server', error: error.message });

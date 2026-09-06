@@ -33,17 +33,33 @@ const gameAccountSchema = new mongoose.Schema({
   images: [{
     type: String
   }],
-  rank: {
+  teamValue: {
     type: String,
     default: ''
   },
-  server: {
+  bp: {
+    type: String,
+    default: ''
+  },
+  phone: {
+    type: String,
+    default: ''
+  },
+  email: {
+    type: String,
+    default: ''
+  },
+  cccd: {
     type: String,
     default: ''
   },
   additionalInfo: {
     type: String,
     default: ''
+  },
+  isHot: {
+    type: Boolean,
+    default: false
   },
   status: {
     type: String,

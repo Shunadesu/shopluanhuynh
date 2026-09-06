@@ -8,6 +8,13 @@ const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
+// Helper to get full URL for uploaded files
+const getFileUrl = (req, filename) => {
+  const protocol = req.protocol;
+  const host = req.get('host');
+  return `${protocol}://${host}/uploads/${filename}`;
+};
+
 // @desc    Upload single image
 // @route   POST /api/upload/image
 // @access  Private (can be used by both users and admins)
@@ -17,7 +24,7 @@ router.post('/image', upload.single('image'), (req, res) => {
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    const fileUrl = `/uploads/${req.file.filename}`;
+    const fileUrl = getFileUrl(req, req.file.filename);
     
     res.json({
       message: 'Image uploaded successfully',
@@ -40,7 +47,7 @@ router.post('/images', upload.array('images', 5), (req, res) => {
 
     const fileUrls = req.files.map(file => ({
       filename: file.filename,
-      url: `/uploads/${file.filename}`
+      url: getFileUrl(req, file.filename)
     }));
 
     res.json({

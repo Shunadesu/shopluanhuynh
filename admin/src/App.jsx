@@ -5,11 +5,15 @@ import AdminLayout from './layouts/AdminLayout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Categories from './pages/Categories';
+import CategoryForm from './pages/CategoryForm';
+import BankAccounts from './pages/BankAccounts';
 import Accounts from './pages/Accounts';
+import AccountForm from './pages/AccountForm';
 import Orders from './pages/Orders';
 import Deposits from './pages/Deposits';
 import Users from './pages/Users';
 import Sliders from './pages/Sliders';
+import Notifications from './pages/Notifications';
 import Settings from './pages/Settings';
 import { useAuthStore } from './store/authStore';
 
@@ -49,11 +53,17 @@ function App() {
           >
             <Route index element={<Dashboard />} />
             <Route path="categories" element={<Categories />} />
+            <Route path="categories/add" element={<CategoryForm />} />
+            <Route path="categories/edit/:id" element={<CategoryForm />} />
             <Route path="accounts" element={<Accounts />} />
+            <Route path="bank-accounts" element={<BankAccounts />} />
+            <Route path="accounts/add" element={<AccountForm />} />
+            <Route path="accounts/edit/:id" element={<AccountForm />} />
             <Route path="orders" element={<Orders />} />
             <Route path="deposits" element={<Deposits />} />
             <Route path="users" element={<Users />} />
             <Route path="sliders" element={<Sliders />} />
+            <Route path="notifications" element={<Notifications />} />
             <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>

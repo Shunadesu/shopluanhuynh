@@ -2,7 +2,7 @@ import { FiPhone, FiFacebook } from 'react-icons/fi';
 
 const ContactFixed = () => {
   return (
-    <div className="fixed bottom-6 right-6 z-40 flex flex-col space-y-2">
+    <div className="fixed bottom-12 right-2 md:bottom-6 md:right-6 z-[9999] flex flex-col space-y-2">
       {/* Phone */}
       <a
         href="tel:0123456789"

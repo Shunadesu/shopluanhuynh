@@ -37,7 +37,7 @@ export const register = async (req, res) => {
     res.status(201).json({
       message: 'Registration successful. Please check your email for OTP',
       userId: user._id,
-      otp: process.env.NODE_ENV === 'development' ? otp : undefined
+      otp
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -118,7 +118,7 @@ export const resendOTP = async (req, res) => {
 
     res.json({
       message: 'OTP resent successfully',
-      otp: process.env.NODE_ENV === 'development' ? otp : undefined
+      otp
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

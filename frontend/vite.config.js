@@ -6,6 +6,18 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 9004,
-    host: true
-  }
+    host: true,
+    proxy: {
+      '/api': {
+        target: 'https://luanhuynhfc.shop',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/uploads': {
+        target: 'https://luanhuynhfc.shop',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
 })

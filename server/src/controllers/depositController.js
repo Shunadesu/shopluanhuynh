@@ -270,3 +270,53 @@ export const toggleBankAccount = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// @desc    Get top depositors of the month
+// @route   GET /api/deposits/top-depositors
+// @access  Public
+export const getTopDepositors = async (req, res) => {
+  try {
+    // Get start of current month
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    // Aggregate approved deposits by user
+    const topDepositors = await DepositRequest.aggregate([
+      {
+        $match: {
+          status: 'approved',
+          createdAt: { $gte: startOfMonth }
+        }
+      },
+      {
+        $group: {
+          _id: '$user',
+          totalAmount: { $sum: '$amount' }
+        }
+      },
+      { $sort: { totalAmount: -1 } },
+      { $limit: 10 },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      { $unwind: '$user' },
+      {
+        $project: {
+          _id: 1,
+          totalAmount: 1,
+          fullName: '$user.fullName'
+        }
+      }
+    ]);
+
+    res.json(topDepositors);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
