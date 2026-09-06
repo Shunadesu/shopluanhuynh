@@ -79,10 +79,10 @@ const OrderDetail = () => {
 
   if (!order) {
     return (
-      <div className="min-h-screen pt-20 pb-12">
+      <div className="min-h-screen pt-28 pb-12">
         <div className="container-custom text-center py-20">
-          <FiInfo className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-          <p className="text-white text-xl font-bold mb-2">Không tìm thấy đơn hàng</p>
+          <FiInfo className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+          <p className="text-slate-900 dark:text-white text-xl font-bold mb-2">Không tìm thấy đơn hàng</p>
           <Link to="/profile/orders" className="btn-primary inline-flex items-center gap-2 mt-4">
             <FiArrowLeft className="w-4 h-4" /> Quay lại
           </Link>
@@ -95,7 +95,7 @@ const OrderDetail = () => {
   const StatusIcon = statusCfg.icon;
 
   return (
-    <div className="min-h-screen pt-20 pb-12">
+    <div className="min-h-screen pt-28 pb-12">
       <SEOHead
         title={`Đơn hàng #${order.orderNumber}`}
         description={`Chi tiết đơn hàng #${order.orderNumber} - Thông tin tài khoản đã mua`}
@@ -104,12 +104,12 @@ const OrderDetail = () => {
       <div className="container-custom space-y-4">
 
         {/* ── Breadcrumb + Header ─────────────────────────── */}
-        <div className="flex items-center gap-2 text-sm text-slate-500 mb-2">
+        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-500 mb-2">
           <Link to="/profile" className="hover:text-primary transition-colors">Hồ sơ</Link>
           <span>/</span>
           <Link to="/profile/orders" className="hover:text-primary transition-colors">Đơn hàng</Link>
           <span>/</span>
-          <span className="text-slate-300">#{order.orderNumber}</span>
+          <span className="text-slate-700 dark:text-slate-300">#{order.orderNumber}</span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -118,8 +118,8 @@ const OrderDetail = () => {
           <div className="lg:col-span-2 space-y-4">
 
             {/* Status Hero Card */}
-            <div className={`rounded-2xl p-[2px] bg-gradient-to-br ${statusCfg.bg} border border-slate-800`}>
-              <div className="bg-dark rounded-[14px] p-6">
+            <div className={`rounded-2xl p-[2px] bg-gradient-to-br ${statusCfg.bg} border border-slate-200 dark:border-slate-800`}>
+              <div className="bg-white dark:bg-dark rounded-[14px] p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${
@@ -132,8 +132,8 @@ const OrderDetail = () => {
                       }`} />
                     </div>
                     <div>
-                      <h1 className="text-2xl font-black text-white">#{order.orderNumber}</h1>
-                      <p className="text-slate-400 text-sm">
+                      <h1 className="text-2xl font-black text-slate-900 dark:text-white">#{order.orderNumber}</h1>
+                      <p className="text-slate-500 dark:text-slate-400 text-sm">
                         Đặt lúc {new Date(order.createdAt).toLocaleString('vi-VN')}
                       </p>
                     </div>
@@ -157,10 +157,10 @@ const OrderDetail = () => {
 
             {/* Items */}
             <div className="card">
-              <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                 <FiShoppingBag className="text-primary" />
                 Sản phẩm đã mua
-                <span className="text-slate-500 font-normal text-sm">
+                <span className="text-slate-500 dark:text-slate-500 font-normal text-sm">
                   ({order.items?.length})
                 </span>
               </h2>
@@ -184,7 +184,7 @@ const OrderDetail = () => {
             {/* Back link */}
             <Link
               to="/profile/orders"
-              className="flex items-center gap-2 text-slate-400 hover:text-primary text-sm transition-colors"
+              className="flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-primary text-sm transition-colors"
             >
               <FiArrowLeft className="w-4 h-4" /> Quay lại danh sách đơn hàng
             </Link>
@@ -193,7 +193,7 @@ const OrderDetail = () => {
           {/* ── Right Column (Sticky Summary) ─────────────── */}
           <div className="lg:col-span-1">
             <div className="card sticky top-24 space-y-4">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <FiInfo className="text-primary" />
                 Tóm tắt đơn hàng
               </h3>
@@ -201,7 +201,7 @@ const OrderDetail = () => {
               <div className="space-y-3">
                 {order.items?.map((item, idx) => (
                   item.accountId && (
-                    <div key={idx} className="flex gap-3 pb-3 border-b border-slate-700 last:border-0 last:pb-0">
+                    <div key={idx} className="flex gap-3 pb-3 border-b border-slate-200 dark:border-slate-700 last:border-0 last:pb-0">
                       <img
                         src={item.accountId.images?.[0]}
                         alt=""
@@ -209,7 +209,7 @@ const OrderDetail = () => {
                         onError={(e) => { e.target.src = '/placeholder.jpg'; }}
                       />
                       <div className="min-w-0">
-                        <p className="text-white text-sm font-medium line-clamp-1">
+                        <p className="text-slate-900 dark:text-white text-sm font-medium line-clamp-1">
                           {item.accountId.title}
                         </p>
                         <p className="text-primary font-semibold text-sm">
@@ -221,16 +221,16 @@ const OrderDetail = () => {
                 ))}
               </div>
 
-              <div className="border-t border-slate-700 pt-3 space-y-2">
-                <div className="flex justify-between text-slate-400 text-sm">
+              <div className="border-t border-slate-200 dark:border-slate-700 pt-3 space-y-2">
+                <div className="flex justify-between text-slate-500 dark:text-slate-400 text-sm">
                   <span>Số sản phẩm</span>
                   <span>{order.items?.length}</span>
                 </div>
-                <div className="flex justify-between text-slate-400 text-sm">
+                <div className="flex justify-between text-slate-500 dark:text-slate-400 text-sm">
                   <span>Phương thức</span>
                   <span>Số dư TK</span>
                 </div>
-                <div className="flex justify-between text-white font-black text-xl pt-2 border-t border-slate-700">
+                <div className="flex justify-between text-slate-900 dark:text-white font-black text-xl pt-2 border-t border-slate-200 dark:border-slate-700">
                   <span>Tổng cộng</span>
                   <span className="text-primary">
                     {order.totalAmount?.toLocaleString('vi-VN')}đ
@@ -262,7 +262,7 @@ const AccountItem = ({ item, orderStatus, showPasswords, onTogglePassword, onCop
   const isCompleted = orderStatus === 'completed';
 
   return (
-    <div className="rounded-xl border border-slate-800 bg-dark-light p-5">
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-dark-light p-5">
       {/* Product info */}
       <div className="flex gap-4 mb-4">
         <img
@@ -272,7 +272,7 @@ const AccountItem = ({ item, orderStatus, showPasswords, onTogglePassword, onCop
           onError={(e) => { e.target.src = '/placeholder.jpg'; }}
         />
         <div className="flex-1 min-w-0">
-          <h4 className="text-white font-bold text-base mb-2 line-clamp-2">{acc.title}</h4>
+          <h4 className="text-slate-900 dark:text-white font-bold text-base mb-2 line-clamp-2">{acc.title}</h4>
           <div className="flex flex-wrap gap-1.5 mb-2">
             {acc.rank && (
               <span className="inline-flex items-center gap-1 bg-primary/20 text-primary text-xs font-semibold px-2.5 py-1 rounded-full border border-primary/30">
@@ -281,13 +281,13 @@ const AccountItem = ({ item, orderStatus, showPasswords, onTogglePassword, onCop
               </span>
             )}
             {acc.server && (
-              <span className="inline-flex items-center gap-1 bg-slate-700 text-slate-300 text-xs font-medium px-2.5 py-1 rounded-full">
+              <span className="inline-flex items-center gap-1 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium px-2.5 py-1 rounded-full">
                 <FiServer className="w-3 h-3" />
                 {acc.server}
               </span>
             )}
             {acc.category && (
-              <span className="inline-flex items-center gap-1 bg-slate-700 text-slate-300 text-xs font-medium px-2.5 py-1 rounded-full">
+              <span className="inline-flex items-center gap-1 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium px-2.5 py-1 rounded-full">
                 {acc.category.name}
               </span>
             )}
@@ -300,7 +300,7 @@ const AccountItem = ({ item, orderStatus, showPasswords, onTogglePassword, onCop
 
       {/* Credentials — only show when completed */}
       {isCompleted && (acc.username || acc.password) && (
-        <div className="rounded-xl bg-slate-800/80 border border-slate-700 p-4 space-y-3">
+        <div className="rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 p-4 space-y-3">
           <div className="flex items-center gap-2 mb-1">
             <FiLock className="w-4 h-4 text-green-400" />
             <span className="text-green-400 text-sm font-bold">Thông tin tài khoản</span>
@@ -328,8 +328,8 @@ const AccountItem = ({ item, orderStatus, showPasswords, onTogglePassword, onCop
 
           {acc.additionalInfo && (
             <div>
-              <p className="text-slate-500 text-xs mb-1 font-medium">Thông tin thêm</p>
-              <p className="text-slate-300 text-sm whitespace-pre-line bg-slate-900/50 rounded-lg p-3 border border-slate-700">
+              <p className="text-slate-500 dark:text-slate-500 text-xs mb-1 font-medium">Thông tin thêm</p>
+              <p className="text-slate-700 dark:text-slate-300 text-sm whitespace-pre-line bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
                 {acc.additionalInfo}
               </p>
             </div>
@@ -343,7 +343,7 @@ const AccountItem = ({ item, orderStatus, showPasswords, onTogglePassword, onCop
 // ── Credential Row ──────────────────────────────────────────
 const CredentialRow = ({ label, value, visible, canReveal, onReveal, onCopy }) => (
   <div>
-    <p className="text-slate-500 text-xs mb-1 font-medium">{label}</p>
+    <p className="text-slate-500 dark:text-slate-500 text-xs mb-1 font-medium">{label}</p>
     <div className="flex items-center gap-2">
       <input
         type={canReveal && !visible ? 'password' : 'text'}
@@ -355,12 +355,12 @@ const CredentialRow = ({ label, value, visible, canReveal, onReveal, onCopy }) =
         <button
           type="button"
           onClick={onReveal}
-          className="p-2.5 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors shrink-0"
+          className="p-2.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 rounded-lg transition-colors shrink-0"
           title={visible ? 'Ẩn' : 'Hiện'}
         >
           {visible
-            ? <FiEyeOff className="w-4 h-4 text-slate-300" />
-            : <FiEye className="w-4 h-4 text-slate-300" />
+            ? <FiEyeOff className="w-4 h-4 text-slate-700 dark:text-slate-300" />
+            : <FiEye className="w-4 h-4 text-slate-700 dark:text-slate-300" />
           }
         </button>
       )}

@@ -35,14 +35,14 @@ const Profile = () => {
         <Icon className="w-5 h-5 text-white" />
       </div>
       <div>
-        <p className="text-slate-400 text-xs">{label}</p>
-        <p className="text-white font-bold text-base leading-tight">{value}</p>
+        <p className="text-slate-500 dark:text-slate-400 text-xs">{label}</p>
+        <p className="text-slate-900 dark:text-white font-bold text-base leading-tight">{value}</p>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen pt-20 pb-12">
+    <div className="min-h-screen pt-28 pb-12">
       <SEOHead
         title="Tài Khoản Của Tôi"
         description="Quản lý thông tin tài khoản, xem lịch sử đơn hàng, nạp tiền và các cài đặt khác."
@@ -51,7 +51,7 @@ const Profile = () => {
       <div className="container-custom space-y-4">
 
         {/* ── Hero Section ─────────────────────────────── */}
-        <div className="bg-dark-light border border-slate-800 rounded-2xl p-6">
+        <div className="bg-white dark:bg-dark-light border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
 
             {/* Avatar */}
@@ -61,15 +61,15 @@ const Profile = () => {
                 <FiUser className="w-10 h-10 text-white" />
               </div>
               {/* Online dot */}
-              <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-green-500 rounded-full border-2 border-dark-light flex items-center justify-center">
+              <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-green-500 rounded-full border-2 border-white dark:border-dark-light flex items-center justify-center">
                 <FiCheckCircle className="w-3 h-3 text-white" />
               </div>
             </div>
 
             {/* Info */}
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-black text-white truncate">{user?.fullName}</h1>
-              <p className="text-slate-400 text-sm truncate">{user?.email}</p>
+              <h1 className="text-2xl font-black text-slate-900 dark:text-white truncate">{user?.fullName}</h1>
+              <p className="text-slate-500 dark:text-slate-400 text-sm truncate">{user?.email}</p>
               <div className="flex flex-wrap items-center gap-2 mt-2">
                 {user?.isVerified ? (
                   <span className="inline-flex items-center gap-1.5 bg-green-500/20 border border-green-500/40 text-green-400 text-xs font-semibold px-3 py-1 rounded-full">
@@ -81,7 +81,7 @@ const Profile = () => {
                   </span>
                 )}
                 {user?.phone && (
-                  <span className="inline-flex items-center gap-1.5 bg-slate-800 text-slate-300 text-xs font-medium px-3 py-1 rounded-full">
+                  <span className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium px-3 py-1 rounded-full">
                     <FiPhone className="w-3.5 h-3.5" /> {user.phone}
                   </span>
                 )}
@@ -134,7 +134,7 @@ const Profile = () => {
 
         {/* ── Tab Navigation ───────────────────────────── */}
         <div>
-          <div className="flex gap-1 border-b border-slate-800 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-1 border-b border-slate-200 dark:border-slate-800 overflow-x-auto scrollbar-hide">
             {tabs.map(({ key, label, icon: Icon }) => (
               <button
                 key={key}
@@ -142,7 +142,7 @@ const Profile = () => {
                 className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold transition-all whitespace-nowrap shrink-0 border-b-2 ${
                   activeTab === key
                     ? 'text-primary border-primary'
-                    : 'text-slate-400 border-transparent hover:text-slate-200'
+                    : 'text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -158,20 +158,20 @@ const Profile = () => {
                 {/* Animated border info card */}
                 <div className="rounded-2xl p-[2px]"
                   style={{ background: 'linear-gradient(90deg, #D84315, #FF6D00, #FFAB40, #D84315)', backgroundSize: '300% 100%', animation: 'border-flow 2s linear infinite' }}>
-                  <div className="bg-dark-light rounded-[14px] p-6 space-y-0">
+                  <div className="bg-white dark:bg-dark-light rounded-[14px] p-6 space-y-0">
                     {[
                       { icon: FiUser,       label: 'Họ tên',            value: user?.fullName,                   mono: false },
                       { icon: FiMail,       label: 'Email',             value: user?.email,                      mono: false },
                       { icon: FiPhone,      label: 'Số điện thoại',     value: user?.phone || 'Chưa cập nhật',   mono: false },
                       { icon: FiShoppingBag,label: 'Tổng đơn hàng',      value: totalOrders,                      mono: true  },
                     ].map(({ icon: Icon, label, value, mono }, idx) => (
-                      <div key={label} className={`flex items-start gap-3 py-4 ${idx < 3 ? 'border-b border-slate-700/60' : ''}`}>
-                        <div className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center shrink-0 mt-0.5">
+                      <div key={label} className={`flex items-start gap-3 py-4 ${idx < 3 ? 'border-b border-slate-200 dark:border-slate-700/60' : ''}`}>
+                        <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 mt-0.5">
                           <Icon className="w-4 h-4 text-primary" />
                         </div>
                         <div>
-                          <p className="text-slate-400 text-xs mb-0.5">{label}</p>
-                          <p className={`font-semibold text-base ${mono ? 'tabular-nums text-primary' : 'text-white'}`}>
+                          <p className="text-slate-500 dark:text-slate-400 text-xs mb-0.5">{label}</p>
+                          <p className={`font-semibold text-base ${mono ? 'tabular-nums text-primary' : 'text-slate-900 dark:text-white'}`}>
                             {value}
                           </p>
                         </div>
@@ -186,15 +186,15 @@ const Profile = () => {
                     <div className="w-12 h-12 bg-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
                       <FiTrendingUp className="w-6 h-6 text-primary" />
                     </div>
-                    <p className="text-white font-bold text-sm">Mua tài khoản</p>
-                    <p className="text-slate-400 text-xs mt-1">Khám phá cửa hàng</p>
+                    <p className="text-slate-900 dark:text-white font-bold text-sm">Mua tài khoản</p>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">Khám phá cửa hàng</p>
                   </Link>
                   <Link to="/profile/orders" className="card p-5 hover:border-primary/50 group transition-all text-center">
                     <div className="w-12 h-12 bg-blue-600/20 rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
                       <FiShoppingBag className="w-6 h-6 text-blue-400" />
                     </div>
-                    <p className="text-white font-bold text-sm">Xem đơn hàng</p>
-                    <p className="text-slate-400 text-xs mt-1">Lịch sử mua hàng</p>
+                    <p className="text-slate-900 dark:text-white font-bold text-sm">Xem đơn hàng</p>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">Lịch sử mua hàng</p>
                   </Link>
                 </div>
               </div>
@@ -202,9 +202,9 @@ const Profile = () => {
 
             {activeTab === 'orders' && (
               <div className="card p-8 text-center">
-                <FiShoppingBag className="w-14 h-14 text-slate-600 mx-auto mb-4" />
-                <p className="text-white font-semibold text-lg mb-2">Đơn hàng của bạn</p>
-                <p className="text-slate-400 text-sm mb-6">Xem lịch sử các đơn hàng đã đặt</p>
+                <FiShoppingBag className="w-14 h-14 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+                <p className="text-slate-900 dark:text-white font-semibold text-lg mb-2">Đơn hàng của bạn</p>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Xem lịch sử các đơn hàng đã đặt</p>
                 <Link to="/profile/orders" className="btn-primary inline-flex items-center gap-2">
                   <FiShoppingBag className="w-4 h-4" /> Xem đơn hàng
                 </Link>
@@ -213,9 +213,9 @@ const Profile = () => {
 
             {activeTab === 'deposits' && (
               <div className="card p-8 text-center">
-                <FiCreditCard className="w-14 h-14 text-slate-600 mx-auto mb-4" />
-                <p className="text-white font-semibold text-lg mb-2">Lịch sử nạp tiền</p>
-                <p className="text-slate-400 text-sm mb-6">Theo dõi các khoản nạp đã thực hiện</p>
+                <FiCreditCard className="w-14 h-14 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+                <p className="text-slate-900 dark:text-white font-semibold text-lg mb-2">Lịch sử nạp tiền</p>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Theo dõi các khoản nạp đã thực hiện</p>
                 <Link to="/profile/deposits" className="btn-primary inline-flex items-center gap-2">
                   <FiCreditCard className="w-4 h-4" /> Xem lịch sử
                 </Link>
@@ -224,9 +224,9 @@ const Profile = () => {
 
             {activeTab === 'purchased' && (
               <div className="card p-8 text-center">
-                <FiKey className="w-14 h-14 text-slate-600 mx-auto mb-4" />
-                <p className="text-white font-semibold text-lg mb-2">Tài khoản đã mua</p>
-                <p className="text-slate-400 text-sm mb-6">Danh sách các tài khoản game đã sở hữu</p>
+                <FiKey className="w-14 h-14 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+                <p className="text-slate-900 dark:text-white font-semibold text-lg mb-2">Tài khoản đã mua</p>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Danh sách các tài khoản game đã sở hữu</p>
                 <Link to="/profile/purchased-accounts" className="btn-primary inline-flex items-center gap-2">
                   <FiKey className="w-4 h-4" /> Xem tài khoản
                 </Link>

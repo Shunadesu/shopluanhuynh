@@ -153,23 +153,23 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
 
           {/* Drawer */}
           <motion.div
-            className="fixed inset-y-0 right-0 z-50 w-full sm:w-[40vw] bg-dark-light border-l border-slate-700 shadow-2xl flex flex-col"
+            className="fixed inset-y-0 right-0 z-50 w-full sm:w-[40vw] bg-white dark:bg-dark-light border-l border-slate-200 dark:border-slate-700 shadow-2xl flex flex-col"
             variants={drawerVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
           >
             {/* Header */}
-            <div className="sticky top-0 bg-dark-light border-b border-slate-700 p-4 flex items-center justify-between z-10">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <div className="sticky top-0 bg-white dark:bg-dark-light border-b border-slate-200 dark:border-slate-700 p-4 flex items-center justify-between z-10">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <FiShoppingBag className="w-5 h-5" />
                 Giỏ hàng ({items.length})
               </h2>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
               >
-                <FiX className="w-6 h-6 text-slate-400" />
+                <FiX className="w-6 h-6 text-slate-500 dark:text-slate-400" />
               </button>
             </div>
 
@@ -188,9 +188,9 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
                     animate={{ y: 0 }}
                     transition={{ type: 'spring', damping: 15 }}
                   >
-                    <FiShoppingBag className="w-20 h-20 text-slate-600 mb-4" />
+                    <FiShoppingBag className="w-20 h-20 text-slate-300 dark:text-slate-600 mb-4" />
                   </motion.div>
-                  <p className="text-slate-400 text-lg mb-6">Giỏ hàng của bạn đang trống</p>
+                  <p className="text-slate-500 dark:text-slate-400 text-lg mb-6">Giỏ hàng của bạn đang trống</p>
                   <Link
                     to="/shop"
                     onClick={onClose}
@@ -209,9 +209,9 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
                 >
                   <AnimatePresence>
                     {items.map((item) => (
-                      <motion.div 
-                        key={item._id} 
-                        className="bg-dark rounded-lg p-4"
+                      <motion.div
+                        key={item._id}
+                        className="bg-slate-50 dark:bg-dark rounded-lg p-4"
                         variants={itemVariants}
                         layout
                         exit="exit"
@@ -239,7 +239,7 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
                               onClick={onClose}
                               className="block"
                             >
-                              <h3 className="text-white font-semibold mb-1 line-clamp-2 hover:text-primary transition-colors">
+                              <h3 className="text-slate-900 dark:text-white font-semibold mb-1 line-clamp-2 hover:text-primary transition-colors">
                                 {item.title}
                               </h3>
                             </Link>
@@ -251,7 +251,7 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
                                 </span>
                               )}
                               {item.server && (
-                                <span className="bg-slate-700 text-slate-300 px-2 py-0.5 rounded text-xs">
+                                <span className="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded text-xs">
                                   {item.server}
                                 </span>
                               )}
@@ -272,7 +272,7 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
                               <motion.button
                                 onClick={() => handleRemove(item._id)}
                                 disabled={removeFromCartMutation.isPending}
-                                className="p-2 text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                                className="p-2 text-red-500 dark:text-red-400 hover:bg-red-500/10 dark:hover:bg-red-400/10 rounded-lg transition-colors"
                                 title="Xóa"
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.95 }}
@@ -292,19 +292,19 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
             {/* Footer - Summary & Actions */}
             <AnimatePresence>
               {items.length > 0 && (
-                <motion.div 
-                  className="border-t border-slate-700 p-4 space-y-4"
+                <motion.div
+                  className="border-t border-slate-200 dark:border-slate-700 p-4 space-y-4"
                   initial={{ y: 50, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.2, type: 'spring', damping: 20 }}
                 >
                   {/* Summary */}
                   <div className="space-y-2">
-                    <div className="flex justify-between text-slate-400">
+                    <div className="flex justify-between text-slate-600 dark:text-slate-400">
                       <span>Số lượng sản phẩm:</span>
                       <span>{items.length}</span>
                     </div>
-                    <div className="border-t border-slate-700 pt-3 flex justify-between text-white font-bold text-lg">
+                    <div className="border-t border-slate-200 dark:border-slate-700 pt-3 flex justify-between text-slate-900 dark:text-white font-bold text-lg">
                       <span>Tổng cộng:</span>
                       <motion.span 
                         className="text-primary"
@@ -340,8 +340,8 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
                   </div>
 
                   {/* Info Note */}
-                  <div className="p-3 bg-slate-800 rounded-lg">
-                    <p className="text-slate-400 text-xs">
+                  <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                    <p className="text-slate-600 dark:text-slate-400 text-xs">
                       ℹ️ Thanh toán bằng số dư tài khoản. Vui lòng nạp tiền trước khi thanh toán.
                     </p>
                   </div>

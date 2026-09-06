@@ -118,8 +118,8 @@ const AccountDetail = ({ onOpenAuth }) => {
 
   if (!account) {
     return (
-      <div className="min-h-screen pt-20 pb-12 flex items-center justify-center">
-        <p className="text-slate-400">Không tìm thấy tài khoản</p>
+      <div className="min-h-screen pt-28 pb-12 flex items-center justify-center">
+        <p className="text-slate-500 dark:text-slate-400">Không tìm thấy tài khoản</p>
       </div>
     );
   }
@@ -134,7 +134,7 @@ const AccountDetail = ({ onOpenAuth }) => {
     : null;
 
   return (
-    <div className="min-h-screen pt-20 pb-12">
+    <div className="min-h-screen pt-28 pb-12">
       <SEOHead
         title={account?.title || 'Chi Tiết Tài Khoản'}
         description={`Mua tài khoản ${account?.title} - Rank ${account?.rank} với giá chỉ ${account?.price?.toLocaleString('vi-VN')}đ. Tài khoản game chất lượng cao, bảo mật.`}
@@ -144,7 +144,7 @@ const AccountDetail = ({ onOpenAuth }) => {
       />
       <div className="container-custom">
         {/* Breadcrumb */}
-        <div className="text-sm text-slate-400 mb-6">
+        <div className="text-sm text-slate-500 dark:text-slate-400 mb-6">
           <span
             className="hover:text-primary cursor-pointer transition-colors"
             onClick={() => navigate('/')}
@@ -212,7 +212,7 @@ const AccountDetail = ({ onOpenAuth }) => {
                     className={`relative cursor-pointer border-2 rounded-lg overflow-hidden transition-all ${
                       selectedImage === idx
                         ? 'border-primary'
-                        : 'border-slate-700 hover:border-slate-600'
+                        : 'border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600'
                     }`}
                   >
                     <img
@@ -242,19 +242,19 @@ const AccountDetail = ({ onOpenAuth }) => {
                 )}
 
                 {/* Account Name */}
-                <h1 className="text-2xl font-black text-white">{account.title}</h1>
+                <h1 className="text-2xl font-black text-slate-900 dark:text-white">{account.title}</h1>
 
                 {/* Price section — enhanced */}
-                <div className="bg-slate-800/80 rounded-xl p-5 border border-primary/25">
+                <div className="bg-slate-100 dark:bg-slate-800/80 rounded-xl p-5 border border-primary/25">
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <p className="text-slate-400 text-sm">Giá gốc</p>
+                      <p className="text-slate-500 dark:text-slate-400 text-sm">Giá gốc</p>
                       {account.originalPrice && account.originalPrice > account.price ? (
-                        <p className="text-slate-500 text-xl line-through">
+                        <p className="text-slate-500 dark:text-slate-500 text-xl line-through">
                           {account.originalPrice.toLocaleString('vi-VN')}đ
                         </p>
                       ) : (
-                        <p className="text-slate-600 text-xl">—</p>
+                        <p className="text-slate-400 dark:text-slate-600 text-xl">—</p>
                       )}
                     </div>
                     {discountPct && (
@@ -264,7 +264,7 @@ const AccountDetail = ({ onOpenAuth }) => {
                     )}
                   </div>
                   <div className="text-center">
-                    <p className="text-white text-sm mb-1">Giá bán</p>
+                    <p className="text-slate-600 dark:text-white text-sm mb-1">Giá bán</p>
                     <p className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-orange-400 to-amber-300 font-black text-4xl drop-shadow-lg">
                       {account.price.toLocaleString('vi-VN')}đ
                     </p>
@@ -277,13 +277,13 @@ const AccountDetail = ({ onOpenAuth }) => {
                     {account.teamValue && (
                       <div className="flex items-center justify-between">
                         <span className="text-primary font-bold text-sm uppercase tracking-wider">Giá trị đội hình</span>
-                        <span className="text-white font-bold text-lg">{account.teamValue}</span>
+                        <span className="text-slate-900 dark:text-white font-bold text-lg">{account.teamValue}</span>
                       </div>
                     )}
                     {account.bp && (
                       <div className="flex items-center justify-between pt-2 border-t border-primary/20">
                         <span className="text-amber-400 font-bold text-sm uppercase tracking-wider">BP</span>
-                        <span className="text-white font-bold text-lg">{account.bp}</span>
+                        <span className="text-slate-900 dark:text-white font-bold text-lg">{account.bp}</span>
                       </div>
                     )}
                   </div>
@@ -292,8 +292,8 @@ const AccountDetail = ({ onOpenAuth }) => {
                 {/* Description */}
                 {account.description && (
                   <div>
-                    <h3 className="text-white font-semibold mb-2">Mô tả</h3>
-                    <p className="text-slate-400 whitespace-pre-line">
+                    <h3 className="text-slate-900 dark:text-white font-semibold mb-2">Mô tả</h3>
+                    <p className="text-slate-600 dark:text-slate-400 whitespace-pre-line">
                       {account.description}
                     </p>
                   </div>
@@ -302,8 +302,8 @@ const AccountDetail = ({ onOpenAuth }) => {
                 {/* Additional Info */}
                 {account.additionalInfo && (
                   <div>
-                    <h3 className="text-white font-semibold mb-2">Thông tin thêm</h3>
-                    <p className="text-slate-400 whitespace-pre-line">
+                    <h3 className="text-slate-900 dark:text-white font-semibold mb-2">Thông tin thêm</h3>
+                    <p className="text-slate-600 dark:text-slate-400 whitespace-pre-line">
                       {account.additionalInfo}
                     </p>
                   </div>
@@ -354,23 +354,23 @@ const AccountDetail = ({ onOpenAuth }) => {
             {/* Toggle header */}
             <button
               onClick={() => setGalleryOpen((o) => !o)}
-              className="w-full flex items-center justify-between bg-slate-800 hover:bg-slate-700 border border-slate-700 px-5 py-4 rounded-xl transition-colors mb-4"
+              className="w-full flex items-center justify-between bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 px-5 py-4 rounded-xl transition-colors mb-4"
             >
               <div className="flex items-center gap-3">
                 <FiImage className="text-cyan-400 text-xl" />
                 <div className="text-left">
-                  <h2 className="text-white font-semibold text-base">
+                  <h2 className="text-slate-900 dark:text-white font-semibold text-base">
                     Hình ảnh chi tiết
                   </h2>
-                  <p className="text-slate-400 text-xs mt-0.5">
+                  <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">
                     {images.length} hình
                   </p>
                 </div>
               </div>
               {galleryOpen ? (
-                <FiChevronUp className="text-slate-400" />
+                <FiChevronUp className="text-slate-500 dark:text-slate-400" />
               ) : (
-                <FiChevronDown className="text-slate-400" />
+                <FiChevronDown className="text-slate-500 dark:text-slate-400" />
               )}
             </button>
 
@@ -380,7 +380,7 @@ const AccountDetail = ({ onOpenAuth }) => {
                 {images.map((url, idx) => (
                   <div
                     key={idx}
-                    className="relative rounded-xl overflow-hidden bg-slate-800 border border-slate-700"
+                    className="relative rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"
                   >
                     <div className="absolute top-3 left-3 z-10 bg-black/60 text-white text-xs font-bold px-2 py-1 rounded">
                       {idx + 1} / {images.length}
@@ -402,7 +402,7 @@ const AccountDetail = ({ onOpenAuth }) => {
         {/* ─── Related Accounts ─── */}
         {relatedAccounts.length > 0 && (
           <div className="mt-12">
-            <h2 className="text-2xl font-bold text-white mb-6">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
               Tài khoản bạn có thể thích
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -417,7 +417,7 @@ const AccountDetail = ({ onOpenAuth }) => {
                     alt={acc.title}
                     className="w-full h-36 object-cover rounded-lg mb-3 group-hover:opacity-80 transition-opacity"
                   />
-                  <h3 className="text-white text-sm font-semibold line-clamp-2 mb-2">
+                  <h3 className="text-slate-900 dark:text-white text-sm font-semibold line-clamp-2 mb-2">
                     {acc.title}
                   </h3>
                   <p className="text-primary font-bold">

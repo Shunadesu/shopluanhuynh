@@ -60,7 +60,7 @@ const Checkout = () => {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen pt-20 pb-12">
+      <div className="min-h-screen pt-28 pb-12">
         <SEOHead
           title="Giỏ hàng trống"
           description="Giỏ hàng của bạn đang trống. Hãy tiếp tục mua sắm tài khoản game chất lượng cao tại Shop Luan Huỳnh."
@@ -68,7 +68,7 @@ const Checkout = () => {
         />
         <div className="container-custom">
           <div className="card text-center py-20">
-            <p className="text-slate-400 text-lg mb-6">Giỏ hàng trống</p>
+            <p className="text-slate-500 dark:text-slate-400 text-lg mb-6">Giỏ hàng trống</p>
             <button onClick={() => navigate('/shop')} className="btn-primary">
               Tiếp tục mua sắm
             </button>
@@ -79,30 +79,30 @@ const Checkout = () => {
   }
 
   return (
-    <div className="min-h-screen pt-20 pb-12">
+    <div className="min-h-screen pt-28 pb-12">
       <SEOHead
         title="Thanh toán"
         description={`Thanh toán ${items.length} tài khoản game với tổng cộng ${totalAmount.toLocaleString('vi-VN')}đ tại Shop Luan Huỳnh.`}
         type="website"
       />
       <div className="container-custom">
-        <h1 className="text-3xl font-bold text-white mb-8">Thanh toán</h1>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-8">Thanh toán</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
           {/* Order Items */}
           <div className="lg:col-span-2">
             <div className="card mb-6">
-              <h2 className="text-xl font-bold text-white mb-4">Đơn hàng của bạn</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4">Đơn hàng của bạn</h2>
               <div className="space-y-2">
                 {items.map((item) => (
-                  <div key={item._id} className="flex gap-2 pb-2 border-b border-slate-700 last:border-0">
+                  <div key={item._id} className="flex gap-2 pb-2 border-b border-slate-200 dark:border-slate-700 last:border-0">
                     <img
                       src={item.images?.[0] || '/placeholder.jpg'}
                       alt={item.title}
                       className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
                     />
                     <div className="flex-grow">
-                      <h3 className="text-white font-semibold mb-1 line-clamp-2">
+                      <h3 className="text-slate-900 dark:text-white font-semibold mb-1 line-clamp-2">
                         {item.title}
                       </h3>
                       <div className="flex flex-wrap gap-2 mb-2">
@@ -123,14 +123,14 @@ const Checkout = () => {
 
             {/* Payment Method */}
             <div className="card">
-              <h2 className="text-xl font-bold text-white mb-4">Phương thức thanh toán</h2>
-              <div className="bg-slate-800 border border-primary rounded-lg p-4">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4">Phương thức thanh toán</h2>
+              <div className="bg-slate-100 dark:bg-slate-800 border border-primary rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <FiCheckCircle className="w-6 h-6 text-primary" />
                     <div>
-                      <p className="text-white font-semibold">Số dư tài khoản</p>
-                      <p className="text-slate-400 text-sm">
+                      <p className="text-slate-900 dark:text-white font-semibold">Số dư tài khoản</p>
+                      <p className="text-slate-500 dark:text-slate-400 text-sm">
                         Số dư hiện tại: <span className="text-primary font-semibold">
                           {balance.toLocaleString('vi-VN')}đ
                         </span>
@@ -145,18 +145,18 @@ const Checkout = () => {
           {/* Summary */}
           <div className="lg:col-span-1">
             <div className="card sticky top-24">
-              <h2 className="text-xl font-bold text-white mb-6">Tóm tắt đơn hàng</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Tóm tắt đơn hàng</h2>
 
               <div className="space-y-2 mb-2">
-                <div className="flex justify-between text-slate-400">
+                <div className="flex justify-between text-slate-500 dark:text-slate-400">
                   <span>Số lượng sản phẩm:</span>
                   <span>{items.length}</span>
                 </div>
-                <div className="flex justify-between text-slate-400">
+                <div className="flex justify-between text-slate-500 dark:text-slate-400">
                   <span>Tổng tiền:</span>
                   <span>{totalAmount.toLocaleString('vi-VN')}đ</span>
                 </div>
-                <div className="border-t border-slate-700 pt-3 flex justify-between text-white font-bold text-xl">
+                <div className="border-t border-slate-200 dark:border-slate-700 pt-3 flex justify-between text-slate-900 dark:text-white font-bold text-xl">
                   <span>Thanh toán:</span>
                   <span className="text-primary">{totalAmount.toLocaleString('vi-VN')}đ</span>
                 </div>
@@ -210,8 +210,8 @@ const Checkout = () => {
                 Quay lại giỏ hàng
               </button>
 
-              <div className="mt-6 p-4 bg-slate-800 rounded-lg">
-                <p className="text-slate-400 text-sm">
+              <div className="mt-6 p-4 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                <p className="text-slate-500 dark:text-slate-400 text-sm">
                   ℹ️ Sau khi thanh toán thành công, thông tin tài khoản sẽ được hiển thị trong chi tiết đơn hàng.
                 </p>
               </div>

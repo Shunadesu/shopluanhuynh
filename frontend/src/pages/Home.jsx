@@ -184,20 +184,20 @@ const MOCK_ACCOUNTS = [
 // Skeleton loader components
 const SkeletonCategoryCard = () => (
   <div className="card animate-pulse">
-    <div className="w-full h-32 bg-slate-700 rounded-t-lg mb-4" />
-    <div className="h-5 bg-slate-700 rounded w-3/4 mx-auto mb-2" />
-    <div className="h-4 bg-slate-700 rounded w-1/2 mx-auto" />
+    <div className="w-full h-32 bg-slate-200 dark:bg-slate-700 rounded-t-lg mb-4" />
+    <div className="h-5 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mx-auto mb-2" />
+    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2 mx-auto" />
   </div>
 );
 
 const SkeletonAccountCard = () => (
   <div className="card animate-pulse">
-    <div className="w-full h-40 sm:h-48 bg-slate-700 rounded-lg mb-3" />
-    <div className="h-5 bg-slate-700 rounded w-full mb-2" />
-    <div className="h-4 bg-slate-700 rounded w-2/3 mb-4" />
+    <div className="w-full h-40 sm:h-48 bg-slate-200 dark:bg-slate-700 rounded-lg mb-3" />
+    <div className="h-5 bg-slate-200 dark:bg-slate-700 rounded w-full mb-2" />
+    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-2/3 mb-4" />
     <div className="flex justify-between items-center">
-      <div className="h-6 bg-slate-700 rounded w-20" />
-      <div className="h-7 bg-slate-700 rounded w-24" />
+      <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded w-20" />
+      <div className="h-7 bg-slate-200 dark:bg-slate-700 rounded w-24" />
     </div>
   </div>
 );
@@ -216,7 +216,7 @@ const AccountCard = ({ account, onAddToCart, onBuyNow, addToCartPending }) => {
             className="w-full h-40 sm:h-48 object-cover rounded-lg mb-3"
           />
         </div>
-        <h3 className="text-white font-semibold mb-2 line-clamp-2 min-h-[2.5rem] text-sm sm:text-base">
+        <h3 className="text-slate-900 dark:text-white font-semibold mb-2 line-clamp-2 min-h-[2.5rem] text-sm sm:text-base">
           {account.title}
         </h3>
       </Link>
@@ -225,19 +225,19 @@ const AccountCard = ({ account, onAddToCart, onBuyNow, addToCartPending }) => {
       {category && (
         <div className="flex items-center gap-1 mb-2">
           <FiTag className="w-3 h-3 text-primary" />
-          <span className="text-xs text-slate-300">{category.name}</span>
+          <span className="text-xs text-slate-600 dark:text-slate-300">{category.name}</span>
         </div>
       )}
       
       {/* Team Value & BP */}
       <div className="flex flex-wrap gap-2 mb-2">
         {account.teamValue && (
-          <span className="text-xs bg-slate-700/70 text-slate-300 px-2 py-0.5 rounded">
+          <span className="text-xs bg-slate-200 dark:bg-slate-700/70 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded">
             Đội hình: {account.teamValue}
           </span>
         )}
         {account.bp && (
-          <span className="text-xs bg-slate-700/70 text-slate-300 px-2 py-0.5 rounded">
+          <span className="text-xs bg-slate-200 dark:bg-slate-700/70 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded">
             BP: {account.bp}
           </span>
         )}
@@ -254,7 +254,7 @@ const AccountCard = ({ account, onAddToCart, onBuyNow, addToCartPending }) => {
         {/* Price */}
         <div className="flex flex-col gap-0.5">
           {account.originalPrice && account.originalPrice > account.price && (
-            <span className="text-slate-500 text-xs line-through">
+            <span className="text-slate-500 dark:text-slate-500 text-xs line-through">
               {account.originalPrice.toLocaleString('vi-VN')}đ
             </span>
           )}
@@ -293,8 +293,8 @@ const CategoryAccountSection = ({ category, accounts, onAddToCart, onBuyNow, add
       <section className="py-6">
         <div className="container-custom">
           <div className="flex items-center justify-between mb-6">
-            <div className="h-8 bg-slate-700 rounded w-48 animate-pulse" />
-            <div className="h-6 bg-slate-700 rounded w-24 animate-pulse" />
+            <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-48 animate-pulse" />
+            <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded w-24 animate-pulse" />
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map((i) => (
@@ -313,7 +313,7 @@ const CategoryAccountSection = ({ category, accounts, onAddToCart, onBuyNow, add
       <div className="container-custom">
         {/* Section Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             {category.thumbnail && (
               <img
                 src={category.thumbnail}
@@ -483,12 +483,12 @@ const Home = () => {
         type="website"
       />
       {/* Hero Section - Slider */}
-      <section className="relative" style={{ height: '80vh', overflow: 'hidden' }}>
+      <section className="relative" style={{ height: '100vh', overflow: 'hidden' }}>
         {sliders && sliders.length > 0 ? (
           <Swiper
             modules={[Autoplay, Pagination]}
             autoplay={{ delay: 5000 }}
-            pagination={{ clickable: true }}
+            // pagination={{ clickable: true }}
             loop={true}
             className="h-full"
           >
@@ -500,8 +500,8 @@ const Home = () => {
                     className="absolute inset-0 w-full"
                     style={{
                       transform: `translateY(${scrollY * 0.3}px)`,
-                      height: 'calc(80vh + 200px)',
-                      marginTop: '-100px'
+                      height: 'calc(100vh)',
+                      // marginTop: '-100px'
                     }}
                   >
                     <img
@@ -511,7 +511,7 @@ const Home = () => {
                     />
                   </div>
                   {/* Overlay Gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-dark via-dark/30 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent dark:from-dark dark:via-dark/30" />
                   {/* Content */}
                   <div className="absolute inset-0 flex items-end">
                     <div className="container-custom pb-16">
@@ -546,7 +546,7 @@ const Home = () => {
         <section className="py-4">
           <div className="container-custom">
             <div className="flex items-center justify-center mb-8">
-              <h2 className="text-3xl font-bold text-white text-center">Danh mục game</h2>
+              <h2 className="text-3xl font-bold text-slate-900 dark:text-white text-center">Danh mục game</h2>
             </div>
             
             {/* Show skeleton if loading, otherwise show data */}
@@ -577,9 +577,9 @@ const Home = () => {
                         </span>
                       </div>
                     )}
-                    <h3 className="text-white font-semibold text-center">{category.name}</h3>
+                    <h3 className="text-slate-900 dark:text-white font-semibold text-center">{category.name}</h3>
                     {category.description && (
-                      <p className="text-slate-400 text-sm text-center mt-2 line-clamp-2">
+                      <p className="text-slate-500 dark:text-slate-400 text-sm text-center mt-2 line-clamp-2">
                         {category.description}
                       </p>
                     )}
@@ -595,7 +595,7 @@ const Home = () => {
       <section className="py-4">
         <div className="container-custom">
           <div className="flex items-center justify-center mb-6">
-            <h2 className="text-3xl font-bold text-white text-center">Tài khoản nổi bật</h2>
+            <h2 className="text-3xl font-bold text-slate-900 dark:text-white text-center">Tài khoản nổi bật</h2>
           </div>
           
           {/* Show skeleton if loading, otherwise show data */}
@@ -663,8 +663,8 @@ const Home = () => {
               <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-primary text-3xl">⚡</span>
               </div>
-              <h3 className="text-white font-semibold text-xl mb-2">Giao dịch nhanh</h3>
-              <p className="text-slate-400">
+              <h3 className="text-slate-900 dark:text-white font-semibold text-xl mb-2">Giao dịch nhanh</h3>
+              <p className="text-slate-600 dark:text-slate-400">
                 Nhận tài khoản ngay sau khi thanh toán thành công
               </p>
             </div>
@@ -672,8 +672,8 @@ const Home = () => {
               <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-primary text-3xl">🔒</span>
               </div>
-              <h3 className="text-white font-semibold text-xl mb-2">Bảo mật cao</h3>
-              <p className="text-slate-400">
+              <h3 className="text-slate-900 dark:text-white font-semibold text-xl mb-2">Bảo mật cao</h3>
+              <p className="text-slate-600 dark:text-slate-400">
                 Thông tin tài khoản được mã hóa và bảo vệ tuyệt đối
               </p>
             </div>
@@ -681,8 +681,8 @@ const Home = () => {
               <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-primary text-3xl">💰</span>
               </div>
-              <h3 className="text-white font-semibold text-xl mb-2">Giá tốt nhất</h3>
-              <p className="text-slate-400">
+              <h3 className="text-slate-900 dark:text-white font-semibold text-xl mb-2">Giá tốt nhất</h3>
+              <p className="text-slate-600 dark:text-slate-400">
                 Cam kết giá cả cạnh tranh và ưu đãi hấp dẫn
               </p>
             </div>

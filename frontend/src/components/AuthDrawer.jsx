@@ -179,22 +179,22 @@ const AuthDrawer = ({ isOpen, onClose, initialView = 'login' }) => {
 
           {/* Drawer */}
           <motion.div
-            className="fixed inset-y-0 right-0 z-50 w-full sm:w-[40vw] bg-dark-light border-l border-slate-700 shadow-2xl overflow-y-auto"
+            className="fixed inset-y-0 right-0 z-50 w-full sm:w-[40vw] bg-white dark:bg-dark-light border-l border-slate-200 dark:border-slate-700 shadow-2xl overflow-y-auto"
             variants={drawerVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
           >
             {/* Header */}
-            <div className="sticky top-0 bg-dark-light border-b border-slate-700 p-4 flex items-center justify-between z-10">
-              <h2 className="text-xl font-bold text-white">
+            <div className="sticky top-0 bg-white dark:bg-dark-light border-b border-slate-200 dark:border-slate-700 p-4 flex items-center justify-between z-10">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                 {showOtpInput ? 'Xác thực OTP' : view === 'login' ? 'Đăng nhập' : 'Đăng ký'}
               </h2>
               <button
                 onClick={onClose}
-                className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
               >
-                <FiX className="w-6 h-6 text-slate-400" />
+                <FiX className="w-6 h-6 text-slate-500 dark:text-slate-400 dark:text-slate-400" />
               </button>
             </div>
 
@@ -208,7 +208,7 @@ const AuthDrawer = ({ isOpen, onClose, initialView = 'login' }) => {
               {showOtpInput ? (
                 /* OTP Verification Form */
                 <div>
-                  <p className="text-slate-400 mb-4">
+                  <p className="text-slate-600 dark:text-slate-400 dark:text-slate-400 mb-4">
                     Mã OTP đã được gửi đến <span className="text-primary">{email}</span>
                   </p>
 
@@ -247,9 +247,9 @@ const AuthDrawer = ({ isOpen, onClose, initialView = 'login' }) => {
                 <form onSubmit={handleSubmit(handleLogin)} className="space-y-4">
                   {/* Email */}
                   <div>
-                    <label className="block text-slate-300 mb-2">Email</label>
+                    <label className="block text-slate-700 dark:text-slate-300 mb-2">Email</label>
                     <div className="relative">
-                      <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-400" />
                       <input
                         type="email"
                         {...register('email', {
@@ -270,9 +270,9 @@ const AuthDrawer = ({ isOpen, onClose, initialView = 'login' }) => {
 
                   {/* Password */}
                   <div>
-                    <label className="block text-slate-300 mb-2">Mật khẩu</label>
+                    <label className="block text-slate-700 dark:text-slate-300 mb-2">Mật khẩu</label>
                     <div className="relative">
-                      <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-400" />
                       <input
                         type="password"
                         {...register('password', {
@@ -305,9 +305,9 @@ const AuthDrawer = ({ isOpen, onClose, initialView = 'login' }) => {
                 <form onSubmit={handleSubmit(handleRegister)} className="space-y-4">
                   {/* Full Name */}
                   <div>
-                    <label className="block text-slate-300 mb-2">Họ tên</label>
+                    <label className="block text-slate-700 dark:text-slate-300 mb-2">Họ tên</label>
                     <div className="relative">
-                      <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-400" />
                       <input
                         type="text"
                         {...register('fullName', {
@@ -328,9 +328,9 @@ const AuthDrawer = ({ isOpen, onClose, initialView = 'login' }) => {
 
                   {/* Email */}
                   <div>
-                    <label className="block text-slate-300 mb-2">Email</label>
+                    <label className="block text-slate-700 dark:text-slate-300 mb-2">Email</label>
                     <div className="relative">
-                      <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-400" />
                       <input
                         type="email"
                         {...register('email', {
@@ -351,9 +351,9 @@ const AuthDrawer = ({ isOpen, onClose, initialView = 'login' }) => {
 
                   {/* Password */}
                   <div>
-                    <label className="block text-slate-300 mb-2">Mật khẩu</label>
+                    <label className="block text-slate-700 dark:text-slate-300 mb-2">Mật khẩu</label>
                     <div className="relative">
-                      <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-400" />
                       <input
                         type="password"
                         {...register('password', {
@@ -374,9 +374,9 @@ const AuthDrawer = ({ isOpen, onClose, initialView = 'login' }) => {
 
                   {/* Confirm Password */}
                   <div>
-                    <label className="block text-slate-300 mb-2">Xác nhận mật khẩu</label>
+                    <label className="block text-slate-700 dark:text-slate-300 mb-2">Xác nhận mật khẩu</label>
                     <div className="relative">
-                      <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-400" />
                       <input
                         type="password"
                         {...register('confirmPassword', {
@@ -408,7 +408,7 @@ const AuthDrawer = ({ isOpen, onClose, initialView = 'login' }) => {
                 <>
                   <div className="mt-6 text-center">
                     {view === 'login' ? (
-                      <p className="text-slate-400">
+                      <p className="text-slate-400 dark:text-slate-400">
                         Chưa có tài khoản?{' '}
                         <button
                           type="button"
@@ -423,7 +423,7 @@ const AuthDrawer = ({ isOpen, onClose, initialView = 'login' }) => {
                         </button>
                       </p>
                     ) : (
-                      <p className="text-slate-400">
+                      <p className="text-slate-400 dark:text-slate-400">
                         Đã có tài khoản?{' '}
                         <button
                           type="button"
@@ -443,10 +443,10 @@ const AuthDrawer = ({ isOpen, onClose, initialView = 'login' }) => {
                   {/* Facebook Login - Coming Soon */}
                   <div className="relative mt-6">
                     <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-slate-700"></div>
+                      <div className="w-full border-t border-slate-200 dark:border-slate-700"></div>
                     </div>
                     <div className="relative flex justify-center text-sm">
-                      <span className="px-2 bg-dark-light text-slate-400">Hoặc</span>
+                      <span className="px-2 bg-white dark:bg-dark-light text-slate-500 dark:text-slate-400">Hoặc</span>
                     </div>
                   </div>
 

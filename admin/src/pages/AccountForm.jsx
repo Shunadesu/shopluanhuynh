@@ -39,13 +39,14 @@ export default function AccountForm() {
   });
 
   // Fetch account data when editing
-  const { data: account, isLoading: loadingAccount } = useQuery({
+  const { data: account, isLoading: loadingAccount, error: accountError } = useQuery({
     queryKey: ['account', id],
     queryFn: async () => {
+      if (!id) throw new Error('Account ID is required');
       const { data } = await api.get(`/accounts/${id}`);
       return data;
     },
-    enabled: isEditing,
+    enabled: Boolean(id),
   });
 
   // Pre-fill form when account data loaded
@@ -125,6 +126,37 @@ export default function AccountForm() {
 
   if (isEditing && loadingAccount) {
     return <AccountFormSkeleton />;
+  }
+
+  // Handle error state
+  if (isEditing && accountError) {
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate('/accounts')}
+            className="p-2 hover:bg-slate-700 rounded-lg transition-all"
+          >
+            <FiArrowLeft className="text-xl text-slate-300" />
+          </button>
+          <div>
+            <h1 className="text-3xl font-bold text-slate-100">Lỗi tải dữ liệu</h1>
+            <p className="text-slate-400 mt-1">
+              Không thể tải thông tin tài khoản. Vui lòng thử lại.
+            </p>
+          </div>
+        </div>
+        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-6 text-center">
+          <p className="text-red-400 mb-4">{accountError.message || 'Đã xảy ra lỗi khi tải dữ liệu'}</p>
+          <button
+            onClick={() => queryClient.invalidateQueries(['account', id])}
+            className="btn-primary"
+          >
+            Thử lại
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (

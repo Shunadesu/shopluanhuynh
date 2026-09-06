@@ -78,7 +78,7 @@ const Orders = () => {
     .reduce((sum, o) => sum + (o.totalAmount || 0), 0);
 
   return (
-    <div className="min-h-screen pt-20 pb-12">
+    <div className="min-h-screen pt-28 pb-12">
       <SEOHead
         title="Đơn Hàng Của Tôi"
         description="Xem và quản lý lịch sử đơn hàng đã mua tài khoản game."
@@ -87,15 +87,15 @@ const Orders = () => {
       <div className="container-custom space-y-4">
 
         {/* ── Hero ──────────────────────────────────────── */}
-        <div className="bg-dark-light border border-slate-800 rounded-2xl p-6">
+        <div className="bg-white dark:bg-dark-light border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-black text-white mb-1">Đơn hàng của tôi</h1>
-              <p className="text-slate-400 text-sm">Theo dõi và quản lý các đơn hàng đã đặt</p>
+              <h1 className="text-2xl font-black text-slate-900 dark:text-white mb-1">Đơn hàng của tôi</h1>
+              <p className="text-slate-500 dark:text-slate-400 text-sm">Theo dõi và quản lý các đơn hàng đã đặt</p>
             </div>
             <Link
               to="/profile"
-              className="text-slate-400 hover:text-white text-sm flex items-center gap-1 transition-colors shrink-0"
+              className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-sm flex items-center gap-1 transition-colors shrink-0"
             >
               ← Quay lại
             </Link>
@@ -109,8 +109,8 @@ const Orders = () => {
               <FiPackage className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-slate-400 text-xs">Tổng đơn hàng</p>
-              <p className="text-white font-bold text-base leading-tight">{counts.all}</p>
+              <p className="text-slate-500 dark:text-slate-400 text-xs">Tổng đơn hàng</p>
+              <p className="text-slate-900 dark:text-white font-bold text-base leading-tight">{counts.all}</p>
             </div>
           </div>
           <div className="card p-4 flex items-center gap-3">
@@ -118,8 +118,8 @@ const Orders = () => {
               <FiClock className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-slate-400 text-xs">Đang xử lý</p>
-              <p className="text-white font-bold text-base leading-tight">{counts.pending}</p>
+              <p className="text-slate-500 dark:text-slate-400 text-xs">Đang xử lý</p>
+              <p className="text-slate-900 dark:text-white font-bold text-base leading-tight">{counts.pending}</p>
             </div>
           </div>
           <div className="card p-4 flex items-center gap-3">
@@ -127,8 +127,8 @@ const Orders = () => {
               <FiCheckCircle className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-slate-400 text-xs">Hoàn thành</p>
-              <p className="text-white font-bold text-base leading-tight">{counts.completed}</p>
+              <p className="text-slate-500 dark:text-slate-400 text-xs">Hoàn thành</p>
+              <p className="text-slate-900 dark:text-white font-bold text-base leading-tight">{counts.completed}</p>
             </div>
           </div>
           <div className="card p-4 flex items-center gap-3">
@@ -136,8 +136,8 @@ const Orders = () => {
               <FiDollarSign className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-slate-400 text-xs">Đã chi tiêu</p>
-              <p className="text-white font-bold text-base leading-tight">
+              <p className="text-slate-500 dark:text-slate-400 text-xs">Đã chi tiêu</p>
+              <p className="text-slate-900 dark:text-white font-bold text-base leading-tight">
                 {totalSpent > 0 ? `${totalSpent.toLocaleString('vi-VN')}đ` : '—'}
               </p>
             </div>
@@ -146,7 +146,7 @@ const Orders = () => {
 
         {/* ── Tabs ───────────────────────────────────────── */}
         <div>
-          <div className="flex gap-1 border-b border-slate-800 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-1 border-b border-slate-200 dark:border-slate-800 overflow-x-auto scrollbar-hide">
             {TABS.map(({ key, label, icon: Icon }) => (
               <button
                 key={key}
@@ -154,13 +154,13 @@ const Orders = () => {
                 className={`flex items-center gap-2 px-4 py-3 text-sm font-semibold transition-all whitespace-nowrap shrink-0 border-b-2 ${
                   activeTab === key
                     ? 'text-primary border-primary'
-                    : 'text-slate-400 border-transparent hover:text-slate-200'
+                    : 'text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
               >
                 <Icon className="w-4 h-4" />
                 {label}
                 <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${
-                  activeTab === key ? 'bg-primary/20 text-primary' : 'bg-slate-700 text-slate-400'
+                  activeTab === key ? 'bg-primary/20 text-primary' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
                 }`}>
                   {counts[key]}
                 </span>
@@ -172,18 +172,18 @@ const Orders = () => {
           <div className="mt-4 space-y-3">
             {!orders || orders.length === 0 ? (
               <div className="card p-12 text-center">
-                <FiShoppingBag className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-                <p className="text-white font-semibold text-lg mb-2">Chưa có đơn hàng nào</p>
-                <p className="text-slate-400 text-sm mb-6">Bắt đầu mua tài khoản game yêu thích của bạn</p>
+                <FiShoppingBag className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+                <p className="text-slate-900 dark:text-white font-semibold text-lg mb-2">Chưa có đơn hàng nào</p>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Bắt đầu mua tài khoản game yêu thích của bạn</p>
                 <Link to="/shop" className="btn-primary inline-flex items-center gap-2">
                   <FiShoppingBag className="w-4 h-4" /> Mua ngay
                 </Link>
               </div>
             ) : filtered.length === 0 ? (
               <div className="card p-12 text-center">
-                <FiX className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-                <p className="text-white font-semibold text-lg mb-2">Không có đơn hàng</p>
-                <p className="text-slate-400 text-sm">Không tìm thấy đơn hàng nào trong danh mục này</p>
+                <FiX className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+                <p className="text-slate-900 dark:text-white font-semibold text-lg mb-2">Không có đơn hàng</p>
+                <p className="text-slate-500 dark:text-slate-400 text-sm">Không tìm thấy đơn hàng nào trong danh mục này</p>
               </div>
             ) : (
               filtered.map((order) => (
@@ -212,15 +212,15 @@ const OrderCard = ({ order }) => (
     <div className="flex items-start justify-between mb-4">
       <div>
         <div className="flex flex-wrap items-center gap-2 mb-1">
-          <h3 className="text-white font-bold text-base">#{order.orderNumber}</h3>
+          <h3 className="text-slate-900 dark:text-white font-bold text-base">#{order.orderNumber}</h3>
           <StatusBadge status={order.status} />
         </div>
-        <p className="text-slate-500 text-xs">
+        <p className="text-slate-500 dark:text-slate-500 text-xs">
           {new Date(order.createdAt).toLocaleString('vi-VN')}
         </p>
       </div>
       <div className="text-right shrink-0">
-        <p className="text-slate-500 text-xs mb-0.5">Tổng tiền</p>
+        <p className="text-slate-500 dark:text-slate-500 text-xs mb-0.5">Tổng tiền</p>
         <p className="text-primary font-black text-lg leading-tight">
           {order.totalAmount?.toLocaleString('vi-VN')}đ
         </p>
@@ -230,7 +230,7 @@ const OrderCard = ({ order }) => (
     {/* Product thumbnails */}
     {order.items?.length > 0 && (
       <div className="mb-4">
-        <p className="text-slate-500 text-xs mb-2">
+        <p className="text-slate-500 dark:text-slate-500 text-xs mb-2">
           {order.items.length} sản phẩm
         </p>
         <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
@@ -238,7 +238,7 @@ const OrderCard = ({ order }) => (
             item.accountId && (
               <div
                 key={idx}
-                className="flex items-center gap-2 bg-slate-800/70 border border-slate-700 px-3 py-2 rounded-xl min-w-0 shrink-0"
+                className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 px-3 py-2 rounded-xl min-w-0 shrink-0"
               >
                 <img
                   src={item.accountId.images?.[0]}
@@ -246,7 +246,7 @@ const OrderCard = ({ order }) => (
                   className="w-8 h-8 rounded object-cover shrink-0"
                   onError={(e) => { e.target.src = '/placeholder.jpg'; }}
                 />
-                <span className="text-slate-300 text-xs line-clamp-1 max-w-[120px]">
+                <span className="text-slate-700 dark:text-slate-300 text-xs line-clamp-1 max-w-[120px]">
                   {item.accountId.title}
                 </span>
               </div>
@@ -262,9 +262,9 @@ const OrderCard = ({ order }) => (
     )}
 
     {/* Footer */}
-    <div className="flex items-center justify-between pt-3 border-t border-slate-800">
-      <p className="text-slate-500 text-xs">
-        Thanh toán: <span className="text-slate-300">Số dư tài khoản</span>
+    <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-800">
+      <p className="text-slate-500 dark:text-slate-500 text-xs">
+        Thanh toán: <span className="text-slate-700 dark:text-slate-300">Số dư tài khoản</span>
       </p>
       <Link
         to={`/profile/orders/${order._id}`}

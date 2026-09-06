@@ -8,6 +8,7 @@ import BottomStatusBar from './components/BottomStatusBar';
 import ProtectedRoute from './components/ProtectedRoute';
 import NotificationModal from './components/NotificationModal';
 import SEOHead from './components/SEOHead';
+import { useThemeStore } from './store/themeStore';
 import api from './utils/api';
 
 // Pages
@@ -39,7 +40,8 @@ function ScrollToTop() {
 
 function App() {
   const navigate = useNavigate();
-  
+  const applyDefaultTheme = useThemeStore((s) => s.applyDefault);
+
   // Drawer state
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -54,6 +56,13 @@ function App() {
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
+
+  // Apply admin default theme on first load (only if user has no preference)
+  useEffect(() => {
+    if (settings) {
+      applyDefaultTheme(settings.defaultTheme || 'light');
+    }
+  }, [settings, applyDefaultTheme]);
 
   // Update favicon dynamically from settings
   useEffect(() => {

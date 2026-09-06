@@ -65,17 +65,17 @@ const Cart = ({ onOpenAuth }) => {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen pt-20 pb-12">
+      <div className="min-h-screen pt-28 pb-12">
         <SEOHead
           title="Giỏ Hàng Trống"
           description="Giỏ hàng của bạn đang trống. Hãy chọn tài khoản game yêu thích để thêm vào giỏ hàng."
           type="website"
         />
         <div className="container-custom">
-          <h1 className="text-3xl font-bold text-white mb-8">Giỏ hàng</h1>
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-8">Giỏ hàng</h1>
           <div className="card text-center py-20">
-            <FiShoppingBag className="w-20 h-20 text-slate-600 mx-auto mb-4" />
-            <p className="text-slate-400 text-lg mb-6">Giỏ hàng của bạn đang trống</p>
+            <FiShoppingBag className="w-20 h-20 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+            <p className="text-slate-500 dark:text-slate-400 text-lg mb-6">Giỏ hàng của bạn đang trống</p>
             <Link to="/shop" className="btn-primary inline-block">
               Tiếp tục mua sắm
             </Link>
@@ -86,14 +86,14 @@ const Cart = ({ onOpenAuth }) => {
   }
 
   return (
-    <div className="min-h-screen pt-20 pb-12">
+    <div className="min-h-screen pt-28 pb-12">
       <SEOHead
         title={`Giỏ Hàng (${items.length} sản phẩm)`}
         description={`Bạn có ${items.length} tài khoản game trong giỏ hàng. Tiếp tục mua sắm hoặc tiến hành thanh toán.`}
         type="website"
       />
       <div className="container-custom">
-        <h1 className="text-3xl font-bold text-white mb-8">Giỏ hàng ({items.length})</h1>
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-8">Giỏ hàng ({items.length})</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
           {/* Cart Items */}
@@ -113,11 +113,11 @@ const Cart = ({ onOpenAuth }) => {
                   {/* Info */}
                   <div className="flex-grow">
                     <Link to={`/account/${item._id}`}>
-                      <h3 className="text-white font-semibold mb-2 hover:text-primary line-clamp-2">
+                      <h3 className="text-slate-900 dark:text-white font-semibold mb-2 hover:text-primary line-clamp-2">
                         {item.title}
                       </h3>
                     </Link>
-                    
+
                     <div className="flex flex-wrap gap-2 mb-2">
                       {item.rank && (
                         <span className="bg-primary/20 text-primary px-2 py-1 rounded text-xs">
@@ -125,7 +125,7 @@ const Cart = ({ onOpenAuth }) => {
                         </span>
                       )}
                       {item.server && (
-                        <span className="bg-slate-700 text-slate-300 px-2 py-1 rounded text-xs">
+                        <span className="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-1 rounded text-xs">
                           {item.server}
                         </span>
                       )}
@@ -134,7 +134,7 @@ const Cart = ({ onOpenAuth }) => {
                     <div className="flex items-center justify-between mt-3">
                       <div>
                         {item.originalPrice && item.originalPrice > item.price && (
-                          <p className="text-slate-500 text-sm line-through">
+                          <p className="text-slate-500 dark:text-slate-500 text-sm line-through">
                             {item.originalPrice.toLocaleString('vi-VN')}đ
                           </p>
                         )}
@@ -147,7 +147,7 @@ const Cart = ({ onOpenAuth }) => {
                       <button
                         onClick={() => handleRemove(item._id)}
                         disabled={removeFromCartMutation.isPending}
-                        className="p-2 text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                        className="p-2 text-red-500 dark:text-red-400 hover:bg-red-500/10 dark:hover:bg-red-400/10 rounded-lg transition-colors"
                         title="Xóa"
                       >
                         <FiTrash2 className="w-5 h-5" />
@@ -162,14 +162,14 @@ const Cart = ({ onOpenAuth }) => {
           {/* Summary */}
           <div className="lg:col-span-1">
             <div className="card sticky top-24">
-              <h2 className="text-xl font-bold text-white mb-6">Tổng đơn hàng</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Tổng đơn hàng</h2>
 
               <div className="space-y-2 mb-2">
-                <div className="flex justify-between text-slate-400">
+                <div className="flex justify-between text-slate-500 dark:text-slate-400">
                   <span>Số lượng sản phẩm:</span>
                   <span>{items.length}</span>
                 </div>
-                <div className="border-t border-slate-700 pt-3 flex justify-between text-white font-bold text-xl">
+                <div className="border-t border-slate-200 dark:border-slate-700 pt-3 flex justify-between text-slate-900 dark:text-white font-bold text-xl">
                   <span>Tổng cộng:</span>
                   <span className="text-primary">{totalAmount.toLocaleString('vi-VN')}đ</span>
                 </div>
@@ -192,8 +192,8 @@ const Cart = ({ onOpenAuth }) => {
                 Tiếp tục mua sắm
               </Link>
 
-              <div className="mt-6 p-4 bg-slate-800 rounded-lg">
-                <p className="text-slate-400 text-sm">
+              <div className="mt-6 p-4 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                <p className="text-slate-500 dark:text-slate-400 text-sm">
                   ℹ️ Thanh toán bằng số dư tài khoản. Vui lòng nạp tiền trước khi thanh toán.
                 </p>
               </div>

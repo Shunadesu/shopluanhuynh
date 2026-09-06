@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
-import { FiSave, FiPhone, FiFacebook, FiMail, FiImage, FiUpload, FiLink, FiEdit2, FiTrash2, FiSearch, FiGlobe } from 'react-icons/fi';
+import { FiSave, FiPhone, FiFacebook, FiMail, FiImage, FiUpload, FiLink, FiEdit2, FiTrash2, FiSearch, FiGlobe, FiSun, FiMoon } from 'react-icons/fi';
 import { FormSkeleton } from '../components/SkeletonLoader';
 
 export default function Settings() {
@@ -24,6 +24,7 @@ export default function Settings() {
     contactEmail: '',
     facebookLink: '',
     zaloLink: '',
+    defaultTheme: 'light',
   });
 
   const [logoForm, setLogoForm] = useState({
@@ -53,6 +54,7 @@ export default function Settings() {
         contactEmail: settings.contactEmail || '',
         facebookLink: settings.facebookLink || '',
         zaloLink: settings.zaloLink || '',
+        defaultTheme: settings.defaultTheme || 'light',
       });
       setLogoForm({ logo: settings.logo || '' });
       setSeoForm({
@@ -457,6 +459,41 @@ export default function Settings() {
                   placeholder="https://zalo.me/..."
                 />
               </div>
+            </div>
+
+            {/* Default Theme */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                <FiSun className="inline mr-2" />
+                Theme mặc định cho frontend
+              </label>
+              <div className="flex gap-3">
+                <label className={`flex items-center gap-2 px-4 py-3 rounded-lg cursor-pointer transition-colors ${generalForm.defaultTheme === 'dark' ? 'bg-cyan-500/20 border border-cyan-500/50 text-cyan-300' : 'bg-slate-700 hover:bg-slate-600 text-slate-300'}`}>
+                  <input
+                    type="radio"
+                    name="defaultTheme"
+                    value="dark"
+                    checked={generalForm.defaultTheme === 'dark'}
+                    onChange={(e) => setGeneralForm({ ...generalForm, defaultTheme: e.target.value })}
+                    className="text-cyan-500 focus:ring-cyan-500"
+                  />
+                  <FiMoon /> Tối
+                </label>
+                <label className={`flex items-center gap-2 px-4 py-3 rounded-lg cursor-pointer transition-colors ${generalForm.defaultTheme === 'light' ? 'bg-cyan-500/20 border border-cyan-500/50 text-cyan-300' : 'bg-slate-700 hover:bg-slate-600 text-slate-300'}`}>
+                  <input
+                    type="radio"
+                    name="defaultTheme"
+                    value="light"
+                    checked={generalForm.defaultTheme === 'light'}
+                    onChange={(e) => setGeneralForm({ ...generalForm, defaultTheme: e.target.value })}
+                    className="text-cyan-500 focus:ring-cyan-500"
+                  />
+                  <FiSun /> Sáng
+                </label>
+              </div>
+              <p className="text-slate-500 text-xs mt-2">
+                Áp dụng cho khách truy cập lần đầu (chưa có preference trong localStorage). User có thể tự toggle theme ở header.
+              </p>
             </div>
 
             <button type="submit" className="w-full btn-primary mt-6">

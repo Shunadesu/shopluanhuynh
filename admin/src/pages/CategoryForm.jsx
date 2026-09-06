@@ -20,13 +20,14 @@ export default function CategoryForm() {
   });
 
   // Fetch category data when editing
-  const { data: category, isLoading: loadingCategory } = useQuery({
+  const { data: category, isLoading: loadingCategory, error } = useQuery({
     queryKey: ['category', id],
     queryFn: async () => {
+      if (!id) throw new Error('Category ID is required');
       const { data } = await api.get(`/admin/categories/${id}`);
       return data;
     },
-    enabled: isEditing,
+    enabled: Boolean(id),
   });
 
   // Pre-fill form when category data loaded
@@ -153,6 +154,37 @@ export default function CategoryForm() {
               <div className="h-12 bg-slate-800 rounded-lg flex-1 animate-pulse" />
             </div>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle error state
+  if (isEditing && error) {
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate('/categories')}
+            className="p-2 hover:bg-slate-700 rounded-lg transition-all"
+          >
+            <FiArrowLeft className="text-xl text-slate-300" />
+          </button>
+          <div>
+            <h1 className="text-3xl font-bold text-slate-100">Lỗi tải dữ liệu</h1>
+            <p className="text-slate-400 mt-1">
+              Không thể tải thông tin danh mục. Vui lòng thử lại.
+            </p>
+          </div>
+        </div>
+        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-6 text-center">
+          <p className="text-red-400 mb-4">{error.message || 'Đã xảy ra lỗi khi tải dữ liệu'}</p>
+          <button
+            onClick={() => queryClient.invalidateQueries(['category', id])}
+            className="btn-primary"
+          >
+            Thử lại
+          </button>
         </div>
       </div>
     );

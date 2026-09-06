@@ -45,7 +45,7 @@ const DepositHistory = () => {
   };
 
   return (
-    <div className="min-h-screen pt-20 pb-12">
+    <div className="min-h-screen pt-28 pb-12">
       <div className="container-custom">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-white">Lịch sử nạp tiền</h1>
@@ -61,8 +61,8 @@ const DepositHistory = () => {
 
         {!deposits || deposits.length === 0 ? (
           <div className="card text-center py-20">
-            <FiDollarSign className="w-20 h-20 text-slate-600 mx-auto mb-4" />
-            <p className="text-slate-400 text-lg mb-6">Bạn chưa có lịch sử nạp tiền</p>
+            <FiDollarSign className="w-20 h-20 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+            <p className="text-slate-500 dark:text-slate-400 text-lg mb-6">Bạn chưa có lịch sử nạp tiền</p>
             <Link to="/deposit" className="btn-primary inline-block">
               Nạp tiền ngay
             </Link>
@@ -79,7 +79,7 @@ const DepositHistory = () => {
                       </p>
                       {getStatusBadge(deposit.status)}
                     </div>
-                    <p className="text-slate-400 text-sm">
+                    <p className="text-slate-500 dark:text-slate-400 text-sm">
                       {new Date(deposit.createdAt).toLocaleString('vi-VN')}
                     </p>
                   </div>
@@ -87,12 +87,12 @@ const DepositHistory = () => {
 
                 {/* Bank Info */}
                 {deposit.bankAccountId && (
-                  <div className="bg-slate-800 rounded-lg p-4 mb-4">
-                    <p className="text-slate-400 text-sm mb-2">Ngân hàng</p>
-                    <p className="text-white font-semibold">
+                  <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-4 mb-4">
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mb-2">Ngân hàng</p>
+                    <p className="text-slate-900 dark:text-white font-semibold">
                       {deposit.bankAccountId.bankName} - {deposit.bankAccountId.accountNumber}
                     </p>
-                    <p className="text-slate-400 text-sm">
+                    <p className="text-slate-500 dark:text-slate-400 text-sm">
                       {deposit.bankAccountId.accountName}
                     </p>
                   </div>
@@ -101,8 +101,8 @@ const DepositHistory = () => {
                 {/* Transfer Note */}
                 {deposit.transferNote && (
                   <div className="mb-4">
-                    <p className="text-slate-400 text-sm mb-1">Nội dung chuyển khoản:</p>
-                    <p className="text-slate-300">{deposit.transferNote}</p>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mb-1">Nội dung chuyển khoản:</p>
+                    <p className="text-slate-700 dark:text-slate-300">{deposit.transferNote}</p>
                   </div>
                 )}
 
@@ -111,10 +111,10 @@ const DepositHistory = () => {
                   <div className={`p-4 rounded-lg ${
                     deposit.status === 'rejected'
                       ? 'bg-red-500/20 border border-red-500'
-                      : 'bg-slate-800'
+                      : 'bg-slate-100 dark:bg-slate-800'
                   }`}>
-                    <p className="text-slate-400 text-sm mb-1">Ghi chú từ admin:</p>
-                    <p className={deposit.status === 'rejected' ? 'text-red-400' : 'text-slate-300'}>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mb-1">Ghi chú từ admin:</p>
+                    <p className={deposit.status === 'rejected' ? 'text-red-400' : 'text-slate-700 dark:text-slate-300'}>
                       {deposit.adminNote}
                     </p>
                   </div>
@@ -122,8 +122,8 @@ const DepositHistory = () => {
 
                 {/* Processed Info */}
                 {deposit.processedAt && (
-                  <div className="mt-4 pt-4 border-t border-slate-700">
-                    <p className="text-slate-400 text-sm">
+                  <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                    <p className="text-slate-500 dark:text-slate-400 text-sm">
                       {deposit.status === 'approved' ? 'Đã duyệt' : 'Đã xử lý'} lúc:{' '}
                       {new Date(deposit.processedAt).toLocaleString('vi-VN')}
                     </p>

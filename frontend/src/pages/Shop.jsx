@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import api from '../utils/api';
 import { useAuthStore } from '../store/authStore';
 import { useCartStore } from '../store/cartStore';
-import Loading from '../components/Loading';
+import { ShopSkeleton, AccountCardSkeleton } from '../components/SkeletonLoader';
 import { FiSearch, FiTag, FiShoppingCart, FiZap, FiChevronRight } from 'react-icons/fi';
 import SEOHead from '../components/SEOHead';
 
@@ -24,12 +24,12 @@ const AccountCard = ({ account, onAddToCart, onBuyNow, addToCartPending }) => {
           />
           {/* Sold Badge */}
           {account.status === 'sold' && (
-            <div className="absolute inset-0 bg-dark/80 rounded-lg flex items-center justify-center">
+            <div className="absolute inset-0 bg-slate-900/80 dark:bg-dark/80 rounded-lg flex items-center justify-center">
               <span className="text-red-400 font-bold text-xl">ĐÃ BÁN</span>
             </div>
           )}
         </div>
-        <h3 className="text-white font-semibold mb-2 line-clamp-2 min-h-[2.5rem] text-sm sm:text-base">
+        <h3 className="text-slate-900 dark:text-white font-semibold mb-2 line-clamp-2 min-h-[2.5rem] text-sm sm:text-base">
           {account.title}
         </h3>
       </Link>
@@ -38,19 +38,19 @@ const AccountCard = ({ account, onAddToCart, onBuyNow, addToCartPending }) => {
       {category && (
         <div className="flex items-center gap-1 mb-2">
           <FiTag className="w-3 h-3 text-primary" />
-          <span className="text-xs text-slate-300">{category.name}</span>
+          <span className="text-xs text-slate-600 dark:text-slate-300">{category.name}</span>
         </div>
       )}
       
       {/* Team Value & BP */}
       <div className="flex flex-wrap gap-2 mb-2">
         {account.teamValue && (
-          <span className="text-xs bg-slate-700/70 text-slate-300 px-2 py-0.5 rounded">
+          <span className="text-xs bg-slate-200 dark:bg-slate-700/70 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded">
             Đội hình: {account.teamValue}
           </span>
         )}
         {account.bp && (
-          <span className="text-xs bg-slate-700/70 text-slate-300 px-2 py-0.5 rounded">
+          <span className="text-xs bg-slate-200 dark:bg-slate-700/70 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded">
             BP: {account.bp}
           </span>
         )}
@@ -109,7 +109,7 @@ const CategorySection = ({ category, accounts, onAddToCart, onBuyNow, addToCartP
       <div className="container-custom">
         {/* Section Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             {category.thumbnail && (
               <img
                 src={category.thumbnail}
@@ -281,7 +281,7 @@ const Shop = () => {
   };
 
   return (
-    <div className="min-h-screen pt-20 pb-12">
+    <div className="min-h-screen pt-28 pb-12">
       <SEOHead
         title="Cửa Hàng Tài Khoản Game Giá Rẻ"
         description="Mua tài khoản game giá rẻ, chất lượng cao. Liên Quân, PUBG, Free Fire, Genshin Impact với giá tốt nhất thị trường."
@@ -290,24 +290,24 @@ const Shop = () => {
       />
       {/* Page Title */}
       <div className="container-custom mb-6">
-        <h1 className="text-3xl font-bold text-white">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
           {selectedCategoryId === 'all' 
             ? 'Cửa hàng tài khoản' 
             : categories?.find(c => c._id === selectedCategoryId)?.name || 'Tài khoản'
           }
         </h1>
-        <p className="text-slate-400 mt-1">
+        <p className="text-slate-600 dark:text-slate-400 mt-1">
           {filteredAccounts.length} tài khoản được tìm thấy
         </p>
       </div>
 
       {/* Filters Bar */}
       <div className="container-custom mb-6">
-        <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 bg-slate-800/50 p-4 rounded-lg border border-slate-700">
+        <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 bg-slate-100 dark:bg-slate-800/50 p-4 rounded-lg border border-slate-200 dark:border-slate-700">
           {/* Search */}
           <div className="flex-1 min-w-[180px]">
             <div className="relative">
-              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
               <input
                 type="text"
                 value={search}
@@ -327,7 +327,7 @@ const Shop = () => {
               className="input-field w-24 text-sm"
               placeholder="Giá từ"
             />
-            <span className="text-slate-400">-</span>
+            <span className="text-slate-500 dark:text-slate-400">-</span>
             <input
               type="number"
               value={maxPrice}
@@ -361,7 +361,7 @@ const Shop = () => {
             className={`px-4 py-1.5 rounded-lg whitespace-nowrap transition-all text-sm ${
               selectedCategoryId === 'all'
                 ? 'bg-primary text-white font-medium'
-                : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700'
+                : 'bg-slate-200 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
             }`}
           >
             Tất cả
@@ -378,7 +378,7 @@ const Shop = () => {
               className={`px-4 py-1.5 rounded-lg whitespace-nowrap transition-all text-sm flex items-center gap-2 ${
                 selectedCategoryId === cat._id
                   ? 'bg-primary text-white font-medium'
-                  : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700'
+                  : 'bg-slate-200 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
               }`}
             >
               {cat.thumbnail && (
@@ -397,11 +397,11 @@ const Shop = () => {
       {/* Main Content */}
       <div>
         {isLoading ? (
-          <Loading />
+          <ShopSkeleton />
         ) : filteredAccounts.length === 0 ? (
           <div className="container-custom">
             <div className="text-center py-20">
-              <p className="text-slate-400 text-lg mb-4">Không tìm thấy tài khoản nào</p>
+              <p className="text-slate-500 dark:text-slate-400 text-lg mb-4">Không tìm thấy tài khoản nào</p>
               <button onClick={handleResetFilters} className="btn-secondary">
                 Xóa bộ lọc
               </button>
@@ -431,7 +431,7 @@ const Shop = () => {
             {accounts.filter(a => !a.category?._id || !accountsByCategory[a.category?._id]).length > 0 && (
               <div className="py-6">
                 <div className="container-custom">
-                  <h2 className="text-xl md:text-2xl font-bold text-white mb-6">Tài khoản khác</h2>
+                  <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white mb-6">Tài khoản khác</h2>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {accounts
                       .filter(a => !a.category?._id || !accountsByCategory[a.category?._id])
@@ -473,7 +473,7 @@ const Shop = () => {
               >
                 Trước
               </button>
-              <span className="text-slate-300 px-4">
+              <span className="text-slate-600 dark:text-slate-300 px-4">
                 Trang {page} / {pagination.pages}
               </span>
               <button

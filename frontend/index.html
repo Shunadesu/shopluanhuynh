@@ -6,7 +6,34 @@
     <title>Shopluanhuynh - LuanHuynhFCO</title>
     <meta name="description" content="Cung cấp tài khoản game chất lượng cao với giá cả hợp lý. Uy tín - Nhanh chóng - Bảo mật." />
     <meta name="robots" content="index, follow" />
-    <meta name="theme-color" content="#f97316" />
+    <meta name="theme-color" content="#0B0E14" />
+
+    <!-- Inline theme script: set theme class on <html> BEFORE React renders to avoid FOUC -->
+    <script>
+      (function () {
+        try {
+          var raw = localStorage.getItem('theme-storage');
+          var theme = 'light';
+          if (raw) {
+            var parsed = JSON.parse(raw);
+            if (parsed && parsed.state && parsed.state.theme) {
+              theme = parsed.state.theme;
+            }
+          }
+          if (theme === 'light') {
+            document.documentElement.classList.remove('dark');
+            var meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.setAttribute('content', '#FFFFFF');
+          } else {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (e) {
+          document.documentElement.classList.remove('dark');
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', '#FFFFFF');
+        }
+      })();
+    </script>
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
