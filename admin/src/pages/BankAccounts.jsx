@@ -11,6 +11,40 @@ import { Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
 
+// Danh sách ngân hàng phổ biến tại Việt Nam
+const VIETNAMESE_BANKS = [
+  { code: 'VCB', name: 'Vietcombank' },
+  { code: 'VIB', name: 'VIB - Ngân hàng Quốc tế' },
+  { code: 'ICB', name: 'VietinBank' },
+  { code: 'BID', name: 'BIDV' },
+  { code: 'ACB', name: 'ACB' },
+  { code: 'TPB', name: 'TPBank' },
+  { code: 'MBB', name: 'MB Bank' },
+  { code: 'VPB', name: 'VPBank' },
+  { code: 'TCB', name: 'Techcombank' },
+  { code: 'CTG', name: 'CTGC (Viet Capital Bank)' },
+  { code: 'EIB', name: 'Eximbank' },
+  { code: 'HDB', name: 'HDBank' },
+  { code: 'MSB', name: 'MSB - Ngân hàng Hàng Hải' },
+  { code: 'OCB', name: 'OCB' },
+  { code: 'SHB', name: 'SHB' },
+  { code: 'STB', name: 'Sacombank' },
+  { code: 'ABB', name: 'ABBANK' },
+  { code: 'KLB', name: 'Kienlongbank' },
+  { code: 'LPB', name: 'LienVietPostBank' },
+  { code: 'NAB', name: 'NamABank' },
+  { code: 'PGB', name: 'PGBank' },
+  { code: 'SCB', name: 'SCB' },
+  { code: 'SEA', name: 'SeABank' },
+  { code: 'SSB', name: 'Saigonbank' },
+  { code: 'VAB', name: 'VietABank' },
+  { code: 'VCCB', name: 'VietCredit' },
+  { code: 'VRB', name: 'VietinBank (VRB)' },
+  { code: 'WOORI', name: 'Woori Bank' },
+  { code: 'UOB', name: 'UOB Singapore' },
+  { code: 'OTHER', name: 'Khác (tự nhập)' },
+];
+
 export default function BankAccounts() {
   const queryClient = useQueryClient();
 
@@ -25,6 +59,7 @@ export default function BankAccounts() {
 
   const [form, setForm] = useState({
     bankName: '',
+    bankNameCustom: '',
     accountName: '',
     accountNumber: '',
     isActive: true,
@@ -113,7 +148,7 @@ export default function BankAccounts() {
 
   // ─── Modal helpers ──────────────────────────────────────────
   const openAddModal = () => {
-    setForm({ bankName: '', accountName: '', accountNumber: '', isActive: true });
+    setForm({ bankName: '', bankNameCustom: '', accountName: '', accountNumber: '', isActive: true });
     setQrPreview('');
     setQrFile(null);
     setEditingId(null);
@@ -121,8 +156,12 @@ export default function BankAccounts() {
   };
 
   const openEditModal = (bank) => {
+    const matchedBank = VIETNAMESE_BANKS.find(
+      (b) => b.name.toLowerCase() === (bank.bankName || '').toLowerCase()
+    );
     setForm({
-      bankName: bank.bankName || '',
+      bankName: matchedBank ? matchedBank.code : 'OTHER',
+      bankNameCustom: matchedBank ? (bank.bankName || '') : (bank.bankName || ''),
       accountName: bank.accountName || '',
       accountNumber: bank.accountNumber || '',
       isActive: bank.isActive ?? true,
@@ -142,7 +181,14 @@ export default function BankAccounts() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const payload = { ...form, qrCodeImage: qrPreview };
+    const finalBankName =
+      form.bankName === 'OTHER' ? form.bankNameCustom.trim() : (VIETNAMESE_BANKS.find((b) => b.code === form.bankName)?.name || '');
+    if (!finalBankName) {
+      toast.error('Vui lòng chọn hoặc nhập tên ngân hàng');
+      return;
+    }
+    const payload = { ...form, bankName: finalBankName };
+    delete payload.bankNameCustom;
 
     if (editingId) {
       updateMutation.mutate({ id: editingId, data: payload });
@@ -293,7 +339,7 @@ export default function BankAccounts() {
 
       {/* ─── Modal ─── */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="!mt-0 fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-lg mx-4 shadow-2xl">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700">
@@ -315,15 +361,36 @@ export default function BankAccounts() {
                 <label className="block text-sm font-medium text-slate-300 mb-2">
                   Tên ngân hàng <span className="text-red-400">*</span>
                 </label>
-                <input
-                  type="text"
+                <select
                   value={form.bankName}
-                  onChange={(e) => setForm({ ...form, bankName: e.target.value })}
+                  onChange={(e) => setForm({ ...form, bankName: e.target.value, bankNameCustom: '' })}
                   className="input-field"
-                  placeholder="Vietcombank"
                   required
-                />
+                >
+                  <option value="">— Chọn ngân hàng —</option>
+                  {VIETNAMESE_BANKS.map((bank) => (
+                    <option key={bank.code} value={bank.code}>
+                      {bank.name}
+                    </option>
+                  ))}
+                </select>
               </div>
+
+              {form.bankName === 'OTHER' && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Tên ngân hàng (tự nhập) <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={form.bankNameCustom}
+                    onChange={(e) => setForm({ ...form, bankNameCustom: e.target.value })}
+                    className="input-field"
+                    placeholder="Nhập tên ngân hàng"
+                    required
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
