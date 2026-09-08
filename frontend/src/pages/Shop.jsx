@@ -1,10 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import api from '../utils/api';
 import { useAuthStore } from '../store/authStore';
 import { useCartStore } from '../store/cartStore';
+import { useCategories, useAccountList } from '../hooks';
 import { ShopSkeleton, AccountCardSkeleton } from '../components/SkeletonLoader';
 import { FiSearch, FiTag, FiShoppingCart, FiZap, FiChevronRight } from 'react-icons/fi';
 import SEOHead from '../components/SEOHead';
@@ -147,10 +146,9 @@ const CategorySection = ({ category, accounts, onAddToCart, onBuyNow, addToCartP
 
 const Shop = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const { isAuthenticated } = useAuthStore();
-  const { setCartCount, incrementCart } = useCartStore();
+  const incrementCart = useCartStore((s) => s.incrementCart);
 
   // Get category from URL query params
   const categoryFromUrl = searchParams.get('category');
@@ -161,15 +159,10 @@ const Shop = () => {
   const [maxPrice, setMaxPrice] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState('all');
   const [page, setPage] = useState(1);
+  const [addToCartPending, setAddToCartPending] = useState(false);
 
   // Fetch categories
-  const { data: categories } = useQuery({
-    queryKey: ['categories'],
-    queryFn: async () => {
-      const res = await api.get('/categories');
-      return res.data;
-    }
-  });
+  const { data: categories } = useCategories();
 
   // Set selected category from URL when categories are loaded
   useEffect(() => {
@@ -182,69 +175,54 @@ const Shop = () => {
   }, [categoryFromUrl, categories]);
 
   // Fetch accounts với filters
-  const { data: accountsData, isLoading } = useQuery({
-    queryKey: ['accounts', search, minPrice, maxPrice, page],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (search) params.append('search', search);
-      if (minPrice) params.append('minPrice', minPrice);
-      if (maxPrice) params.append('maxPrice', maxPrice);
-      params.append('page', page);
-      params.append('limit', 100);
-
-      const res = await api.get(`/accounts?${params.toString()}`);
-      return res.data;
-    }
+  const { accounts, loading: isLoading, pagination } = useAccountList({
+    search,
+    minPrice,
+    maxPrice,
+    page,
+    limit: 100,
   });
 
-  const accounts = accountsData?.accounts || [];
-  const pagination = accountsData?.pagination;
-
-  // Add to cart mutation
-  const addToCartMutation = useMutation({
-    mutationFn: async (accountId) => {
-      const res = await api.post('/orders/cart', { accountId });
-      return res.data;
-    },
-    onSuccess: (data) => {
+  const handleAddToCart = async (e, accountId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setAddToCartPending(true);
+    try {
+      const data = await useCartStore.getState().addToCart(accountId);
       toast.success('Đã thêm vào giỏ hàng');
       incrementCart();
-      queryClient.invalidateQueries(['cart']);
-      setCartCount(data?.items?.length || 0);
-    },
-    onError: (error) => {
-      if (error.response?.status === 401) {
+      useCartStore.setState({ cartCount: data?.items?.length || 0 });
+    } catch (error) {
+      if (error?.__skipped || error.response?.status === 401) {
         toast.error('Vui lòng đăng nhập để thêm vào giỏ hàng');
       } else {
         toast.error(error.response?.data?.message || 'Không thể thêm vào giỏ hàng');
       }
+    } finally {
+      setAddToCartPending(false);
     }
-  });
-
-  // Handle add to cart
-  const handleAddToCart = (e, accountId) => {
-    e.preventDefault();
-    e.stopPropagation();
-    addToCartMutation.mutate(accountId);
   };
 
-  // Handle buy now
-  const handleBuyNow = (e, account) => {
+  const handleBuyNow = async (e, account) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (!isAuthenticated) {
       window.dispatchEvent(new CustomEvent('openAuthDrawer', { detail: { view: 'login' } }));
       sessionStorage.setItem('buyNowAccount', JSON.stringify(account));
       return;
     }
-    
-    api.post('/orders/cart', { accountId: account._id }).then(() => {
-      queryClient.invalidateQueries(['cart']);
+
+    try {
+      await useCartStore.getState().addToCart(account._id);
       navigate('/checkout');
-    }).catch((error) => {
-      toast.error(error.response?.data?.message || 'Không thể xử lý');
-    });
+    } catch (error) {
+      if (error?.__skipped || error.response?.status === 401) {
+        toast.error('Vui lòng đăng nhập để mua ngay');
+      } else {
+        toast.error(error.response?.data?.message || 'Không thể xử lý');
+      }
+    }
   };
 
   // Filter accounts by selected category
@@ -421,7 +399,7 @@ const Shop = () => {
                     accounts={categoryAccounts.slice(0, 8)}
                     onAddToCart={handleAddToCart}
                     onBuyNow={handleBuyNow}
-                    addToCartPending={addToCartMutation.isPending}
+                    addToCartPending={addToCartPending}
                   />
                 </div>
               );
@@ -441,7 +419,7 @@ const Shop = () => {
                           account={account}
                           onAddToCart={handleAddToCart}
                           onBuyNow={handleBuyNow}
-                          addToCartPending={addToCartMutation.isPending}
+                          addToCartPending={addToCartPending}
                         />
                       ))}
                   </div>
@@ -457,7 +435,7 @@ const Shop = () => {
               accounts={filteredAccounts}
               onAddToCart={handleAddToCart}
               onBuyNow={handleBuyNow}
-              addToCartPending={addToCartMutation.isPending}
+              addToCartPending={addToCartPending}
             />
           </div>
         )}

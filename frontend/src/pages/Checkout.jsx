@@ -1,59 +1,38 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import api from '../utils/api';
 import { useAuthStore } from '../store/authStore';
 import { useCartStore } from '../store/cartStore';
+import { useUserStore } from '../store/data/userStore';
+import { useOrderStore } from '../store/data/orderStore';
+import { useCart } from '../hooks/useCart';
+import { useUserProfile } from '../hooks/useUserProfile';
 import Loading from '../components/Loading';
 import { FiCheckCircle } from 'react-icons/fi';
 import SEOHead from '../components/SEOHead';
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { user } = useAuthStore();
-  const { clearCart } = useCartStore();
+  const { items, loading: cartLoading, mutating: checkoutPending, checkout } = useCart();
+  const { data: userData, refresh: refreshUser } = useUserProfile();
 
-  // Fetch cart
-  const { data: cartData, isLoading: cartLoading } = useQuery({
-    queryKey: ['cart'],
-    queryFn: async () => {
-      const res = await api.get('/orders/cart');
-      return res.data;
-    }
-  });
-
-  // Fetch user info for balance
-  const { data: userData } = useQuery({
-    queryKey: ['user-me'],
-    queryFn: async () => {
-      const res = await api.get('/auth/me');
-      return res.data;
-    }
-  });
-
-  // Checkout mutation
-  const checkoutMutation = useMutation({
-    mutationFn: async () => {
-      const res = await api.post('/orders/checkout');
-      return res.data;
-    },
-    onSuccess: (data) => {
-      clearCart();
+  const handleCheckout = async () => {
+    try {
+      const data = await checkout();
       toast.success('Thanh toán thành công!');
-      queryClient.invalidateQueries(['cart']);
-      queryClient.invalidateQueries(['user-me']);
-      queryClient.invalidateQueries(['orders']);
+      useOrderStore.getState().invalidateOrders();
+      refreshUser();
       navigate(`/profile/orders/${data.order._id}`);
-    },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Thanh toán thất bại');
+    } catch (error) {
+      if (error?.__skipped || error.response?.status === 401) {
+        toast.error('Vui lòng đăng nhập để thanh toán');
+      } else {
+        toast.error(error.response?.data?.message || 'Thanh toán thất bại');
+      }
     }
-  });
+  };
 
   if (cartLoading) return <Loading />;
-
-  const items = cartData?.items || [];
   const totalAmount = items.reduce((sum, item) => sum + item.price, 0);
   const balance = userData?.balance || 0;
   const insufficientBalance = balance < totalAmount;
@@ -195,11 +174,11 @@ const Checkout = () => {
                 </button>
               ) : (
                 <button
-                  onClick={() => checkoutMutation.mutate()}
-                  disabled={checkoutMutation.isPending}
+                  onClick={handleCheckout}
+                  disabled={checkoutPending}
                   className="btn-primary w-full mb-3"
                 >
-                  {checkoutMutation.isPending ? 'Đang xử lý...' : 'Xác nhận thanh toán'}
+                  {checkoutPending ? 'Đang xử lý...' : 'Xác nhận thanh toán'}
                 </button>
               )}
 

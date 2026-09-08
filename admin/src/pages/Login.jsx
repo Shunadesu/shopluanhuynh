@@ -9,7 +9,7 @@ export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuthStore();
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -20,8 +20,12 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const { data } = await api.post('/auth/login', formData);
-      
+      const payload = {
+        username: formData.username.trim().toLowerCase(),
+        password: formData.password,
+      };
+      const { data } = await api.post('/auth/login', payload);
+
       if (data.user.role !== 'admin') {
         toast.error('Bạn không có quyền truy cập trang quản trị');
         return;
@@ -56,20 +60,22 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Email
+                Tên đăng nhập
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <FiUser className="text-slate-400" />
                 </div>
                 <input
-                  type="email"
-                  value={formData.email}
+                  type="text"
+                  name="username"
+                  autoComplete="username"
+                  value={formData.username}
                   onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
+                    setFormData({ ...formData, username: e.target.value })
                   }
                   className="input-field pl-11"
-                  placeholder="admin@shopluanhuynh.com"
+                  placeholder="admin"
                   required
                 />
               </div>

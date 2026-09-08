@@ -1,18 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import api from '../utils/api';
 import Loading from '../components/Loading';
+import { useMyDepositRequests } from '../hooks/useDeposits';
 import { FiClock, FiCheckCircle, FiXCircle, FiDollarSign } from 'react-icons/fi';
 
 const DepositHistory = () => {
-  // Fetch deposit requests
-  const { data: deposits, isLoading } = useQuery({
-    queryKey: ['deposit-requests'],
-    queryFn: async () => {
-      const res = await api.get('/deposits/my-requests');
-      return res.data;
-    }
-  });
+  const { data: deposits, loading: isLoading } = useMyDepositRequests();
 
   if (isLoading) return <Loading />;
 

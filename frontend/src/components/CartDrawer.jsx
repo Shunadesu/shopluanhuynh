@@ -1,48 +1,25 @@
 import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import api from '../utils/api';
-import { useCartStore } from '../store/cartStore';
+import { useCart } from '../hooks/useCart';
 import { FiTrash2, FiX, FiShoppingBag, FiArrowRight } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { setCartCount } = useCartStore();
+  const { cartData, loading: isLoading, mutating, items: cachedItems, fetch, remove } = useCart({ fetchOnMount: false });
 
-  // Fetch cart
-  const { data: cartData, isLoading } = useQuery({
-    queryKey: ['cart'],
-    queryFn: async () => {
-      const res = await api.get('/orders/cart');
-      return res.data;
-    },
-    enabled: isOpen,
-    onSuccess: (data) => {
-      setCartCount(data?.items?.length || 0);
-    },
-    onError: (error) => {
-      // 401 means user not logged in and no guest cart - that's ok
-      if (error.response?.status !== 401) {
-        console.error('Failed to fetch cart:', error);
-      }
-      setCartCount(0);
-    }
-  });
+  // Only fetch when drawer opens (avoid extra calls when cart is already cached)
+  useEffect(() => {
+    if (isOpen) fetch().catch(() => {});
+  }, [isOpen, fetch]);
 
-  // Remove from cart mutation
-  const removeFromCartMutation = useMutation({
-    mutationFn: async (accountId) => {
-      const res = await api.delete(`/orders/cart/${accountId}`);
-      return res.data;
-    },
-    onSuccess: () => {
+  // Remove from cart
+  const handleRemove = async (accountId) => {
+    try {
+      await remove(accountId);
       toast.success('Đã xóa khỏi giỏ hàng');
-      queryClient.invalidateQueries(['cart']);
-    },
-    onError: (error) => {
+    } catch (error) {
       if (error.response?.status === 401) {
         toast.error('Vui lòng đăng nhập');
         onOpenAuth?.('login');
@@ -50,7 +27,7 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
         toast.error(error.response?.data?.message || 'Không thể xóa khỏi giỏ hàng');
       }
     }
-  });
+  };
 
   // Close on escape key
   useEffect(() => {
@@ -66,10 +43,6 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
       document.body.style.overflow = '';
     };
   }, [isOpen, onClose]);
-
-  const handleRemove = (accountId) => {
-    removeFromCartMutation.mutate(accountId);
-  };
 
   const handleCheckout = () => {
     onClose();
@@ -134,7 +107,7 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
 
   if (!isOpen) return null;
 
-  const items = cartData?.items || [];
+  const items = cartData?.items || cachedItems;
   const totalAmount = items.reduce((sum, item) => sum + item.price, 0);
 
   return (
@@ -271,7 +244,7 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
                               {/* Remove Button */}
                               <motion.button
                                 onClick={() => handleRemove(item._id)}
-                                disabled={removeFromCartMutation.isPending}
+                                disabled={mutating}
                                 className="p-2 text-red-500 dark:text-red-400 hover:bg-red-500/10 dark:hover:bg-red-400/10 rounded-lg transition-colors"
                                 title="Xóa"
                                 whileHover={{ scale: 1.1 }}

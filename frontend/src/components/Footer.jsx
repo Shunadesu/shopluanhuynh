@@ -1,26 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import api from '../utils/api';
 import { FiFacebook, FiMail, FiPhone, FiMapPin, FiGlobe } from 'react-icons/fi';
+import { useSettings, useSocialLinks } from '../hooks';
 
 const Footer = () => {
   // Fetch settings for logo
-  const { data: settings } = useQuery({
-    queryKey: ['settings'],
-    queryFn: async () => {
-      const { data } = await api.get('/settings');
-      return data;
-    },
-  });
+  const { data: settings } = useSettings();
 
   // Fetch social links
-  const { data: socialLinks } = useQuery({
-    queryKey: ['social-links'],
-    queryFn: async () => {
-      const { data } = await api.get('/social-links');
-      return data;
-    },
-  });
+  const { data: socialLinks } = useSocialLinks();
 
   // Component để hiển thị icon theo platform
   const PlatformIcon = ({ platform, className = "w-5 h-5" }) => {

@@ -36,6 +36,18 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files (uploads)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Health check
+app.get('/api/health', (req, res) => {
+  console.log(`[${new Date().toISOString()}] GET /api/health hit`);
+  res.json({ status: 'OK', message: 'Server is running', timestamp: new Date().toISOString() });
+});
+
+// Debug middleware to log unmatched /api requests
+app.use('/api', (req, res, next) => {
+  console.log(`[${new Date().toISOString()}] Unmatched /api request: ${req.method} ${req.originalUrl}`);
+  next();
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
@@ -51,6 +63,12 @@ app.use('/api/admin/social-links', socialLinksRoutes);
 // Health check
 app.get('/', (req, res) => {
   res.json({ message: 'Shopluanhuynh API Server', status: 'running' });
+});
+
+// 404 fallback with logging
+app.use((req, res) => {
+  console.log(`[${new Date().toISOString()}] 404 fallback: ${req.method} ${req.originalUrl}`);
+  res.status(404).json({ message: 'Not Found', method: req.method, url: req.originalUrl });
 });
 
 // Error handling middleware

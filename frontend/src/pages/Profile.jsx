@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import api from '../utils/api';
-import { FiUser, FiMail, FiPhone, FiDollarSign, FiShoppingBag, FiCreditCard, FiKey, FiCheckCircle, FiAlertCircle, FiBox, FiTrendingUp } from 'react-icons/fi';
+import { useUserProfile } from '../hooks/useUserProfile';
+import { FiUser, FiAtSign, FiPhone, FiDollarSign, FiShoppingBag, FiCreditCard, FiKey, FiCheckCircle, FiBox, FiTrendingUp } from 'react-icons/fi';
 import SEOHead from '../components/SEOHead';
 import { ProfileSkeleton } from '../components/SkeletonLoader';
 
@@ -16,13 +15,7 @@ const TABS = [
 const Profile = () => {
   const [activeTab, setActiveTab] = useState('info');
 
-  const { data: user, isLoading } = useQuery({
-    queryKey: ['user-me'],
-    queryFn: async () => {
-      const res = await api.get('/auth/me');
-      return res.data;
-    }
-  });
+  const { data: user, loading: isLoading } = useUserProfile();
 
   if (isLoading) return <ProfileSkeleton />;
 
@@ -69,17 +62,8 @@ const Profile = () => {
             {/* Info */}
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl font-black text-slate-900 dark:text-white truncate">{user?.fullName}</h1>
-              <p className="text-slate-500 dark:text-slate-400 text-sm truncate">{user?.email}</p>
+              <p className="text-slate-500 dark:text-slate-400 text-sm truncate">@{user?.username}</p>
               <div className="flex flex-wrap items-center gap-2 mt-2">
-                {user?.isVerified ? (
-                  <span className="inline-flex items-center gap-1.5 bg-green-500/20 border border-green-500/40 text-green-400 text-xs font-semibold px-3 py-1 rounded-full">
-                    <FiCheckCircle className="w-3.5 h-3.5" /> Đã xác thực
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 bg-yellow-500/20 border border-yellow-500/40 text-yellow-400 text-xs font-semibold px-3 py-1 rounded-full">
-                    <FiAlertCircle className="w-3.5 h-3.5" /> Chưa xác thực
-                  </span>
-                )}
                 {user?.phone && (
                   <span className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium px-3 py-1 rounded-full">
                     <FiPhone className="w-3.5 h-3.5" /> {user.phone}
@@ -125,10 +109,10 @@ const Profile = () => {
             accent="bg-primary"
           />
           <StatCard
-            icon={user?.isVerified ? FiCheckCircle : FiAlertCircle}
-            label="Trạng thái"
-            value={user?.isVerified ? 'Đã xác thực' : 'Chưa xác thực'}
-            accent={user?.isVerified ? 'bg-green-600' : 'bg-yellow-600'}
+            icon={FiKey}
+            label="Vai trò"
+            value={user?.role === 'admin' ? 'Quản trị viên' : 'Thành viên'}
+            accent={user?.role === 'admin' ? 'bg-green-600' : 'bg-blue-600'}
           />
         </div>
 
@@ -161,7 +145,7 @@ const Profile = () => {
                   <div className="bg-white dark:bg-dark-light rounded-[14px] p-6 space-y-0">
                     {[
                       { icon: FiUser,       label: 'Họ tên',            value: user?.fullName,                   mono: false },
-                      { icon: FiMail,       label: 'Email',             value: user?.email,                      mono: false },
+                      { icon: FiAtSign,     label: 'Tên đăng nhập',     value: `@${user?.username}`,              mono: true  },
                       { icon: FiPhone,      label: 'Số điện thoại',     value: user?.phone || 'Chưa cập nhật',   mono: false },
                       { icon: FiShoppingBag,label: 'Tổng đơn hàng',      value: totalOrders,                      mono: true  },
                     ].map(({ icon: Icon, label, value, mono }, idx) => (

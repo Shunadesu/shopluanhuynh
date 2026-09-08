@@ -38,10 +38,157 @@
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512x512.png" />
     <link rel="icon" type="image/svg+xml" id="favicon-link" href="/favicon.svg" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
   </head>
   <body>
+    <!-- App Splash: shown only on first visit of the session, hidden by React once bootstrap data is ready -->
+    <div id="app-splash" aria-hidden="true">
+      <div class="app-splash-inner">
+        <img src="/favicon-192x192.png" alt="" width="96" height="96" class="app-splash-logo" />
+        <div class="app-splash-brand">Shopluanhuynh</div>
+        <div class="app-splash-subtitle">Đang tải dữ liệu...</div>
+        <div class="app-splash-bar"><div class="app-splash-bar-fill" id="app-splash-bar-fill"></div></div>
+      </div>
+    </div>
+
+    <!-- Splash styles: kept inline so they apply before CSS bundle loads -->
+    <style>
+      #app-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #FFFFFF;
+        transition: opacity 350ms ease, transform 350ms ease;
+        font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+      html.dark #app-splash { background: #0B0E14; }
+      #app-splash.app-splash-hide {
+        opacity: 0;
+        transform: scale(1.02);
+        pointer-events: none;
+      }
+      #app-splash.app-splash-removed { display: none !important; }
+      .app-splash-inner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+      }
+      .app-splash-logo {
+        width: 96px;
+        height: 96px;
+        display: block;
+        border-radius: 22px;
+        filter: drop-shadow(0 4px 16px rgba(249, 115, 22, 0.25));
+        animation: app-splash-pulse 1.6s ease-in-out infinite;
+      }
+      @keyframes app-splash-pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.06); opacity: 0.85; }
+      }
+      .app-splash-brand {
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        color: #0F172A;
+      }
+      html.dark .app-splash-brand { color: #F8FAFC; }
+      .app-splash-subtitle {
+        font-size: 13px;
+        font-weight: 400;
+        color: #64748B;
+      }
+      html.dark .app-splash-subtitle { color: #94A3B8; }
+      .app-splash-bar {
+        margin-top: 6px;
+        width: min(320px, 80vw);
+        height: 3px;
+        background: rgba(0, 0, 0, 0.08);
+        border-radius: 999px;
+        overflow: hidden;
+      }
+      html.dark .app-splash-bar { background: rgba(255, 255, 255, 0.12); }
+      .app-splash-bar-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #FF6D00, #FFAB40);
+        border-radius: 999px;
+        transition: width 350ms ease-out;
+      }
+    </style>
+
+    <!-- Splash boot script: drives progress on DOM/load milestones and exposes helpers for React -->
+    <script>
+      (function () {
+        try {
+          // Skip the splash entirely on subsequent visits in this browser session
+          if (sessionStorage.getItem('app_splash_seen') === '1') {
+            var el = document.getElementById('app-splash');
+            if (el) el.classList.add('app-splash-removed');
+            // Still expose no-op helpers so React can call safely
+            window.__splashSetProgress = function () {};
+            window.__splashHide = function () {};
+            return;
+          }
+
+          var fill = document.getElementById('app-splash-bar-fill');
+          var splash = document.getElementById('app-splash');
+          var current = 0;
+
+          function setProgress(p) {
+            if (!fill || !splash) return;
+            if (splash.classList.contains('app-splash-removed')) return;
+            current = Math.max(current, Math.min(100, p));
+            fill.style.width = current + '%';
+          }
+
+          window.__splashSetProgress = setProgress;
+
+          window.__splashHide = function () {
+            if (!splash) return;
+            if (splash.classList.contains('app-splash-removed')) return;
+            // Jump to 100% briefly, then fade out, then remove from layout
+            fill.style.width = '100%';
+            splash.classList.add('app-splash-hide');
+            try { sessionStorage.setItem('app_splash_seen', '1'); } catch (e) {}
+            setTimeout(function () {
+              if (splash) splash.classList.add('app-splash-removed');
+            }, 400);
+          };
+
+          // Handle case where document is already past 'interactive' by the time script runs
+          var ready = document.readyState;
+          if (ready === 'interactive' || ready === 'complete') {
+            setProgress(25);
+            if (ready === 'complete') setProgress(55);
+          }
+
+          document.addEventListener('DOMContentLoaded', function () {
+            requestAnimationFrame(function () { setProgress(25); });
+          });
+
+          window.addEventListener('load', function () {
+            requestAnimationFrame(function () { setProgress(55); });
+          });
+
+          // Safety: hide after 5s no matter what, so splash never gets stuck
+          setTimeout(function () {
+            try { window.__splashHide(); } catch (e) {}
+          }, 5000);
+        } catch (e) {
+          // If anything explodes, hide immediately so the UI is usable
+          var s = document.getElementById('app-splash');
+          if (s) s.classList.add('app-splash-removed');
+        }
+      })();
+    </script>
+
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

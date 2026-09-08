@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import api from '../utils/api';
+import { useOrders } from '../hooks/useOrders';
 import SEOHead from '../components/SEOHead';
 import { OrdersSkeleton } from '../components/SkeletonLoader';
 import {
@@ -52,13 +51,7 @@ const StatusBadge = ({ status }) => {
 const Orders = () => {
   const [activeTab, setActiveTab] = useState('all');
 
-  const { data: orders, isLoading } = useQuery({
-    queryKey: ['orders'],
-    queryFn: async () => {
-      const res = await api.get('/orders');
-      return res.data;
-    }
-  });
+  const { data: orders, loading: isLoading } = useOrders();
 
   if (isLoading) return <OrdersSkeleton />;
 

@@ -16,7 +16,7 @@ const router = express.Router();
 // ==================== DASHBOARD ====================
 
 // Get dashboard stats
-router.get('/dashboard/stats', adminAuth, async (req, res) => {
+const getDashboardStats = async (req, res) => {
   try {
     const totalRevenue = await Order.aggregate([
       { $match: { status: 'completed' } },
@@ -32,11 +32,11 @@ router.get('/dashboard/stats', adminAuth, async (req, res) => {
     today.setHours(0, 0, 0, 0);
 
     const todayRevenue = await Order.aggregate([
-      { 
-        $match: { 
+      {
+        $match: {
           status: 'completed',
           createdAt: { $gte: today }
-        } 
+        }
       },
       { $group: { _id: null, total: { $sum: '$totalAmount' } } }
     ]);
@@ -58,7 +58,10 @@ router.get('/dashboard/stats', adminAuth, async (req, res) => {
     console.error('Get dashboard stats error:', error);
     res.status(500).json({ message: 'Lỗi server', error: error.message });
   }
-});
+};
+
+router.get('/dashboard/stats', adminAuth, getDashboardStats);
+router.get('/stats', adminAuth, getDashboardStats);
 
 // Get revenue chart data
 router.get('/dashboard/revenue-chart', adminAuth, async (req, res) => {
@@ -138,7 +141,7 @@ router.get('/dashboard/top-categories', adminAuth, async (req, res) => {
 router.get('/dashboard/recent-orders', adminAuth, async (req, res) => {
   try {
     const recentOrders = await Order.find()
-      .populate('userId', 'fullName email')
+      .populate('userId', 'fullName username')
       .sort({ createdAt: -1 })
       .limit(10);
 
@@ -224,7 +227,7 @@ router.get('/accounts', adminAuth, async (req, res) => {
 
     const accounts = await GameAccount.find(query)
       .populate('categoryId', 'name')
-      .populate('soldTo', 'fullName email')
+      .populate('soldTo', 'fullName username')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
@@ -408,7 +411,7 @@ router.get('/orders', adminAuth, async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const orders = await Order.find(query)
-      .populate('userId', 'fullName email')
+      .populate('userId', 'fullName username')
       .populate({
         path: 'items.accountId',
         populate: { path: 'categoryId', select: 'name' }
@@ -446,7 +449,7 @@ router.get('/deposits', adminAuth, async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const deposits = await DepositRequest.find(query)
-      .populate('userId', 'fullName email')
+      .populate('userId', 'fullName username')
       .populate('bankAccountId', 'bankName accountNumber identifier')
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -599,7 +602,7 @@ router.get('/users', adminAuth, async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const users = await User.find({ role: 'user' })
-      .select('-password -otp')
+      .select('-password')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
@@ -827,6 +830,38 @@ router.put('/logo', adminAuth, async (req, res) => {
 
     res.json({ message: 'Đã cập nhật logo', logo });
   } catch (error) {
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
+// Bulk upsert settings (PUT /api/admin/settings) — accepts an object of { key: value }
+router.put('/settings', adminAuth, async (req, res) => {
+  try {
+    const body = req.body || {};
+    const entries = Object.entries(body).filter(([, v]) => v !== undefined && v !== null);
+
+    if (entries.length === 0) {
+      return res.json({ message: 'Không có dữ liệu để cập nhật', settings: [] });
+    }
+
+    const results = [];
+    for (const [key, value] of entries) {
+      const setting = await SiteSetting.findOneAndUpdate(
+        { key },
+        {
+          key,
+          value: typeof value === 'object' ? value : String(value),
+          type: typeof value === 'object' ? 'object' : 'text',
+          updatedAt: new Date(),
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+      results.push(setting);
+    }
+
+    res.json({ message: 'Đã cập nhật cài đặt', settings: results });
+  } catch (error) {
+    console.error('Bulk update settings error:', error);
     res.status(500).json({ message: 'Lỗi server', error: error.message });
   }
 });

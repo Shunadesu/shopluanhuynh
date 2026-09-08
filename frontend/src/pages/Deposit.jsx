@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import api from '../utils/api';
 import { useAuthStore } from '../store/authStore';
+import { useDepositStore } from '../store/data/depositStore';
+import { useBankAccounts, useUserProfile } from '../hooks';
+import api from '../utils/api';
 import { DepositSkeleton } from '../components/SkeletonLoader';
 import { FiDollarSign, FiCopy, FiCheck, FiCreditCard, FiPhone } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -48,70 +49,26 @@ const AmountChip = ({ amount, label, isSelected, onClick }) => (
 );
 
 const Deposit = ({ onOpenAuth }) => {
-  const queryClient = useQueryClient();
   const { isAuthenticated, user: authUser } = useAuthStore();
   const [amount, setAmount] = useState('');
   const [selectedBank, setSelectedBank] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   // Fetch bank accounts
-  const { data: bankAccounts, isLoading: banksLoading } = useQuery({
-    queryKey: ['bank-accounts'],
-    queryFn: async () => {
-      const res = await api.get('/deposits/bank-accounts');
-      return res.data;
-    }
-  });
+  const { data: bankAccounts, loading: banksLoading } = useBankAccounts();
 
   // Fetch user info - only when authenticated
-  const { data: user, isLoading: userLoading } = useQuery({
-    queryKey: ['user-me'],
-    queryFn: async () => {
-      const res = await api.get('/auth/me');
-      return res.data;
-    },
-    enabled: isAuthenticated,
-    staleTime: 30000,
-  });
+  const { data: user, loading: userLoading } = useUserProfile({ enabled: isAuthenticated });
 
-  // Create deposit request mutation
-  const depositMutation = useMutation({
-    mutationFn: async (data) => {
-      const res = await api.post('/deposits/request', data);
-      return res.data;
-    },
-    onSuccess: () => {
-      toast.success('Yêu cầu nạp tiền đã được gửi!');
-      setAmount('');
-      setSelectedBank(null);
-      queryClient.invalidateQueries(['deposit-requests']);
-    },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Không thể tạo yêu cầu nạp tiền');
-    }
-  });
-
-  const handleAmountSelect = (value) => {
-    setAmount(value.toString());
-  };
-
-  const handleCustomAmount = (e) => {
-    const value = e.target.value;
-    // Only allow numbers and ensure minimum
-    if (value === '' || /^\d+$/.test(value)) {
-      setAmount(value);
-    }
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Check if not authenticated
+
     if (!isAuthenticated) {
       window.dispatchEvent(new CustomEvent('openAuthDrawer', { detail: { view: 'login' } }));
       toast.error('Vui lòng đăng nhập để nạp tiền');
       return;
     }
-    
+
     const numericAmount = parseFloat(amount);
     if (!amount || numericAmount < 10000) {
       toast.error('Số tiền nạp tối thiểu là 10,000đ');
@@ -123,11 +80,33 @@ const Deposit = ({ onOpenAuth }) => {
       return;
     }
 
-    depositMutation.mutate({
-      amount: numericAmount,
-      bankAccountId: selectedBank._id,
-      transferNote: `${user?.email} ${amount}`
-    });
+    setSubmitting(true);
+    try {
+      const res = await api.post('/deposits/request', {
+        amount: numericAmount,
+        bankAccountId: selectedBank._id,
+        transferNote: `${user?.username} ${amount}`,
+      });
+      toast.success('Yêu cầu nạp tiền đã được gửi!');
+      useDepositStore.getState().addMyRequest(res.data);
+      setAmount('');
+      setSelectedBank(null);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Không thể tạo yêu cầu nạp tiền');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleAmountSelect = (value) => {
+    setAmount(value.toString());
+  };
+
+  const handleCustomAmount = (e) => {
+    const value = e.target.value;
+    if (value === '' || /^\d+$/.test(value)) {
+      setAmount(value);
+    }
   };
 
   const copyToClipboard = (text, label) => {
@@ -377,10 +356,10 @@ const Deposit = ({ onOpenAuth }) => {
                     <p className="text-slate-500 dark:text-slate-400 text-xs mb-1">Nội dung chuyển khoản</p>
                     <div className="flex items-center justify-between">
                       <p className="text-slate-900 dark:text-white font-medium text-sm break-all">
-                        {user?.email} {amount}
+                        {user?.username} {amount}
                       </p>
                       <button
-                        onClick={() => copyToClipboard(`${user?.email} ${amount}`, 'nội dung')}
+                        onClick={() => copyToClipboard(`${user?.username} ${amount}`, 'nội dung')}
                         className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors shrink-0 ml-2"
                         title="Copy nội dung"
                       >
@@ -418,10 +397,10 @@ const Deposit = ({ onOpenAuth }) => {
                   {/* Confirm Button */}
                   <button
                     onClick={handleSubmit}
-                    disabled={depositMutation.isPending}
+                    disabled={submitting}
                     className="btn-primary w-full py-3 text-base font-semibold"
                   >
-                    {depositMutation.isPending ? (
+                    {submitting ? (
                       <span className="flex items-center justify-center gap-2">
                         <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />

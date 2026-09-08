@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import api from '../utils/api';
 import Loading from '../components/Loading';
+import { usePurchasedAccounts } from '../hooks/useOrders';
 import { FiCopy, FiEye, FiEyeOff, FiShoppingBag, FiCalendar, FiTag, FiServer } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -11,14 +10,7 @@ import { vi } from 'date-fns/locale';
 const PurchasedAccounts = () => {
   const [showPasswords, setShowPasswords] = useState({});
 
-  // Fetch purchased accounts
-  const { data: accounts, isLoading } = useQuery({
-    queryKey: ['purchased-accounts'],
-    queryFn: async () => {
-      const res = await api.get('/orders/purchased-accounts');
-      return res.data;
-    }
-  });
+  const { data: accounts, loading: isLoading } = usePurchasedAccounts();
 
   const copyToClipboard = (text, label) => {
     navigator.clipboard.writeText(text);

@@ -1,10 +1,9 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../store/authStore';
 import { useCartStore } from '../store/cartStore';
 import { useThemeStore } from '../store/themeStore';
-import api from '../utils/api';
+import { useSettings } from '../hooks/useSettings';
 import AuthDrawer from './AuthDrawer';
 import CartDrawer from './CartDrawer';
 import { FiShoppingCart, FiUser, FiLogOut, FiMenu, FiSun, FiMoon } from 'react-icons/fi';
@@ -39,13 +38,7 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
   }, []);
 
   // Fetch settings for logo
-  const { data: settings } = useQuery({
-    queryKey: ['settings'],
-    queryFn: async () => {
-      const { data } = await api.get('/settings');
-      return data;
-    },
-  });
+  const { data: settings } = useSettings();
 
   // Close menus on route change
   useEffect(() => {

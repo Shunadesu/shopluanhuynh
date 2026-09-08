@@ -1,66 +1,34 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import api from '../utils/api';
 import { useCartStore } from '../store/cartStore';
 import { useAuthStore } from '../store/authStore';
+import { useCart } from '../hooks/useCart';
 import Loading from '../components/Loading';
 import { FiTrash2, FiShoppingBag } from 'react-icons/fi';
 import SEOHead from '../components/SEOHead';
 
 const Cart = ({ onOpenAuth }) => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { setCartCount } = useCartStore();
   const { isAuthenticated } = useAuthStore();
+  const { cartData, loading: isLoading, items, remove } = useCart();
 
-  // Fetch cart
-  const { data: cartData, isLoading } = useQuery({
-    queryKey: ['cart'],
-    queryFn: async () => {
-      const res = await api.get('/orders/cart');
-      return res.data;
-    },
-    onSuccess: (data) => {
-      setCartCount(data?.items?.length || 0);
-    },
-    onError: (error) => {
-      if (error.response?.status === 401) {
-        // User not logged in and no guest cart - that's ok
-        setCartCount(0);
-      }
-    }
-  });
-
-  // Remove from cart mutation
-  const removeFromCartMutation = useMutation({
-    mutationFn: async (accountId) => {
-      const res = await api.delete(`/orders/cart/${accountId}`);
-      return res.data;
-    },
-    onSuccess: () => {
-      toast.success('Đã xóa khỏi giỏ hàng');
-      queryClient.invalidateQueries(['cart']);
-    },
-    onError: (error) => {
-      if (error.response?.status === 401) {
-        toast.error('Vui lòng đăng nhập');
-        onOpenAuth?.('login');
-      } else {
-        toast.error(error.response?.data?.message || 'Không thể xóa khỏi giỏ hàng');
-      }
-    }
-  });
-
-  const handleRemove = (accountId) => {
+  const handleRemove = async (accountId) => {
     if (window.confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
-      removeFromCartMutation.mutate(accountId);
+      try {
+        await remove(accountId);
+        toast.success('Đã xóa khỏi giỏ hàng');
+      } catch (error) {
+        if (error.response?.status === 401) {
+          toast.error('Vui lòng đăng nhập');
+          onOpenAuth?.('login');
+        } else {
+          toast.error(error.response?.data?.message || 'Không thể xóa khỏi giỏ hàng');
+        }
+      }
     }
   };
 
   if (isLoading) return <Loading />;
-
-  const items = cartData?.items || [];
   const totalAmount = items.reduce((sum, item) => sum + item.price, 0);
 
   if (items.length === 0) {
@@ -146,7 +114,7 @@ const Cart = ({ onOpenAuth }) => {
                       {/* Remove Button */}
                       <button
                         onClick={() => handleRemove(item._id)}
-                        disabled={removeFromCartMutation.isPending}
+                        disabled={false}
                         className="p-2 text-red-500 dark:text-red-400 hover:bg-red-500/10 dark:hover:bg-red-400/10 rounded-lg transition-colors"
                         title="Xóa"
                       >

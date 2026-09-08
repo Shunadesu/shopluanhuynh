@@ -34,6 +34,18 @@ app.use(express.urlencoded({ extended: true }));
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Health check (must be before any route mounts that might match /api/*)
+app.get('/api/health', (req, res) => {
+  console.log(`[${new Date().toISOString()}] GET /api/health hit`);
+  res.json({ status: 'OK', message: 'Server is running', timestamp: new Date().toISOString() });
+});
+
+// Debug middleware to log unmatched /api requests
+app.use('/api', (req, res, next) => {
+  console.log(`[${new Date().toISOString()}] Unmatched /api request: ${req.method} ${req.originalUrl}`);
+  next();
+});
+
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('✅ Connected to MongoDB'))
@@ -50,11 +62,6 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/', sitemapRoutes);
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Server is running' });
-});
-
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -62,6 +69,12 @@ app.use((err, req, res, next) => {
     message: err.message || 'Internal Server Error',
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
+});
+
+// 404 fallback with logging
+app.use((req, res) => {
+  console.log(`[${new Date().toISOString()}] 404 fallback: ${req.method} ${req.originalUrl}`);
+  res.status(404).json({ message: 'Not Found', method: req.method, url: req.originalUrl });
 });
 
 const PORT = process.env.PORT || 9003;

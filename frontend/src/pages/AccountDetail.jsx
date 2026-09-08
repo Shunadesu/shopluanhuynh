@@ -1,9 +1,8 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import api from '../utils/api';
 import { useAuthStore } from '../store/authStore';
 import { useCartStore } from '../store/cartStore';
+import { useAccountDetail, useAccountList } from '../hooks';
 import { FiShoppingCart, FiTag, FiImage, FiChevronDown, FiChevronUp, FiZoomIn, FiX } from 'react-icons/fi';
 import { useState, useEffect, useMemo } from 'react';
 import SEOHead from '../components/SEOHead';
@@ -21,20 +20,14 @@ const resolveUrl = (img) =>
 const AccountDetail = ({ onOpenAuth }) => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { isAuthenticated } = useAuthStore();
-  const { incrementCart } = useCartStore();
+  const incrementCart = useCartStore((s) => s.incrementCart);
   const [selectedImage, setSelectedImage] = useState(0);
   const [galleryOpen, setGalleryOpen] = useState(true);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [addToCartPending, setAddToCartPending] = useState(false);
 
-  const { data: account, isLoading } = useQuery({
-    queryKey: ['account', id],
-    queryFn: async () => {
-      const res = await api.get(`/accounts/${id}`);
-      return res.data;
-    }
-  });
+  const { data: account, isLoading } = useAccountDetail(id);
 
   // ESC to close lightbox + lock body scroll
   useEffect(() => {
@@ -48,57 +41,43 @@ const AccountDetail = ({ onOpenAuth }) => {
     };
   }, [lightboxOpen]);
 
-  const addToCartMutation = useMutation({
-    mutationFn: async () => {
-      const res = await api.post('/orders/cart/add', { accountId: id });
-      return res.data;
-    },
-    onSuccess: () => {
-      incrementCart();
-      toast.success('Đã thêm vào giỏ hàng');
-      queryClient.invalidateQueries(['cart']);
-    },
-    onError: (error) => {
-      if (error.response?.status === 401) {
-        toast.error('Vui lòng đăng nhập để thêm vào giỏ hàng');
-        onOpenAuth?.('login');
-      } else {
-        toast.error(error.response?.data?.message || 'Không thể thêm vào giỏ hàng');
-      }
-    }
-  });
-
   // ─── Related / Random Accounts ───────────────────────────
-  const { data: relatedData } = useQuery({
-    queryKey: ['related-accounts'],
-    queryFn: async () => {
-      const res = await api.get('/accounts?limit=20');
-      return res.data;
-    },
-    enabled: !!account,
-  });
+  const { accounts: allRelated } = useAccountList({ limit: 20 });
 
   const relatedAccounts = useMemo(() => {
-    const all = (relatedData?.accounts || []).filter(
+    const all = (allRelated || []).filter(
       (a) => a._id !== account?._id && a.status === 'available',
     );
-    // Fisher-Yates shuffle
     for (let i = all.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [all[i], all[j]] = [all[j], all[i]];
     }
     return all.slice(0, 4);
-  }, [relatedData, account?._id]);
+  }, [allRelated, account?._id]);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (account.status !== 'available') {
       toast.error('Tài khoản không còn khả dụng');
       return;
     }
-    addToCartMutation.mutate();
+    setAddToCartPending(true);
+    try {
+      await useCartStore.getState().addToCartAdd(id);
+      incrementCart();
+      toast.success('Đã thêm vào giỏ hàng');
+    } catch (error) {
+      if (error?.__skipped || error.response?.status === 401) {
+        toast.error('Vui lòng đăng nhập để thêm vào giỏ hàng');
+        onOpenAuth?.('login');
+      } else {
+        toast.error(error.response?.data?.message || 'Không thể thêm vào giỏ hàng');
+      }
+    } finally {
+      setAddToCartPending(false);
+    }
   };
 
-  const handleBuyNow = () => {
+  const handleBuyNow = async () => {
     if (account.status !== 'available') {
       toast.error('Tài khoản không còn khả dụng');
       return;
@@ -109,9 +88,16 @@ const AccountDetail = ({ onOpenAuth }) => {
       sessionStorage.setItem('buyNowAccount', JSON.stringify({ accountId: id }));
       return;
     }
-    addToCartMutation.mutate(undefined, {
-      onSuccess: () => navigate('/cart'),
-    });
+    try {
+      await useCartStore.getState().addToCartAdd(id);
+      navigate('/cart');
+    } catch (error) {
+      if (error?.__skipped || error.response?.status === 401) {
+        toast.error('Vui lòng đăng nhập để mua ngay');
+      } else {
+        toast.error(error.response?.data?.message || 'Không thể xử lý');
+      }
+    }
   };
 
   if (isLoading) return <AccountDetailSkeleton />;
@@ -315,19 +301,19 @@ const AccountDetail = ({ onOpenAuth }) => {
                     <>
                       <button
                         onClick={handleAddToCart}
-                        disabled={addToCartMutation.isPending}
+                        disabled={addToCartPending}
                         className="btn-primary flex-1 flex items-center justify-center gap-2"
                       >
                         <FiShoppingCart />
                         <span>
-                          {addToCartMutation.isPending
+                          {addToCartPending
                             ? 'Đang xử lý...'
                             : 'Thêm vào giỏ hàng'}
                         </span>
                       </button>
                       <button
                         onClick={handleBuyNow}
-                        disabled={addToCartMutation.isPending}
+                        disabled={addToCartPending}
                         className="btn-secondary flex-1"
                       >
                         Mua ngay

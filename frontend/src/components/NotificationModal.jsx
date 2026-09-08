@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { FiX } from 'react-icons/fi';
-import api from '../utils/api';
+import { useNotifications } from '../hooks';
 
 const STORAGE_KEY = 'notification_dismissed';
 const STORAGE_TIME_KEY = 'notification_dismissed_time';
@@ -11,14 +10,7 @@ export default function NotificationModal() {
   const [currentNotification, setCurrentNotification] = useState(null);
 
   // Fetch active notifications
-  const { data: notifications } = useQuery({
-    queryKey: ['notifications'],
-    queryFn: async () => {
-      const res = await api.get('/settings/notifications');
-      return res.data;
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+  const { data: notifications } = useNotifications();
 
   useEffect(() => {
     if (notifications && notifications.length > 0) {

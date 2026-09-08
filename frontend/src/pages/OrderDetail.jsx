@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
-import api from '../utils/api';
+import { useOrderDetail } from '../hooks/useOrders';
 import SEOHead from '../components/SEOHead';
 import { OrderDetailSkeleton } from '../components/SkeletonLoader';
 import {
@@ -57,13 +56,7 @@ const OrderDetail = () => {
   const { id } = useParams();
   const [showPasswords, setShowPasswords] = useState({});
 
-  const { data: order, isLoading } = useQuery({
-    queryKey: ['order', id],
-    queryFn: async () => {
-      const res = await api.get(`/orders/${id}`);
-      return res.data;
-    }
-  });
+  const { data: order, loading: isLoading } = useOrderDetail(id);
 
   const copyToClipboard = (text, label) => {
     navigator.clipboard.writeText(text).then(() => {

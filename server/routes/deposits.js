@@ -1,6 +1,7 @@
 import express from 'express';
 import DepositRequest from '../models/DepositRequest.js';
 import BankAccount from '../models/BankAccount.js';
+import User from '../models/User.js';
 import { auth } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -63,6 +64,60 @@ router.get('/my-requests', auth, async (req, res) => {
     res.json(deposits);
   } catch (error) {
     console.error('Get my deposits error:', error);
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
+// Get top depositors of the current month (public)
+router.get('/top-depositors', async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit, 10) || 10, 50);
+
+    // Start of current month
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const topDepositors = await DepositRequest.aggregate([
+      {
+        $match: {
+          status: 'approved',
+          createdAt: { $gte: startOfMonth }
+        }
+      },
+      {
+        $group: {
+          _id: '$userId',
+          totalAmount: { $sum: '$amount' },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { totalAmount: -1 } },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: '$_id',
+          totalAmount: 1,
+          count: 1,
+          fullName: { $ifNull: ['$user.fullName', 'Người dùng'] },
+          username: '$user.username',
+          avatar: '$user.avatar'
+        }
+      }
+    ]);
+
+    res.json(topDepositors);
+  } catch (error) {
+    console.error('Get top depositors error:', error);
     res.status(500).json({ message: 'Lỗi server', error: error.message });
   }
 });

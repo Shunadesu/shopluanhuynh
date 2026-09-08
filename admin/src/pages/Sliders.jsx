@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
-import { FiPlus, FiEdit2, FiTrash2, FiImage, FiExternalLink } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiImage, FiExternalLink, FiLayers } from 'react-icons/fi';
 import UploadImage from '../components/UploadImage';
 
 export default function Sliders() {
@@ -16,6 +16,7 @@ export default function Sliders() {
     link: '',
     order: 0,
     isActive: true,
+    displayMode: 'slider',
   });
 
   const { data: sliders, isLoading } = useQuery({
@@ -71,6 +72,7 @@ export default function Sliders() {
         link: slider.link || '',
         order: slider.order || 0,
         isActive: slider.isActive ?? true,
+        displayMode: slider.displayMode || 'slider',
       });
     } else {
       setEditingSlider(null);
@@ -81,9 +83,23 @@ export default function Sliders() {
         link: '',
         order: 0,
         isActive: true,
+        displayMode: 'slider',
       });
     }
     setIsModalOpen(true);
+  };
+
+  const handleQuickToggleDisplayMode = async (slider) => {
+    const next = slider.displayMode === 'stack' ? 'slider' : 'stack';
+    const label = next === 'stack' ? 'Stack (xếp dọc)' : 'Slider (trượt qua lại)';
+    if (!window.confirm(`Chuyển sang chế độ "${label}"?`)) return;
+    try {
+      await api.put(`/admin/sliders/${slider._id}`, { displayMode: next });
+      queryClient.invalidateQueries(['sliders']);
+      toast.success('Đã đổi kiểu hiển thị');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
+    }
   };
 
   const closeModal = () => {
@@ -184,6 +200,7 @@ export default function Sliders() {
                 <th className="text-left px-4 py-3 text-slate-400 font-medium">Tiêu đề</th>
                 <th className="text-left px-4 py-3 text-slate-400 font-medium hidden md:table-cell">Phụ đề</th>
                 <th className="text-center px-4 py-3 text-slate-400 font-medium">Thứ tự</th>
+                <th className="text-center px-4 py-3 text-slate-400 font-medium">Kiểu hiển thị</th>
                 <th className="text-center px-4 py-3 text-slate-400 font-medium">Trạng thái</th>
                 <th className="text-center px-4 py-3 text-slate-400 font-medium">Hành động</th>
               </tr>
@@ -232,6 +249,18 @@ export default function Sliders() {
                   <td className="px-4 py-3 text-center">
                     <span className="badge badge-info">#{slider.order}</span>
                   </td>
+                  {/* Display Mode */}
+                  <td className="px-4 py-3 text-center">
+                    <span
+                      className={`badge ${
+                        slider.displayMode === 'stack'
+                          ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+                          : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                      }`}
+                    >
+                      {slider.displayMode === 'stack' ? 'Stack' : 'Slider'}
+                    </span>
+                  </td>
                   {/* Status */}
                   <td className="px-4 py-3 text-center">
                     <span className={`badge ${slider.isActive ? 'badge-success' : 'badge-danger'}`}>
@@ -241,6 +270,13 @@ export default function Sliders() {
                   {/* Actions */}
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => handleQuickToggleDisplayMode(slider)}
+                        className="p-2 rounded hover:bg-purple-500/20 text-slate-400 hover:text-purple-400 transition-all"
+                        title={slider.displayMode === 'stack' ? 'Chuyển sang Slider' : 'Chuyển sang Stack'}
+                      >
+                        <FiLayers size={16} />
+                      </button>
                       <button
                         onClick={() => openModal(slider)}
                         className="p-2 rounded hover:bg-cyan-500/20 text-slate-400 hover:text-cyan-400 transition-all"
@@ -345,6 +381,24 @@ export default function Sliders() {
                     <option value="false">Inactive</option>
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  <FiLayers className="inline mr-2" />
+                  Kiểu hiển thị
+                </label>
+                <select
+                  value={formData.displayMode}
+                  onChange={(e) => setFormData({ ...formData, displayMode: e.target.value })}
+                  className="input-field"
+                >
+                  <option value="slider">Slider (trượt qua lại như hiện tại)</option>
+                  <option value="stack">Stack (xếp dọc, hiển thị tuần tự)</option>
+                </select>
+                <p className="text-slate-500 text-xs mt-1">
+                  Stack: hiển thị ảnh nối tiếp nhau theo thứ tự, full width, không Swiper.
+                </p>
               </div>
 
               <div className="flex gap-2 pt-2">

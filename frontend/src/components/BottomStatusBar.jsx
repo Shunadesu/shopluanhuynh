@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { FiHome, FiUser, FiCreditCard, FiUserCheck } from 'react-icons/fi';
 import api from '../utils/api';
 import { useAuthStore } from '../store/authStore';
+import { useTopDepositors } from '../hooks/useDeposits';
 
 // Mock data for when there are no real deposits - full names
 const MOCK_TOP_DEPOSITORS = [
@@ -25,9 +26,9 @@ const MOCK_TOP_DEPOSITORS = [
 
 const BottomStatusBar = () => {
   const [isOnline, setIsOnline] = useState(false);
-  const [topDepositors, setTopDepositors] = useState([]);
   const location = useLocation();
   const { isAuthenticated, user } = useAuthStore();
+  const { data: depositorsData } = useTopDepositors();
 
   // Check API connection
   useEffect(() => {
@@ -47,46 +48,25 @@ const BottomStatusBar = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch top depositors
-  useEffect(() => {
-    const fetchTopDepositors = async () => {
-      try {
-        const res = await api.get('/deposits/top-depositors');
-        const realDepositors = res.data.map(depositor => ({
-          ...depositor,
-          isMock: false
-        }));
+  // Merge real depositors with mock data, sort, take top 10
+  const topDepositors = useMemo(() => {
+    const realDepositors = (depositorsData || []).map(d => ({ ...d, isMock: false }));
+    const allDepositors = [...realDepositors];
 
-        // Merge real data with mock data
-        // Real users come first, then mock data
-        const allDepositors = [...realDepositors];
-        
-        // Add mock data if we don't have enough
-        MOCK_TOP_DEPOSITORS.forEach(mock => {
-          if (allDepositors.length < 10) {
-            // Check if this mock amount already exists in real data
-            const exists = allDepositors.some(
-              d => !d.isMock && d.totalAmount === mock.totalAmount
-            );
-            if (!exists) {
-              allDepositors.push(mock);
-            }
-          }
-        });
-
-        // Sort by amount descending
-        allDepositors.sort((a, b) => b.totalAmount - a.totalAmount);
-
-        // Take only top 10
-        setTopDepositors(allDepositors.slice(0, 10));
-      } catch (error) {
-        // On error, just use mock data
-        setTopDepositors(MOCK_TOP_DEPOSITORS.slice(0, 10));
+    MOCK_TOP_DEPOSITORS.forEach(mock => {
+      if (allDepositors.length < 10) {
+        const exists = allDepositors.some(
+          d => !d.isMock && d.totalAmount === mock.totalAmount
+        );
+        if (!exists) {
+          allDepositors.push(mock);
+        }
       }
-    };
+    });
 
-    fetchTopDepositors();
-  }, []);
+    allDepositors.sort((a, b) => b.totalAmount - a.totalAmount);
+    return allDepositors.slice(0, 10);
+  }, [depositorsData]);
 
   // Format currency
   const formatCurrency = (amount) => {

@@ -1,11 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
-import api from '../utils/api';
 import { useAuthStore } from '../store/authStore';
 import { useCartStore } from '../store/cartStore';
+import { useSliders, useCategories, useAccountList } from '../hooks';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination } from 'swiper/modules';
 import 'swiper/css';
@@ -351,9 +350,8 @@ const CategoryAccountSection = ({ category, accounts, onAddToCart, onBuyNow, add
 
 const Home = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { isAuthenticated } = useAuthStore();
-  const { setCartCount, incrementCart } = useCartStore();
+  const incrementCart = useCartStore((s) => s.incrementCart);
   const [scrollY, setScrollY] = useState(0);
 
   // Track scroll position for parallax
@@ -366,86 +364,61 @@ const Home = () => {
   }, []);
 
   // Fetch sliders
-  const { data: sliders } = useQuery({
-    queryKey: ['sliders'],
-    queryFn: async () => {
-      const res = await api.get('/settings/sliders');
-      return res.data;
-    }
-  });
+  const { data: sliders } = useSliders();
 
   // Fetch categories
-  const { data: categories, isLoading: categoriesLoading } = useQuery({
-    queryKey: ['categories'],
-    queryFn: async () => {
-      const res = await api.get('/categories');
-      return res.data;
-    }
-  });
+  const { data: categories, loading: categoriesLoading } = useCategories();
 
   // Fetch all accounts (for grouping by category)
-  const { data: allAccounts, isLoading: accountsLoading } = useQuery({
-    queryKey: ['all-accounts'],
-    queryFn: async () => {
-      const res = await api.get('/accounts?limit=100');
-      return res.data.accounts;
-    }
-  });
+  const { accounts: allAccounts, loading: accountsLoading } = useAccountList({ limit: 100 });
 
   // Fetch featured accounts (limit 8)
-  const { data: featuredAccounts } = useQuery({
-    queryKey: ['featured-accounts'],
-    queryFn: async () => {
-      const res = await api.get('/accounts?limit=8');
-      return res.data.accounts;
-    }
-  });
+  const { accounts: featuredAccounts } = useAccountList({ limit: 8 });
 
-  // Add to cart mutation
-  const addToCartMutation = useMutation({
-    mutationFn: async (accountId) => {
-      const res = await api.post('/orders/cart', { accountId });
-      return res.data;
-    },
-    onSuccess: (data) => {
+  // Add to cart (via store)
+  const [addToCartPending, setAddToCartPending] = useState(false);
+
+  const handleAddToCart = async (e, accountId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setAddToCartPending(true);
+    try {
+      const data = await useCartStore.getState().addToCart(accountId);
       toast.success('Đã thêm vào giỏ hàng');
       incrementCart();
-      queryClient.invalidateQueries(['cart']);
-      setCartCount(data?.items?.length || 0);
-    },
-    onError: (error) => {
-      if (error.response?.status === 401) {
+      useCartStore.setState({ cartCount: data?.items?.length || 0 });
+    } catch (error) {
+      if (error?.__skipped || error.response?.status === 401) {
         toast.error('Vui lòng đăng nhập để thêm vào giỏ hàng');
       } else {
         toast.error(error.response?.data?.message || 'Không thể thêm vào giỏ hàng');
       }
+    } finally {
+      setAddToCartPending(false);
     }
-  });
-
-  // Handle add to cart
-  const handleAddToCart = (e, accountId) => {
-    e.preventDefault();
-    e.stopPropagation();
-    addToCartMutation.mutate(accountId);
   };
 
   // Handle buy now
-  const handleBuyNow = (e, account) => {
+  const handleBuyNow = async (e, account) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (!isAuthenticated) {
       window.dispatchEvent(new CustomEvent('openAuthDrawer', { detail: { view: 'login' } }));
       sessionStorage.setItem('buyNowAccount', JSON.stringify(account));
       return;
     }
-    
-    api.post('/orders/cart/add', { accountId: account._id }).then(() => {
-      queryClient.invalidateQueries(['cart']);
+
+    try {
+      await useCartStore.getState().addToCartAdd(account._id);
       navigate('/checkout');
-    }).catch((error) => {
-      toast.error(error.response?.data?.message || 'Không thể xử lý');
-    });
+    } catch (error) {
+      if (error?.__skipped || error.response?.status === 401) {
+        toast.error('Vui lòng đăng nhập để mua ngay');
+      } else {
+        toast.error(error.response?.data?.message || 'Không thể xử lý');
+      }
+    }
   };
 
   // Determine data to display
@@ -453,8 +426,8 @@ const Home = () => {
   const showCategoriesSkeleton = categoriesLoading && categories?.length === undefined;
 
   const displayAllAccounts = allAccounts?.length > 0 ? allAccounts : MOCK_ACCOUNTS;
-  const displayFeaturedAccounts = featuredAccounts?.length > 0 
-    ? featuredAccounts.slice(0, 8) 
+  const displayFeaturedAccounts = featuredAccounts?.length > 0
+    ? featuredAccounts.slice(0, 8)
     : MOCK_ACCOUNTS.slice(0, 8);
   const showAccountsSkeleton = accountsLoading && allAccounts?.length === undefined;
 
@@ -482,61 +455,76 @@ const Home = () => {
         keywords="mua tai khoan game, tai khoan game gia re, ban tai khoan, lien quan mobile, pubg mobile, free fire"
         type="website"
       />
-      {/* Hero Section - Slider */}
-      <section className="relative" style={{ height: '100vh', overflow: 'hidden' }}>
+      {/* Hero Section - Slider (or Stack when displayMode === 'stack') */}
+      <section className="relative w-full" style={{ height: 'auto' }}>
         {sliders && sliders.length > 0 ? (
-          <Swiper
-            modules={[Autoplay, Pagination]}
-            autoplay={{ delay: 5000 }}
-            // pagination={{ clickable: true }}
-            loop={true}
-            className="h-full"
-          >
-            {sliders.map((slider) => (
-              <SwiperSlide key={slider._id}>
-                <div className="relative w-full h-full">
-                  {/* Parallax Image */}
-                  <div
-                    className="absolute inset-0 w-full"
-                    style={{
-                      transform: `translateY(${scrollY * 0.3}px)`,
-                      height: 'calc(100vh)',
-                      // marginTop: '-100px'
-                    }}
-                  >
-                    <img
-                      src={slider.image}
-                      alt={slider.title}
-                      className="w-full h-full object-cover"
-                    />
+          (() => {
+            const stackSliders = sliders.filter((s) => (s.displayMode ?? 'stack') === 'stack');
+            const carouselSliders = sliders.filter((s) => (s.displayMode ?? 'stack') !== 'stack');
+
+            return (
+              <>
+                {/* Stack mode: ảnh xếp dọc, full width, không Swiper, không title/subtitle/overlay */}
+                {stackSliders.length > 0 && (
+                  <div className="w-full flex flex-col gap-3 sm:gap-4">
+                    {stackSliders.map((slider) => (
+                      <a
+                        key={slider._id}
+                        href={slider.link || undefined}
+                        target={slider.link ? '_blank' : undefined}
+                        rel={slider.link ? 'noopener noreferrer' : undefined}
+                        className="block w-full overflow-hidden rounded-md"
+                      >
+                        <img
+                          src={slider.image}
+                          alt={slider.title || ''}
+                          className="block w-full h-auto object-cover"
+                          loading="lazy"
+                        />
+                      </a>
+                    ))}
                   </div>
-                  {/* Overlay Gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent dark:from-dark dark:via-dark/30" />
-                  {/* Content */}
-                  <div className="absolute inset-0 flex items-end">
-                    <div className="container-custom pb-16">
-                      <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg">
-                        {slider.title}
-                      </h2>
-                      {slider.subtitle && (
-                        <p className="text-lg text-slate-200 mb-4 max-w-2xl drop-shadow">
-                          {slider.subtitle}
-                        </p>
-                      )}
-                      {slider.link && (
-                        <Link to={slider.link} className="btn-primary text-lg px-6 py-3">
-                          Khám phá ngay
-                        </Link>
-                      )}
-                    </div>
+                )}
+
+                {/* Carousel mode: Swiper như cũ */}
+                {carouselSliders.length > 0 && (
+                  <div className="w-full" style={{ height: '70vh', overflow: 'hidden' }}>
+                    <Swiper
+                      modules={[Autoplay, Pagination]}
+                      autoplay={{ delay: 5000 }}
+                      loop={true}
+                      className="h-full"
+                    >
+                      {carouselSliders.map((slider) => (
+                        <SwiperSlide key={slider._id}>
+                          <div className="relative w-full h-full">
+                            {/* Parallax Image */}
+                            <div
+                              className="absolute inset-0 w-full"
+                              style={{
+                                transform: `translateY(${scrollY * 0.3}px)`,
+                                height: 'calc(70vh)',
+                              }}
+                            >
+                              <img
+                                src={slider.image}
+                                alt={slider.title}
+                                className="w-full h-full object-contain md:object-cover object-top"
+                              />
+                            </div>
+                           
+                          </div>
+                        </SwiperSlide>
+                      ))}
+                    </Swiper>
                   </div>
-                </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
+                )}
+              </>
+            );
+          })()
         ) : (
           /* Fallback: Static Banner */
-          <div className="absolute inset-0 bg-gradient-to-br from-primary-dark via-primary to-accent animate-gradient" />
+          <div className="w-full bg-gradient-to-br from-primary-dark via-primary to-accent animate-gradient" style={{ minHeight: '60vh' }} />
         )}
       </section>
 
@@ -545,46 +533,69 @@ const Home = () => {
         {/* Categories */}
         <section className="py-4">
           <div className="container-custom">
-            <div className="flex items-center justify-center mb-8">
-              <h2 className="text-3xl font-bold text-slate-900 dark:text-white text-center">Danh mục game</h2>
+            <div className="section-title-banner">
+              <span className="section-title-banner__text">
+                <span className="accent">Danh mục</span> Game
+              </span>
             </div>
             
             {/* Show skeleton if loading, otherwise show data */}
             {showCategoriesSkeleton ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 {[1, 2, 3, 4].map((i) => (
                   <SkeletonCategoryCard key={i} />
                 ))}
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {displayCategories.map((category) => (
-                  <Link
-                    key={category._id}
-                    to={`/shop?category=${category._id}`}
-                    className="category-card"
-                  >
-                    {category.thumbnail ? (
-                      <img
-                        src={category.thumbnail}
-                        alt={category.name}
-                        className="w-full h-32 object-cover rounded-t-lg mb-4"
-                      />
-                    ) : (
-                      <div className="w-full h-32 rounded-t-lg mb-4 bg-gradient-to-br from-orange-700 via-orange-600 to-amber-500 flex items-center justify-center">
-                        <span className="text-white text-4xl font-bold opacity-50">
-                          {category.name.charAt(0)}
-                        </span>
+                {displayCategories.map((category) => {
+                  const count = (accountsByCategory[category._id] || []).length;
+                  return (
+                    <Link
+                      key={category._id}
+                      to={`/shop?category=${category._id}`}
+                      className="category-card"
+                    >
+                      {category.thumbnail ? (
+                        <img
+                          src={category.thumbnail}
+                          alt={category.name}
+                          className="w-full h-40 object-cover rounded-lg mb-4"
+                        />
+                      ) : (
+                        <div className="w-full h-32 rounded-t-lg mb-4 bg-gradient-to-br from-orange-700 via-orange-600 to-amber-500 flex items-center justify-center">
+                          <span className="text-white text-4xl font-bold opacity-50">
+                            {category.name.charAt(0)}
+                          </span>
+                        </div>
+                      )}
+                      <h3 className="text-slate-900 dark:text-white font-semibold text-center">{category.name}</h3>
+
+                      {/* NEW: số tài khoản */}
+                      <div className="category-count">
+                        {count > 0 ? (
+                          <>
+                            <span className="category-count__num">{count}</span>
+                            <span className="category-count__label">tài khoản</span>
+                          </>
+                        ) : (
+                          <span className="category-count__label">Sắp có</span>
+                        )}
                       </div>
-                    )}
-                    <h3 className="text-slate-900 dark:text-white font-semibold text-center">{category.name}</h3>
-                    {category.description && (
-                      <p className="text-slate-500 dark:text-slate-400 text-sm text-center mt-2 line-clamp-2">
-                        {category.description}
-                      </p>
-                    )}
-                  </Link>
-                ))}
+
+                      {category.description && (
+                        <p className="text-slate-500 dark:text-slate-400 text-sm text-center mt-2 line-clamp-2">
+                          {category.description}
+                        </p>
+                      )}
+
+                      {/* NEW: nút Xem ngay */}
+                      <span className="category-cta">
+                        Xem ngay 
+                      </span>
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -594,8 +605,10 @@ const Home = () => {
       {/* Featured Accounts */}
       <section className="py-4">
         <div className="container-custom">
-          <div className="flex items-center justify-center mb-6">
-            <h2 className="text-3xl font-bold text-slate-900 dark:text-white text-center">Tài khoản nổi bật</h2>
+          <div className="section-title-banner">
+            <span className="section-title-banner__text">
+              <span className="accent">Tài khoản</span> Nổi bật
+            </span>
           </div>
           
           {/* Show skeleton if loading, otherwise show data */}
@@ -615,7 +628,7 @@ const Home = () => {
                     account={account}
                     onAddToCart={handleAddToCart}
                     onBuyNow={handleBuyNow}
-                    addToCartPending={addToCartMutation.isPending}
+                    addToCartPending={addToCartPending}
                   />
                 ))}
               </div>
@@ -649,7 +662,7 @@ const Home = () => {
             accounts={categoryAccounts.slice(0, 4)}
             onAddToCart={handleAddToCart}
             onBuyNow={handleBuyNow}
-            addToCartPending={addToCartMutation.isPending}
+            addToCartPending={addToCartPending}
             isLoading={showAccountsSkeleton}
           />
         );

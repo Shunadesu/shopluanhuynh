@@ -41,6 +41,32 @@ api.interceptors.request.use(
       console.log(`[API Request] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
     }
     const token = localStorage.getItem('token');
+    const isAuthRequest = config.url?.includes('/auth/login') || config.url?.includes('/auth/register');
+    
+    // Skip protected endpoints when there's no token to avoid noisy 401s in DevTools
+    if (!token && !isAuthRequest) {
+      const protectedPrefixes = [
+        '/orders/cart',
+        '/orders',
+        '/deposits',
+        '/user/profile',
+        '/user',
+        '/cart',
+        '/checkout',
+      ];
+      const url = config.url || '';
+      if (protectedPrefixes.some((prefix) => url === prefix || url.startsWith(prefix + '/') || url.startsWith(prefix + '?'))) {
+        if (import.meta.env.DEV) {
+          console.log(`[API Skipped] No token, skipping ${config.method?.toUpperCase()} ${url}`);
+        }
+        return Promise.reject({
+          __skipped: true,
+          message: 'Skipped: no auth token',
+          config,
+        });
+      }
+    }
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

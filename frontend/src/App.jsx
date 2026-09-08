@@ -1,6 +1,5 @@
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { useState, useCallback, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import ContactFixed from './components/ContactFixed';
@@ -9,7 +8,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import NotificationModal from './components/NotificationModal';
 import SEOHead from './components/SEOHead';
 import { useThemeStore } from './store/themeStore';
-import api from './utils/api';
+import { useSettingsStore } from './store/data/settingsStore';
+import { useCartStore } from './store/cartStore';
 
 // Pages
 import Home from './pages/Home';
@@ -39,23 +39,24 @@ function ScrollToTop() {
 }
 
 function App() {
-  const navigate = useNavigate();
   const applyDefaultTheme = useThemeStore((s) => s.applyDefault);
+  const settings = useSettingsStore((s) => s.settings);
 
   // Drawer state
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [authInitialView, setAuthInitialView] = useState('login');
 
-  // Load site settings for SEO and favicon
-  const { data: settings } = useQuery({
-    queryKey: ['settings'],
-    queryFn: async () => {
-      const { data } = await api.get('/settings');
-      return data;
-    },
-    staleTime: 10 * 60 * 1000, // 10 minutes
-  });
+  // Warm cache for hot data on mount (silent on error).
+  // settings/socialLinks/sliders/notifications persist via localStorage so F5 stays instant.
+  // cart is fetched fresh on mount and on auth changes.
+  useEffect(() => {
+    useSettingsStore.getState().fetchSettings().catch(() => {});
+    useSettingsStore.getState().fetchSocialLinks().catch(() => {});
+    useSettingsStore.getState().fetchSliders().catch(() => {});
+    useSettingsStore.getState().fetchNotifications().catch(() => {});
+    useCartStore.getState().fetchCart().catch(() => {});
+  }, []);
 
   // Apply admin default theme on first load (only if user has no preference)
   useEffect(() => {
