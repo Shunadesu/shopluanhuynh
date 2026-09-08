@@ -12,174 +12,6 @@ import 'swiper/css/pagination';
 import { FiShoppingCart, FiZap, FiArrowRight, FiTag, FiChevronRight } from 'react-icons/fi';
 import SEOHead from '../components/SEOHead';
 
-// Mock data for categories
-const MOCK_CATEGORIES = [
-  {
-    _id: 'mock-1',
-    name: 'Liên Quân Mobile',
-    slug: 'lien-quan',
-    thumbnail: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=200&fit=crop',
-    description: 'Game MOBA phổ biến nhất Việt Nam'
-  },
-  {
-    _id: 'mock-2',
-    name: 'PUBG Mobile',
-    slug: 'pubg-mobile',
-    thumbnail: 'https://images.unsplash.com/photo-1552820728-8b83bb6b2b0a?w=400&h=200&fit=crop',
-    description: 'Game bắn súng sinh tồn hấp dẫn'
-  },
-  {
-    _id: 'mock-3',
-    name: 'Free Fire',
-    slug: 'free-fire',
-    thumbnail: 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=400&h=200&fit=crop',
-    description: 'Battle royale cực kỳ hot'
-  },
-  {
-    _id: 'mock-4',
-    name: 'Genshin Impact',
-    slug: 'genshin-impact',
-    thumbnail: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=400&h=200&fit=crop',
-    description: 'Game nhập vai hành động open world'
-  }
-];
-
-// Mock data for accounts with category info
-const MOCK_ACCOUNTS = [
-  {
-    _id: 'mock-acc-1',
-    title: 'Tài khoản Liên Quân Kim Cương 5000+',
-    images: ['https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=300&fit=crop'],
-    rank: 'Kim Cương',
-    price: 350000,
-    originalPrice: 500000,
-    teamValue: '5000+',
-    bp: '2500',
-    category: { _id: 'mock-1', name: 'Liên Quân Mobile', slug: 'lien-quan' }
-  },
-  {
-    _id: 'mock-acc-2',
-    title: 'Tài khoản PUBG Royal Pass Mùa 20',
-    images: ['https://images.unsplash.com/photo-1552820728-8b83bb6b2b0a?w=400&h=300&fit=crop'],
-    rank: 'Huyền Thoại',
-    price: 450000,
-    originalPrice: 600000,
-    teamValue: 'Huyền Thoại',
-    bp: '12000',
-    category: { _id: 'mock-2', name: 'PUBG Mobile', slug: 'pubg-mobile' }
-  },
-  {
-    _id: 'mock-acc-3',
-    title: 'Tài khoản Free Fire Đặc Cấp',
-    images: ['https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=400&h=300&fit=crop'],
-    rank: 'Đặc Cấp',
-    price: 280000,
-    originalPrice: 350000,
-    teamValue: 'Đặc Cấp',
-    bp: '1800',
-    category: { _id: 'mock-3', name: 'Free Fire', slug: 'free-fire' }
-  },
-  {
-    _id: 'mock-acc-4',
-    title: 'Tài khoản Genshin AR 55 + 5 Nhân vật 5*',
-    images: ['https://images.unsplash.com/photo-1534447677768-be436bb09401?w=400&h=300&fit=crop'],
-    rank: 'AR 55',
-    price: 1200000,
-    originalPrice: 1500000,
-    teamValue: 'AR 55',
-    bp: '50000',
-    category: { _id: 'mock-4', name: 'Genshin Impact', slug: 'genshin-impact' }
-  },
-  {
-    _id: 'mock-acc-5',
-    title: 'Tài khoản Liên Quân王者 100 Trang Phục',
-    images: ['https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=300&fit=crop'],
-    rank: '王者',
-    price: 890000,
-    originalPrice: 1100000,
-    teamValue: '王者',
-    bp: '5000',
-    category: { _id: 'mock-1', name: 'Liên Quân Mobile', slug: 'lien-quan' }
-  },
-  {
-    _id: 'mock-acc-6',
-    title: 'Tài khoản Liên Quân Cao Thủ',
-    images: ['https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=300&fit=crop'],
-    rank: 'Cao Thủ',
-    price: 520000,
-    originalPrice: 700000,
-    teamValue: 'Cao Thủ',
-    bp: '3200',
-    category: { _id: 'mock-1', name: 'Liên Quân Mobile', slug: 'lien-quan' }
-  },
-  {
-    _id: 'mock-acc-7',
-    title: 'Tài khoản PUBG Mùa 21 - Huy Chương',
-    images: ['https://images.unsplash.com/photo-1552820728-8b83bb6b2b0a?w=400&h=300&fit=crop'],
-    rank: 'Huy Chương',
-    price: 380000,
-    originalPrice: 480000,
-    teamValue: 'Huy Chương',
-    bp: '8500',
-    category: { _id: 'mock-2', name: 'PUBG Mobile', slug: 'pubg-mobile' }
-  },
-  {
-    _id: 'mock-acc-8',
-    title: 'Tài khoản Free Fire Nick Tài Nguyên',
-    images: ['https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=400&h=300&fit=crop'],
-    rank: 'Kim Cương VIP',
-    price: 420000,
-    originalPrice: 550000,
-    teamValue: 'Kim Cương',
-    bp: '2200',
-    category: { _id: 'mock-3', name: 'Free Fire', slug: 'free-fire' }
-  },
-  {
-    _id: 'mock-acc-9',
-    title: 'Tài khoản Liên Quân Tướng Mạnh',
-    images: ['https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&h=300&fit=crop'],
-    rank: 'Tinh Anh',
-    price: 650000,
-    originalPrice: 800000,
-    teamValue: 'Tinh Anh',
-    bp: '4500',
-    category: { _id: 'mock-1', name: 'Liên Quân Mobile', slug: 'lien-quan' }
-  },
-  {
-    _id: 'mock-acc-10',
-    title: 'Tài khoản Genshin AR 50 Full Nhân Vật',
-    images: ['https://images.unsplash.com/photo-1534447677768-be436bb09401?w=400&h=300&fit=crop'],
-    rank: 'AR 50',
-    price: 950000,
-    originalPrice: 1200000,
-    teamValue: 'AR 50',
-    bp: '35000',
-    category: { _id: 'mock-4', name: 'Genshin Impact', slug: 'genshin-impact' }
-  },
-  {
-    _id: 'mock-acc-11',
-    title: 'Tài khoản PUBG Prime Mùa 22',
-    images: ['https://images.unsplash.com/photo-1552820728-8b83bb6b2b0a?w=400&h=300&fit=crop'],
-    rank: 'Ace',
-    price: 520000,
-    originalPrice: 680000,
-    teamValue: 'Ace',
-    bp: '10000',
-    category: { _id: 'mock-2', name: 'PUBG Mobile', slug: 'pubg-mobile' }
-  },
-  {
-    _id: 'mock-acc-12',
-    title: 'Tài khoản Free Fire Sự Kiện Mới',
-    images: ['https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=400&h=300&fit=crop'],
-    rank: 'Đại Sự Gia',
-    price: 350000,
-    originalPrice: 450000,
-    teamValue: 'Đại Sự Gia',
-    bp: '1500',
-    category: { _id: 'mock-3', name: 'Free Fire', slug: 'free-fire' }
-  }
-];
-
 // Skeleton loader components
 const SkeletonCategoryCard = () => (
   <div className="card animate-pulse">
@@ -422,14 +254,15 @@ const Home = () => {
   };
 
   // Determine data to display
-  const displayCategories = categories?.length > 0 ? categories : MOCK_CATEGORIES;
-  const showCategoriesSkeleton = categoriesLoading && categories?.length === undefined;
+  // Categories: skeleton during initial load, real data when loaded, empty state when no data
+  const categoriesLoaded = !categoriesLoading && Array.isArray(categories);
+  const displayCategories = categoriesLoaded ? categories : [];
 
-  const displayAllAccounts = allAccounts?.length > 0 ? allAccounts : MOCK_ACCOUNTS;
-  const displayFeaturedAccounts = featuredAccounts?.length > 0
-    ? featuredAccounts.slice(0, 8)
-    : MOCK_ACCOUNTS.slice(0, 8);
-  const showAccountsSkeleton = accountsLoading && allAccounts?.length === undefined;
+  // Featured accounts: skeleton during initial load, real data when loaded
+  const accountsLoaded = !accountsLoading && Array.isArray(allAccounts);
+  const displayAllAccounts = accountsLoaded ? allAccounts : [];
+  const displayFeaturedAccounts = accountsLoaded ? (featuredAccounts || []).slice(0, 8) : [];
+  const showAccountsSkeleton = accountsLoading && !accountsLoaded;
 
   // Group accounts by category
   const accountsByCategory = useMemo(() => {
@@ -445,14 +278,14 @@ const Home = () => {
   }, [displayAllAccounts]);
 
   // Check if there are more accounts
-  const hasMoreAccounts = (displayAllAccounts.length) > 8;
+  const hasMoreAccounts = displayAllAccounts.length > 8;
 
   return (
     <div className="min-h-screen">
       <SEOHead
-        title="Mua Bán Tài Khoản Game Giá Rẻ Uy Tín"
-        description="Cung cấp tài khoản game giá rẻ, uy tín, chất lượng. Mua bán tài khoản Liên Quân, PUBG, Free Fire, Genshin Impact và nhiều game khác."
-        keywords="mua tai khoan game, tai khoan game gia re, ban tai khoan, lien quan mobile, pubg mobile, free fire"
+        title="Mua Bán Tài Khoản FC Online, FIFA Online 4 Giá Rẻ Uy Tín"
+        description="Shop chuyên mua bán tài khoản FC Online (FIFA Online 4) giá rẻ, uy tín, chất lượng. Tài khoản FO4 đã có sẵn VPL, VLBD, cày rank, đủ mức giá, giao dịch nhanh, bảo hành an toàn."
+        keywords="mua tai khoan fc online, fco, mua tai khoan fifa online 4, tai khoan fo4 gia re, ban tai khoan fc online, fifa online 4 gia re, fc online uy tin, tai khoan fo4 vpl, bp trang"
         type="website"
       />
       {/* Hero Section - Slider (or Stack when displayMode === 'stack') */}
@@ -539,12 +372,18 @@ const Home = () => {
               </span>
             </div>
             
-            {/* Show skeleton if loading, otherwise show data */}
-            {showCategoriesSkeleton ? (
+            {/* Show skeleton while loading, real data when loaded, empty state if no categories */}
+            {categoriesLoading ? (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 {[1, 2, 3, 4].map((i) => (
                   <SkeletonCategoryCard key={i} />
                 ))}
+              </div>
+            ) : displayCategories.length === 0 ? (
+              <div className="card text-center py-12">
+                <p className="text-slate-500 dark:text-slate-400">
+                  Chưa có danh mục nào. Vui lòng quay lại sau.
+                </p>
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -611,12 +450,18 @@ const Home = () => {
             </span>
           </div>
           
-          {/* Show skeleton if loading, otherwise show data */}
+          {/* Show skeleton while loading; show real data when loaded; show empty state if no accounts */}
           {showAccountsSkeleton ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                 <SkeletonAccountCard key={i} />
               ))}
+            </div>
+          ) : displayFeaturedAccounts.length === 0 ? (
+            <div className="card text-center py-12">
+              <p className="text-slate-500 dark:text-slate-400">
+                Chưa có tài khoản nổi bật. Vui lòng quay lại sau.
+              </p>
             </div>
           ) : (
             <>
@@ -650,23 +495,37 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Category Sections - One for each category with accounts */}
-      {displayCategories.map((category) => {
-        const categoryAccounts = accountsByCategory[category._id];
-        if (!categoryAccounts || categoryAccounts.length === 0) return null;
-        
-        return (
-          <CategoryAccountSection
-            key={category._id}
-            category={category}
-            accounts={categoryAccounts.slice(0, 4)}
-            onAddToCart={handleAddToCart}
-            onBuyNow={handleBuyNow}
-            addToCartPending={addToCartPending}
-            isLoading={showAccountsSkeleton}
-          />
-        );
-      })}
+      {/* Category Sections - One for each category with accounts.
+          - While categories are loading: show a few skeleton placeholders.
+          - After load: render real sections for categories that have accounts. */}
+      {categoriesLoading ? (
+        <>
+          {[1, 2, 3].map((i) => (
+            <CategoryAccountSection
+              key={`skeleton-${i}`}
+              category={{ _id: `skeleton-${i}`, name: '' }}
+              accounts={[]}
+              isLoading
+            />
+          ))}
+        </>
+      ) : (
+        displayCategories.map((category) => {
+          const categoryAccounts = accountsByCategory[category._id];
+          if (!categoryAccounts || categoryAccounts.length === 0) return null;
+
+          return (
+            <CategoryAccountSection
+              key={category._id}
+              category={category}
+              accounts={categoryAccounts.slice(0, 4)}
+              onAddToCart={handleAddToCart}
+              onBuyNow={handleBuyNow}
+              addToCartPending={addToCartPending}
+            />
+          );
+        })
+      )}
 
       {/* Features */}
       <section className="py-4">
