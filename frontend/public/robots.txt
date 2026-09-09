@@ -1,5 +1,8 @@
 User-agent: *
 Allow: /
+Allow: /shop
+Allow: /shop/*
+Allow: /account/*
 Disallow: /checkout
 Disallow: /profile
 Disallow: /deposit
@@ -9,4 +12,8 @@ Disallow: /api/*
 Disallow: /uploads/*
 Disallow: /admin/*
 
-Sitemap: /sitemap.xml
+# Crawl-delay để tránh quá tải server
+Crawl-delay: 1
+
+# Sitemap
+Sitemap: https://luanhuynhfc.shop/sitemap.xml

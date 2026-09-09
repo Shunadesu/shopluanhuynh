@@ -1,135 +1,37 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
-import { useCartStore } from '../store/cartStore';
 import { useSliders, useCategories, useAccountList } from '../hooks';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/pagination';
-import { FiShoppingCart, FiZap, FiArrowRight, FiTag, FiChevronRight } from 'react-icons/fi';
+import { FiChevronRight, FiSearch, FiX } from 'react-icons/fi';
 import SEOHead from '../components/SEOHead';
+import AccountCard from '../components/AccountCard';
+import { AccountCardSkeleton } from '../components/SkeletonLoader';
 
 // Skeleton loader components
 const SkeletonCategoryCard = () => (
   <div className="card animate-pulse">
-    <div className="w-full h-32 bg-slate-200 dark:bg-slate-700 rounded-t-lg mb-4" />
-    <div className="h-5 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mx-auto mb-2" />
-    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2 mx-auto" />
+    <div className="w-full h-40 bg-slate-200 dark:bg-slate-700 rounded-t-lg mb-2" />
+    <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mx-auto mb-1" />
+    <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/2 mx-auto" />
   </div>
 );
-
-const SkeletonAccountCard = () => (
-  <div className="card animate-pulse">
-    <div className="w-full h-40 sm:h-48 bg-slate-200 dark:bg-slate-700 rounded-lg mb-3" />
-    <div className="h-5 bg-slate-200 dark:bg-slate-700 rounded w-full mb-2" />
-    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-2/3 mb-4" />
-    <div className="flex justify-between items-center">
-      <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded w-20" />
-      <div className="h-7 bg-slate-200 dark:bg-slate-700 rounded w-24" />
-    </div>
-  </div>
-);
-
-// Account Card Component
-const AccountCard = ({ account, onAddToCart, onBuyNow, addToCartPending }) => {
-  const category = account.category;
-  
-  return (
-    <div className="account-card flex flex-col">
-      <Link to={`/account/${account._id}`} className="block">
-        <div className="relative">
-          <img
-            src={account.images?.[0] || 'https://via.placeholder.com/400x300?text=No+Image'}
-            alt={account.title}
-            className="w-full h-40 sm:h-48 object-cover rounded-lg mb-3"
-          />
-        </div>
-        <h3 className="text-slate-900 dark:text-white font-semibold mb-2 line-clamp-2 min-h-[2.5rem] text-sm sm:text-base">
-          {account.title}
-        </h3>
-      </Link>
-      
-      {/* Category Badge */}
-      {category && (
-        <div className="flex items-center gap-1 mb-2">
-          <FiTag className="w-3 h-3 text-primary" />
-          <span className="text-xs text-slate-600 dark:text-slate-300">{category.name}</span>
-        </div>
-      )}
-      
-      {/* Team Value & BP */}
-      <div className="flex flex-wrap gap-2 mb-2">
-        {account.teamValue && (
-          <span className="text-xs bg-slate-200 dark:bg-slate-700/70 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded">
-            Đội hình: {account.teamValue}
-          </span>
-        )}
-        {account.bp && (
-          <span className="text-xs bg-slate-200 dark:bg-slate-700/70 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded">
-            BP: {account.bp}
-          </span>
-        )}
-      </div>
-      
-      {/* Rank */}
-      {account.rank && (
-        <span className="inline-block bg-primary/20 text-primary px-2 py-0.5 rounded text-xs mb-2 w-fit">
-          {account.rank}
-        </span>
-      )}
-      
-      <div className="mt-auto space-y-2">
-        {/* Price */}
-        <div className="flex flex-col gap-0.5">
-          {account.originalPrice && account.originalPrice > account.price && (
-            <span className="text-slate-500 dark:text-slate-500 text-xs line-through">
-              {account.originalPrice.toLocaleString('vi-VN')}đ
-            </span>
-          )}
-          <span className="text-primary font-bold text-lg">
-            {account.price.toLocaleString('vi-VN')}đ
-          </span>
-        </div>
-        
-        {/* Buttons - Vertical */}
-        <div className="flex flex-col gap-1 sm:gap-2">
-          <button
-            onClick={(e) => onAddToCart(e, account._id)}
-            disabled={addToCartPending}
-            className="w-full btn-secondary flex items-center justify-center gap-1 py-2 text-xs sm:text-sm"
-          >
-            <FiShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span>Giỏ hàng</span>
-          </button>
-          <button
-            onClick={(e) => onBuyNow(e, account)}
-            className="w-full btn-primary flex items-center justify-center gap-1 py-2 text-xs sm:text-sm"
-          >
-            <FiZap className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span>Mua ngay</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // Category Section Component
-const CategoryAccountSection = ({ category, accounts, onAddToCart, onBuyNow, addToCartPending, isLoading }) => {
+const CategoryAccountSection = ({ category, accounts, isLoading }) => {
   if (isLoading) {
     return (
-      <section className="py-6">
+      <section className="py-2">
         <div className="container-custom">
-          <div className="flex items-center justify-between mb-6">
-            <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-48 animate-pulse" />
-            <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded w-24 animate-pulse" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="h-5 bg-slate-200 dark:bg-slate-700 rounded w-32 animate-pulse" />
+            <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-20 animate-pulse" />
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {[1, 2, 3, 4].map((i) => (
-              <SkeletonAccountCard key={i} />
+              <AccountCardSkeleton key={i} />
             ))}
           </div>
         </div>
@@ -140,38 +42,35 @@ const CategoryAccountSection = ({ category, accounts, onAddToCart, onBuyNow, add
   if (!accounts || accounts.length === 0) return null;
 
   return (
-    <section className="py-6">
+    <section className="py-2">
       <div className="container-custom">
         {/* Section Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
             {category.thumbnail && (
               <img
                 src={category.thumbnail}
                 alt={category.name}
-                className="w-8 h-8 rounded-lg object-cover"
+                className="w-6 h-6 rounded object-cover"
               />
             )}
             {category.name}
           </h2>
           <Link
             to={`/shop?category=${category._id}`}
-            className="text-primary hover:text-primary-light flex items-center gap-1 text-sm font-medium transition-colors"
+            className="text-primary hover:text-primary-light flex items-center gap-1 text-xs font-medium transition-colors"
           >
             <span>Xem tất cả</span>
-            <FiChevronRight className="w-4 h-4" />
+            <FiChevronRight className="w-3 h-3" />
           </Link>
         </div>
 
         {/* Accounts Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {accounts.map((account) => (
             <AccountCard
               key={account._id}
               account={account}
-              onAddToCart={onAddToCart}
-              onBuyNow={onBuyNow}
-              addToCartPending={addToCartPending}
             />
           ))}
         </div>
@@ -181,10 +80,21 @@ const CategoryAccountSection = ({ category, accounts, onAddToCart, onBuyNow, add
 };
 
 const Home = () => {
-  const navigate = useNavigate();
-  const { isAuthenticated } = useAuthStore();
-  const incrementCart = useCartStore((s) => s.incrementCart);
   const [scrollY, setScrollY] = useState(0);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const accountsRef = useRef(null);
+
+  // Filter state
+  const [filters, setFilters] = useState({
+    priceRange: 'all',
+    sortBy: 'default',
+    searchName: '',
+    searchCode: '',
+  });
+
+  // Temporary input states (before clicking "Tìm kiếm")
+  const [tempSearchName, setTempSearchName] = useState('');
+  const [tempSearchCode, setTempSearchCode] = useState('');
 
   // Track scroll position for parallax
   useEffect(() => {
@@ -204,65 +114,14 @@ const Home = () => {
   // Fetch all accounts (for grouping by category)
   const { accounts: allAccounts, loading: accountsLoading } = useAccountList({ limit: 100 });
 
-  // Fetch featured accounts (limit 8)
-  const { accounts: featuredAccounts } = useAccountList({ limit: 8 });
-
-  // Add to cart (via store)
-  const [addToCartPending, setAddToCartPending] = useState(false);
-
-  const handleAddToCart = async (e, accountId) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setAddToCartPending(true);
-    try {
-      const data = await useCartStore.getState().addToCart(accountId);
-      toast.success('Đã thêm vào giỏ hàng');
-      incrementCart();
-      useCartStore.setState({ cartCount: data?.items?.length || 0 });
-    } catch (error) {
-      if (error?.__skipped || error.response?.status === 401) {
-        toast.error('Vui lòng đăng nhập để thêm vào giỏ hàng');
-      } else {
-        toast.error(error.response?.data?.message || 'Không thể thêm vào giỏ hàng');
-      }
-    } finally {
-      setAddToCartPending(false);
-    }
-  };
-
-  // Handle buy now
-  const handleBuyNow = async (e, account) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!isAuthenticated) {
-      window.dispatchEvent(new CustomEvent('openAuthDrawer', { detail: { view: 'login' } }));
-      sessionStorage.setItem('buyNowAccount', JSON.stringify(account));
-      return;
-    }
-
-    try {
-      await useCartStore.getState().addToCartAdd(account._id);
-      navigate('/checkout');
-    } catch (error) {
-      if (error?.__skipped || error.response?.status === 401) {
-        toast.error('Vui lòng đăng nhập để mua ngay');
-      } else {
-        toast.error(error.response?.data?.message || 'Không thể xử lý');
-      }
-    }
-  };
-
   // Determine data to display
   // Categories: skeleton during initial load, real data when loaded, empty state when no data
   const categoriesLoaded = !categoriesLoading && Array.isArray(categories);
   const displayCategories = categoriesLoaded ? categories : [];
 
-  // Featured accounts: skeleton during initial load, real data when loaded
+  // All accounts: skeleton during initial load, real data when loaded
   const accountsLoaded = !accountsLoading && Array.isArray(allAccounts);
   const displayAllAccounts = accountsLoaded ? allAccounts : [];
-  const displayFeaturedAccounts = accountsLoaded ? (featuredAccounts || []).slice(0, 8) : [];
-  const showAccountsSkeleton = accountsLoading && !accountsLoaded;
 
   // Group accounts by category
   const accountsByCategory = useMemo(() => {
@@ -277,8 +136,100 @@ const Home = () => {
     return grouped;
   }, [displayAllAccounts]);
 
-  // Check if there are more accounts
-  const hasMoreAccounts = displayAllAccounts.length > 8;
+  // Filter accounts based on selected category and filters
+  const filteredAccounts = useMemo(() => {
+    let result = displayAllAccounts;
+
+    // Filter by category
+    if (selectedCategory) {
+      result = result.filter(account => account.category?._id === selectedCategory);
+    }
+
+    // Filter by price range
+    if (filters.priceRange !== 'all') {
+      const priceRanges = {
+        'under_50k': { min: 0, max: 50000 },
+        '50k_100k': { min: 50000, max: 100000 },
+        '100k_500k': { min: 100000, max: 500000 },
+        'over_500k': { min: 500000, max: Infinity }
+      };
+      const range = priceRanges[filters.priceRange];
+      if (range) {
+        result = result.filter(acc => acc.price >= range.min && acc.price <= range.max);
+      }
+    }
+
+    // Filter by search name
+    if (filters.searchName) {
+      result = result.filter(acc =>
+        acc.title.toLowerCase().includes(filters.searchName.toLowerCase())
+      );
+    }
+
+    // Filter by search code
+    if (filters.searchCode) {
+      result = result.filter(acc =>
+        acc.code?.toLowerCase().includes(filters.searchCode.toLowerCase())
+      );
+    }
+
+    // Sort
+    if (filters.sortBy !== 'default') {
+      const sorted = [...result];
+      switch(filters.sortBy) {
+        case 'price_asc':
+          sorted.sort((a, b) => a.price - b.price);
+          break;
+        case 'price_desc':
+          sorted.sort((a, b) => b.price - a.price);
+          break;
+        case 'name_asc':
+          sorted.sort((a, b) => a.title.localeCompare(b.title));
+          break;
+        case 'name_desc':
+          sorted.sort((a, b) => b.title.localeCompare(a.title));
+          break;
+        default:
+          break;
+      }
+      return sorted;
+    }
+
+    return result;
+  }, [selectedCategory, displayAllAccounts, filters]);
+
+  // Handle category click with smooth scroll
+  const handleCategoryClick = (categoryId) => {
+    setSelectedCategory(categoryId);
+    // Scroll to accounts section after a short delay
+    setTimeout(() => {
+      accountsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
+
+  // Filter handlers
+  const handleApplyFilters = () => {
+    setFilters(prev => ({
+      ...prev,
+      searchName: tempSearchName,
+      searchCode: tempSearchCode,
+    }));
+    // Scroll to results
+    setTimeout(() => {
+      accountsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
+
+  const handleResetFilters = () => {
+    setFilters({
+      priceRange: 'all',
+      sortBy: 'default',
+      searchName: '',
+      searchCode: '',
+    });
+    setTempSearchName('');
+    setTempSearchCode('');
+  };
 
   return (
     <div className="min-h-screen">
@@ -299,7 +250,7 @@ const Home = () => {
               <>
                 {/* Stack mode: ảnh xếp dọc, full width, không Swiper, không title/subtitle/overlay */}
                 {stackSliders.length > 0 && (
-                  <div className="w-full flex flex-col gap-3 sm:gap-4">
+                  <div className="w-full flex flex-col gap-1">
                     {stackSliders.map((slider) => (
                       <a
                         key={slider._id}
@@ -321,7 +272,7 @@ const Home = () => {
 
                 {/* Carousel mode: Swiper như cũ */}
                 {carouselSliders.length > 0 && (
-                  <div className="w-full" style={{ height: '70vh', overflow: 'hidden' }}>
+                  <div className="w-full" style={{ height: '50vh', overflow: 'hidden' }}>
                     <Swiper
                       modules={[Autoplay, Pagination]}
                       autoplay={{ delay: 5000 }}
@@ -336,7 +287,7 @@ const Home = () => {
                               className="absolute inset-0 w-full"
                               style={{
                                 transform: `translateY(${scrollY * 0.3}px)`,
-                                height: 'calc(70vh)',
+                                height: 'calc(50vh)',
                               }}
                             >
                               <img
@@ -345,7 +296,7 @@ const Home = () => {
                                 className="w-full h-full object-contain md:object-cover object-top"
                               />
                             </div>
-                           
+
                           </div>
                         </SwiperSlide>
                       ))}
@@ -357,60 +308,61 @@ const Home = () => {
           })()
         ) : (
           /* Fallback: Static Banner */
-          <div className="w-full bg-gradient-to-br from-primary-dark via-primary to-accent animate-gradient" style={{ minHeight: '60vh' }} />
+          <div className="w-full bg-gradient-to-br from-primary-dark via-primary to-accent animate-gradient" style={{ minHeight: '40vh' }} />
         )}
       </section>
 
       {/* Content - starts below header */}
-      <div className="pt-16">
+      <div className="pt-4">
         {/* Categories */}
-        <section className="py-4">
+        <section className="py-2">
           <div className="container-custom">
             <div className="section-title-banner">
               <span className="section-title-banner__text">
                 <span className="accent">Danh mục</span> Game
               </span>
             </div>
-            
+
             {/* Show skeleton while loading, real data when loaded, empty state if no categories */}
             {categoriesLoading ? (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {[1, 2, 3, 4].map((i) => (
                   <SkeletonCategoryCard key={i} />
                 ))}
               </div>
             ) : displayCategories.length === 0 ? (
-              <div className="card text-center py-12">
-                <p className="text-slate-500 dark:text-slate-400">
+              <div className="card text-center py-4">
+                <p className="text-slate-500 dark:text-slate-400 text-sm">
                   Chưa có danh mục nào. Vui lòng quay lại sau.
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                 {displayCategories.map((category) => {
                   const count = (accountsByCategory[category._id] || []).length;
+                  const isActive = selectedCategory === category._id;
                   return (
-                    <Link
+                    <button
                       key={category._id}
-                      to={`/shop?category=${category._id}`}
-                      className="category-card"
+                      onClick={() => handleCategoryClick(category._id)}
+                      className={`category-card ${isActive ? 'ring-2 ring-primary shadow-lg' : ''}`}
                     >
                       {category.thumbnail ? (
                         <img
                           src={category.thumbnail}
                           alt={category.name}
-                          className="w-full h-40 object-cover rounded-lg mb-4"
+                          className="w-full h-40 object-cover rounded-lg mb-2"
                         />
                       ) : (
-                        <div className="w-full h-32 rounded-t-lg mb-4 bg-gradient-to-br from-orange-700 via-orange-600 to-amber-500 flex items-center justify-center">
-                          <span className="text-white text-4xl font-bold opacity-50">
+                        <div className="w-full h-32 rounded-t-lg mb-2 bg-gradient-to-br from-orange-700 via-orange-600 to-amber-500 flex items-center justify-center">
+                          <span className="text-white text-2xl font-bold opacity-50">
                             {category.name.charAt(0)}
                           </span>
                         </div>
                       )}
-                      <h3 className="text-slate-900 dark:text-white font-semibold text-center">{category.name}</h3>
+                      <h3 className="text-slate-900 dark:text-white text-sm font-semibold text-center">{category.name}</h3>
 
-                      {/* NEW: số tài khoản */}
+                      {/* Số tài khoản */}
                       <div className="category-count">
                         {count > 0 ? (
                           <>
@@ -423,138 +375,216 @@ const Home = () => {
                       </div>
 
                       {category.description && (
-                        <p className="text-slate-500 dark:text-slate-400 text-sm text-center mt-2 line-clamp-2">
+                        <p className="text-slate-500 dark:text-slate-400 text-xs text-center mt-1 line-clamp-2">
                           {category.description}
                         </p>
                       )}
-
-                      {/* NEW: nút Xem ngay */}
-                      <span className="category-cta">
-                        Xem ngay 
-                      </span>
-                    </Link>
+                    </button>
                   );
                 })}
               </div>
             )}
           </div>
         </section>
+
+        {/* Filter Bar */}
+        <section className="py-2">
+          <div className="container-custom">
+            <div className="card p-2">
+              <div className="flex flex-wrap items-end gap-2">
+                {/* Dropdown Khoảng giá */}
+                <div className="flex-1 min-w-[120px]">
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Khoảng giá
+                  </label>
+                  <select
+                    value={filters.priceRange}
+                    onChange={(e) => setFilters(prev => ({ ...prev, priceRange: e.target.value }))}
+                    className="input-field w-full text-sm py-1"
+                  >
+                    <option value="all">Tất cả</option>
+                    <option value="under_50k">Dưới 50.000đ</option>
+                    <option value="50k_100k">50.000đ - 100.000đ</option>
+                    <option value="100k_500k">100.000đ - 500.000đ</option>
+                    <option value="over_500k">Trên 500.000đ</option>
+                  </select>
+                </div>
+
+                {/* Dropdown Sắp xếp */}
+                <div className="flex-1 min-w-[120px]">
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Sắp xếp
+                  </label>
+                  <select
+                    value={filters.sortBy}
+                    onChange={(e) => setFilters(prev => ({ ...prev, sortBy: e.target.value }))}
+                    className="input-field w-full text-sm py-1"
+                  >
+                    <option value="default">Mặc định</option>
+                    <option value="price_asc">Giá: Thấp → Cao</option>
+                    <option value="price_desc">Giá: Cao → Thấp</option>
+                    <option value="name_asc">Tên: A → Z</option>
+                    <option value="name_desc">Tên: Z → A</option>
+                  </select>
+                </div>
+
+                {/* Tìm kiếm tên */}
+                <div className="flex-1 min-w-[140px]">
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Tìm tên sản phẩm
+                  </label>
+                  <input
+                    type="text"
+                    value={tempSearchName}
+                    onChange={(e) => setTempSearchName(e.target.value)}
+                    placeholder="Nhập tên tài khoản..."
+                    className="input-field w-full text-sm py-1"
+                  />
+                </div>
+
+                {/* Mã tài khoản */}
+                <div className="flex-1 min-w-[120px]">
+                  <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Mã tài khoản
+                  </label>
+                  <input
+                    type="text"
+                    value={tempSearchCode}
+                    onChange={(e) => setTempSearchCode(e.target.value)}
+                    placeholder="VD: ACC123"
+                    className="input-field w-full text-sm py-1"
+                  />
+                </div>
+
+                {/* Nút Tìm kiếm */}
+                <button
+                  onClick={handleApplyFilters}
+                  className="btn-primary px-3 py-1 text-sm flex items-center gap-1 whitespace-nowrap"
+                >
+                  <FiSearch className="w-3 h-3" />
+                  <span>Tìm kiếm</span>
+                </button>
+
+                {/* Nút Hủy bỏ */}
+                <button
+                  onClick={handleResetFilters}
+                  className="btn-secondary px-3 py-1 text-sm flex items-center gap-1 whitespace-nowrap"
+                >
+                  <FiX className="w-3 h-3" />
+                  <span>Hủy bỏ</span>
+                </button>
+              </div>
+
+              {/* Active filters indicator */}
+              {(filters.priceRange !== 'all' || filters.sortBy !== 'default' || filters.searchName || filters.searchCode) && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {filters.priceRange !== 'all' && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/20 text-primary text-xs rounded">
+                      Giá: {filters.priceRange.replace('_', ' ')}
+                    </span>
+                  )}
+                  {filters.sortBy !== 'default' && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/20 text-primary text-xs rounded">
+                      Sắp xếp: {filters.sortBy.replace('_', ' ')}
+                    </span>
+                  )}
+                  {filters.searchName && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/20 text-primary text-xs rounded">
+                      Tên: "{filters.searchName}"
+                    </span>
+                  )}
+                  {filters.searchCode && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/20 text-primary text-xs rounded">
+                      Mã: "{filters.searchCode}"
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
       </div>
 
-      {/* Featured Accounts */}
-      <section className="py-4">
+      {/* Filtered Accounts Section */}
+      <section className="py-2" ref={accountsRef}>
         <div className="container-custom">
-          <div className="section-title-banner">
-            <span className="section-title-banner__text">
-              <span className="accent">Tài khoản</span> Nổi bật
-            </span>
+          {/* Section Header */}
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              {selectedCategory ? (
+                <>
+                  {displayCategories.find(cat => cat._id === selectedCategory)?.thumbnail && (
+                    <img
+                      src={displayCategories.find(cat => cat._id === selectedCategory)?.thumbnail}
+                      alt={displayCategories.find(cat => cat._id === selectedCategory)?.name}
+                      className="w-6 h-6 rounded object-cover"
+                    />
+                  )}
+                  {displayCategories.find(cat => cat._id === selectedCategory)?.name}
+                </>
+              ) : (
+                'Tất cả tài khoản'
+              )}
+            </h2>
+            <div className="text-xs text-slate-600 dark:text-slate-400">
+              {filteredAccounts.length} tài khoản
+            </div>
           </div>
-          
-          {/* Show skeleton while loading; show real data when loaded; show empty state if no accounts */}
-          {showAccountsSkeleton ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+          {/* Accounts Grid */}
+          {accountsLoading ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                <SkeletonAccountCard key={i} />
+                <AccountCardSkeleton key={i} />
               ))}
             </div>
-          ) : displayFeaturedAccounts.length === 0 ? (
-            <div className="card text-center py-12">
-              <p className="text-slate-500 dark:text-slate-400">
-                Chưa có tài khoản nổi bật. Vui lòng quay lại sau.
+          ) : filteredAccounts.length === 0 ? (
+            <div className="card text-center py-4">
+              <p className="text-slate-500 dark:text-slate-400 text-sm">
+                Danh mục này chưa có tài khoản nào.
               </p>
             </div>
           ) : (
-            <>
-              {/* Desktop: 4 columns, Mobile: 2 columns */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {displayFeaturedAccounts.map((account) => (
-                  <AccountCard
-                    key={account._id}
-                    account={account}
-                    onAddToCart={handleAddToCart}
-                    onBuyNow={handleBuyNow}
-                    addToCartPending={addToCartPending}
-                  />
-                ))}
-              </div>
-
-              {/* View More Button */}
-              {hasMoreAccounts && (
-                <div className="flex justify-center mt-8">
-                  <Link
-                    to="/shop"
-                    className="btn-secondary px-8 py-3 flex items-center gap-2 text-base hover:bg-primary/20 hover:text-primary transition-all"
-                  >
-                    <span>Xem tất cả tài khoản</span>
-                    <FiArrowRight className="w-5 h-5" />
-                  </Link>
-                </div>
-              )}
-            </>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {filteredAccounts.map((account) => (
+                <AccountCard
+                  key={account._id}
+                  account={account}
+                />
+              ))}
+            </div>
           )}
         </div>
       </section>
 
-      {/* Category Sections - One for each category with accounts.
-          - While categories are loading: show a few skeleton placeholders.
-          - After load: render real sections for categories that have accounts. */}
-      {categoriesLoading ? (
-        <>
-          {[1, 2, 3].map((i) => (
-            <CategoryAccountSection
-              key={`skeleton-${i}`}
-              category={{ _id: `skeleton-${i}`, name: '' }}
-              accounts={[]}
-              isLoading
-            />
-          ))}
-        </>
-      ) : (
-        displayCategories.map((category) => {
-          const categoryAccounts = accountsByCategory[category._id];
-          if (!categoryAccounts || categoryAccounts.length === 0) return null;
-
-          return (
-            <CategoryAccountSection
-              key={category._id}
-              category={category}
-              accounts={categoryAccounts.slice(0, 4)}
-              onAddToCart={handleAddToCart}
-              onBuyNow={handleBuyNow}
-              addToCartPending={addToCartPending}
-            />
-          );
-        })
-      )}
-
       {/* Features */}
-      <section className="py-4">
+      <section className="py-2">
         <div className="container-custom">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             <div className="text-center">
-              <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-primary text-3xl">⚡</span>
+              <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                <span className="text-primary text-xl">⚡</span>
               </div>
-              <h3 className="text-slate-900 dark:text-white font-semibold text-xl mb-2">Giao dịch nhanh</h3>
-              <p className="text-slate-600 dark:text-slate-400">
+              <h3 className="text-slate-900 dark:text-white font-semibold text-sm mb-1">Giao dịch nhanh</h3>
+              <p className="text-slate-600 dark:text-slate-400 text-xs">
                 Nhận tài khoản ngay sau khi thanh toán thành công
               </p>
             </div>
             <div className="text-center">
-              <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-primary text-3xl">🔒</span>
+              <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                <span className="text-primary text-xl">🔒</span>
               </div>
-              <h3 className="text-slate-900 dark:text-white font-semibold text-xl mb-2">Bảo mật cao</h3>
-              <p className="text-slate-600 dark:text-slate-400">
+              <h3 className="text-slate-900 dark:text-white font-semibold text-sm mb-1">Bảo mật cao</h3>
+              <p className="text-slate-600 dark:text-slate-400 text-xs">
                 Thông tin tài khoản được mã hóa và bảo vệ tuyệt đối
               </p>
             </div>
             <div className="text-center">
-              <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-primary text-3xl">💰</span>
+              <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                <span className="text-primary text-xl">💰</span>
               </div>
-              <h3 className="text-slate-900 dark:text-white font-semibold text-xl mb-2">Giá tốt nhất</h3>
-              <p className="text-slate-600 dark:text-slate-400">
+              <h3 className="text-slate-900 dark:text-white font-semibold text-sm mb-1">Giá tốt nhất</h3>
+              <p className="text-slate-600 dark:text-slate-400 text-xs">
                 Cam kết giá cả cạnh tranh và ưu đãi hấp dẫn
               </p>
             </div>

@@ -8,7 +8,7 @@ const router = express.Router();
 // Get all accounts with filters
 router.get('/', async (req, res) => {
   try {
-    const { category, minPrice, maxPrice, search, page = 1, limit = 12 } = req.query;
+    const { category, minPrice, maxPrice, search, code, sortBy, page = 1, limit = 12 } = req.query;
 
     const query = { status: 'available' };
 
@@ -30,12 +30,37 @@ router.get('/', async (req, res) => {
       ];
     }
 
+    if (code) {
+      query.code = { $regex: code, $options: 'i' };
+    }
+
+    // Determine sort order
+    let sortOptions = { createdAt: -1 }; // default
+    if (sortBy) {
+      switch(sortBy) {
+        case 'price_asc':
+          sortOptions = { price: 1 };
+          break;
+        case 'price_desc':
+          sortOptions = { price: -1 };
+          break;
+        case 'name_asc':
+          sortOptions = { title: 1 };
+          break;
+        case 'name_desc':
+          sortOptions = { title: -1 };
+          break;
+        default:
+          sortOptions = { createdAt: -1 };
+      }
+    }
+
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const accounts = await GameAccount.find(query)
       .populate('categoryId', 'name slug')
       .select('-username -password') // Hide credentials
-      .sort({ createdAt: -1 })
+      .sort(sortOptions)
       .skip(skip)
       .limit(parseInt(limit));
 

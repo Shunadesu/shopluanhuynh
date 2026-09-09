@@ -6,6 +6,14 @@ const gameAccountSchema = new mongoose.Schema({
     ref: 'Category',
     required: true
   },
+  code: {
+    type: String,
+    unique: true,
+    sparse: true,
+    default: function() {
+      return 'ACC' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substr(2, 3).toUpperCase();
+    }
+  },
   title: {
     type: String,
     required: true
