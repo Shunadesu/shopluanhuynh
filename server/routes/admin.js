@@ -154,11 +154,33 @@ router.get('/dashboard/recent-orders', adminAuth, async (req, res) => {
 
 // ==================== CATEGORIES ====================
 
-// Get all categories (admin)
+// Get all categories (admin) - with subcategories
 router.get('/categories', adminAuth, async (req, res) => {
   try {
     const categories = await Category.find().sort({ order: 1 });
-    res.json(categories);
+    
+    // Phân tách categories gốc và subcategories
+    const parentCategories = categories.filter(c => !c.parentId);
+    const subcategoriesMap = {};
+    
+    categories.forEach(cat => {
+      if (cat.parentId) {
+        const parentId = cat.parentId.toString();
+        if (!subcategoriesMap[parentId]) {
+          subcategoriesMap[parentId] = [];
+        }
+        subcategoriesMap[parentId].push(cat);
+      }
+    });
+    
+    // Gắn subcategories vào mỗi category gốc
+    const result = parentCategories.map(cat => {
+      const catObj = cat.toObject();
+      catObj.subcategories = subcategoriesMap[cat._id.toString()] || [];
+      return catObj;
+    });
+    
+    res.json(result);
   } catch (error) {
     res.status(500).json({ message: 'Lỗi server', error: error.message });
   }
@@ -196,17 +218,31 @@ router.put('/categories/:id', adminAuth, async (req, res) => {
       req.body,
       { new: true }
     );
+    if (!category) {
+      return res.status(404).json({ message: 'Danh mục không tồn tại' });
+    }
     res.json(category);
   } catch (error) {
     res.status(500).json({ message: 'Lỗi server', error: error.message });
   }
 });
 
-// Delete category
+// Delete category (and its subcategories)
 router.delete('/categories/:id', adminAuth, async (req, res) => {
   try {
+    const category = await Category.findById(req.params.id);
+    
+    if (!category) {
+      return res.status(404).json({ message: 'Danh mục không tồn tại' });
+    }
+    
+    // Xóa các subcategories của category này
+    await Category.deleteMany({ parentId: req.params.id });
+    
+    // Xóa category
     await Category.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Đã xóa danh mục' });
+    
+    res.json({ message: 'Đã xóa danh mục và các danh mục con' });
   } catch (error) {
     res.status(500).json({ message: 'Lỗi server', error: error.message });
   }

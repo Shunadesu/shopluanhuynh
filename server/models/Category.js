@@ -30,6 +30,11 @@ const categorySchema = new mongoose.Schema({
   order: {
     type: Number,
     default: 0
+  },
+  parentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category',
+    default: null  // null = danh mục gốc, có giá trị = danh mục con
   }
 }, {
   timestamps: true

@@ -16,6 +16,7 @@ export default function AccountForm() {
   const [formData, setFormData] = useState({
     title: '',
     category: '',
+    subcategory: '',
     price: '',
     description: '',
     loginInfo: '',
@@ -54,7 +55,8 @@ export default function AccountForm() {
     if (account) {
       setFormData({
         title: account.title || '',
-        category: account.category?._id || '',
+        category: account.category?._id || account.categoryId?._id || account.categoryId || '',
+        subcategory: account.subcategory?._id || account.subcategoryId?._id || account.subcategoryId || '',
         price: account.price || '',
         description: account.description || '',
         loginInfo: account.loginInfo || '',
@@ -118,9 +120,9 @@ export default function AccountForm() {
     }
 
     if (isEditing) {
-      updateMutation.mutate({ id, data: formData });
+      updateMutation.mutate({ id, data: { ...formData, subcategoryId: formData.subcategory || null } });
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate({ ...formData, subcategoryId: formData.subcategory || null });
     }
   };
 
@@ -203,7 +205,7 @@ export default function AccountForm() {
               </label>
               <select
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value, subcategory: '' })}
                 className="input-field"
                 required
               >
@@ -218,8 +220,24 @@ export default function AccountForm() {
 
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Giá (VNĐ) <span className="text-red-400">*</span>
+                Danh mục con
               </label>
+              <select
+                value={formData.subcategory}
+                onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
+                className="input-field"
+                disabled={!formData.category}
+              >
+                <option value="">Không chọn danh mục con</option>
+                {categories
+                  ?.filter((cat) => String(cat.parentId?._id || cat.parentId || '') === String(formData.category))
+                  .map((cat) => (
+                    <option key={cat._id} value={cat._id}>{cat.name}</option>
+                  ))}
+              </select>
+            </div>
+
+            <div>
               <input
                 type="number"
                 value={formData.price}

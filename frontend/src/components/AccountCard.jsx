@@ -23,8 +23,8 @@ const AccountCard = ({ account }) => {
       </div>
 
       {/* Content */}
-      <div>
-        <h3 className="text-sm font-semibold text-white mb-1 line-clamp-2 group-hover:text-primary transition-colors">
+      <div className="flex flex-col">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1 line-clamp-2 min-h-[2.5rem] group-hover:text-primary transition-colors">
           {account.title}
         </h3>
 
@@ -37,6 +37,7 @@ const AccountCard = ({ account }) => {
           </div>
         )}
 
+        {/* Rank / Server */}
         {account.rank && (
           <div className="flex items-center space-x-1 mb-1">
             <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded">
@@ -50,27 +51,40 @@ const AccountCard = ({ account }) => {
           </div>
         )}
 
-        <p className="text-slate-400 text-xs mb-2 line-clamp-2">
+        <p className="text-slate-400 text-xs mb-2 line-clamp-2 min-h-[1rem]">
           {account.description}
         </p>
 
-        {/* Price */}
-        <div className="flex items-center justify-between">
-          <div>
-            {account.originalPrice && account.originalPrice > account.price && (
-              <span className="text-slate-500 text-xs line-through mr-1">
+        {/* Price section */}
+        <div className="space-y-1 mt-auto">
+          {/* Original price — struck through above */}
+          <div className="min-h-[1rem]">
+            {account.originalPrice > 0 && account.originalPrice > account.price && (
+              <span className="text-slate-400 text-xs line-through">
                 {account.originalPrice.toLocaleString('vi-VN')}đ
               </span>
             )}
-            <span className="text-primary text-base font-bold">
+          </div>
+
+          {/* Sale price — orange */}
+          <div>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-orange-400 to-amber-300 font-black text-xl">
               {account.price.toLocaleString('vi-VN')}đ
             </span>
           </div>
-          {account.status === 'available' && (
-            <button className="btn-primary text-xs px-2 py-1">
-              Xem chi tiết
-            </button>
-          )}
+
+          <div className="flex flex-col gap-1.5 min-h-[3.25rem]">
+            {account.status === 'available' && (
+              <>
+                <button className="btn-primary text-xs w-full py-1.5">
+                  Xem chi tiết
+                </button>
+                <button className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold px-3 py-1.5 rounded transition-colors w-full">
+                  Mua ngay
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </Link>

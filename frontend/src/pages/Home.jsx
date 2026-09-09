@@ -1,11 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { useSliders, useCategories, useAccountList } from '../hooks';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, Pagination } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/pagination';
-import { FiChevronRight, FiSearch, FiX } from 'react-icons/fi';
+import { Link, useNavigate } from 'react-router-dom';
+import { useSliders, useCategories, useAccountList, useHasSubcategories } from '../hooks';
+import { FiChevronRight, FiChevronLeft, FiSearch, FiX } from 'react-icons/fi';
 import SEOHead from '../components/SEOHead';
 import AccountCard from '../components/AccountCard';
 import { AccountCardSkeleton } from '../components/SkeletonLoader';
@@ -19,8 +15,82 @@ const SkeletonCategoryCard = () => (
   </div>
 );
 
+// Subcategory Grid Component
+const SubcategoryGrid = ({ parentCategory, subcategories, onSelectSubcategory }) => {
+  return (
+    <section className="py-2">
+      <div className="container-custom">
+        {/* Header (no back button - click another category to switch) */}
+        <div className="flex items-center gap-3 mb-4">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            {parentCategory.thumbnail && (
+              <img
+                src={parentCategory.thumbnail}
+                alt={parentCategory.name}
+                className="w-6 h-6 rounded object-cover"
+              />
+            )}
+            {parentCategory.name}
+          </h2>
+        </div>
+
+        {/* Subcategories Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+          {subcategories.map((subcategory) => (
+            <button
+              key={subcategory._id}
+              onClick={() => onSelectSubcategory(subcategory)}
+              className="category-card"
+            >
+              {subcategory.thumbnail ? (
+                <img
+                  src={subcategory.thumbnail}
+                  alt={subcategory.name}
+                  className="w-full h-32 object-cover rounded-lg mb-2"
+                />
+              ) : (
+                <div className="w-full h-24 rounded-t-lg mb-2 bg-gradient-to-br from-orange-700 via-orange-600 to-amber-500 flex items-center justify-center">
+                  <span className="text-white text-xl font-bold opacity-50">
+                    {subcategory.name.charAt(0)}
+                  </span>
+                </div>
+              )}
+              <h3 className="text-slate-900 dark:text-white text-sm font-semibold text-center">
+                {subcategory.name}
+              </h3>
+              {subcategory.description && (
+                <p className="text-slate-500 dark:text-slate-400 text-xs text-center mt-1 line-clamp-2">
+                  {subcategory.description}
+                </p>
+              )}
+              <span className="category-count__label text-center block mt-1">
+                Xem tài khoản
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
 // Category Section Component
-const CategoryAccountSection = ({ category, accounts, isLoading }) => {
+const CategoryAccountSection = ({ category, accounts, isLoading, onSelectSubcategory, selectedSubcategoryId }) => {
+  const hasSubcategories = category.subcategories && category.subcategories.length > 0;
+  const [activeSubcategory, setActiveSubcategory] = useState(null);
+
+  // Filter accounts by active subcategory
+  const filteredAccounts = useMemo(() => {
+    if (!activeSubcategory) return accounts;
+    return accounts.filter(acc => acc.category?._id === activeSubcategory._id);
+  }, [accounts, activeSubcategory]);
+
+  const handleSubcategoryClick = (sub) => {
+    const newSub = activeSubcategory?._id === sub._id ? null : sub;
+    setActiveSubcategory(newSub);
+    onSelectSubcategory?.(newSub);
+  };
+
   if (isLoading) {
     return (
       <section className="py-2">
@@ -55,9 +125,14 @@ const CategoryAccountSection = ({ category, accounts, isLoading }) => {
               />
             )}
             {category.name}
+            {activeSubcategory && (
+              <span className="text-sm font-normal text-primary">
+                / {activeSubcategory.name}
+              </span>
+            )}
           </h2>
           <Link
-            to={`/shop?category=${category._id}`}
+            to={`/shop?category=${category._id}${activeSubcategory ? `&subcategory=${activeSubcategory._id}` : ''}`}
             className="text-primary hover:text-primary-light flex items-center gap-1 text-xs font-medium transition-colors"
           >
             <span>Xem tất cả</span>
@@ -65,23 +140,67 @@ const CategoryAccountSection = ({ category, accounts, isLoading }) => {
           </Link>
         </div>
 
+        {/* Subcategory Chips */}
+        {hasSubcategories && (
+          <div className="flex flex-wrap gap-2 mb-3">
+            <button
+              onClick={() => handleSubcategoryClick(null)}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                !activeSubcategory
+                  ? 'bg-primary text-white'
+                  : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
+              }`}
+            >
+              Tất cả ({accounts.length})
+            </button>
+            {category.subcategories.map((sub) => {
+              const count = accounts.filter(acc => acc.category?._id === sub._id).length;
+              if (count === 0) return null;
+              return (
+                <button
+                  key={sub._id}
+                  onClick={() => handleSubcategoryClick(sub)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all flex items-center gap-1 ${
+                    activeSubcategory?._id === sub._id
+                      ? 'bg-primary text-white'
+                      : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
+                  }`}
+                >
+                  <span>{sub.name}</span>
+                  <span className="opacity-70">({count})</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Empty state for subcategory */}
+        {activeSubcategory && filteredAccounts.length === 0 && (
+          <div className="text-center py-8 text-slate-500 dark:text-slate-400 text-sm">
+            Chưa có tài khoản trong danh mục con này
+          </div>
+        )}
+
         {/* Accounts Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          {accounts.map((account) => (
-            <AccountCard
-              key={account._id}
-              account={account}
-            />
-          ))}
-        </div>
+        {filteredAccounts.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {filteredAccounts.slice(0, 8).map((account) => (
+              <AccountCard
+                key={account._id}
+                account={account}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
 };
 
 const Home = () => {
-  const [scrollY, setScrollY] = useState(0);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const navigate = useNavigate();
+  const [selectedParent, setSelectedParent] = useState(null); // Category cha đang chọn (để hiển thị subcategories)
+  const [selectedSubcategory, setSelectedSubcategory] = useState(null); // Danh mục con đang chọn (để lọc accounts)
   const accountsRef = useRef(null);
 
   // Filter state
@@ -95,15 +214,6 @@ const Home = () => {
   // Temporary input states (before clicking "Tìm kiếm")
   const [tempSearchName, setTempSearchName] = useState('');
   const [tempSearchCode, setTempSearchCode] = useState('');
-
-  // Track scroll position for parallax
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   // Fetch sliders
   const { data: sliders } = useSliders();
@@ -136,13 +246,13 @@ const Home = () => {
     return grouped;
   }, [displayAllAccounts]);
 
-  // Filter accounts based on selected category and filters
+  // Filter accounts based on selected subcategory and filters
   const filteredAccounts = useMemo(() => {
     let result = displayAllAccounts;
 
-    // Filter by category
-    if (selectedCategory) {
-      result = result.filter(account => account.category?._id === selectedCategory);
+    // Filter by subcategory (only - parent selection just shows subcategory grid)
+    if (selectedSubcategory) {
+      result = result.filter(account => account.category?._id === selectedSubcategory._id);
     }
 
     // Filter by price range
@@ -196,12 +306,35 @@ const Home = () => {
     }
 
     return result;
-  }, [selectedCategory, displayAllAccounts, filters]);
+  }, [selectedParent, selectedSubcategory, displayAllAccounts, filters]);
 
-  // Handle category click with smooth scroll
-  const handleCategoryClick = (categoryId) => {
-    setSelectedCategory(categoryId);
-    // Scroll to accounts section after a short delay
+  // Handle category click - check if has subcategories
+  const handleCategoryClick = (category) => {
+    const hasSubs = category.subcategories && category.subcategories.length > 0;
+
+    if (hasSubs) {
+      // Có subcategories -> hiển thị grid subcategories
+      setSelectedParent(category);
+      setSelectedSubcategory(null);
+      // Scroll to subcategory grid
+      setTimeout(() => {
+        window.scrollTo({ top: window.innerHeight * 0.6, behavior: 'smooth' });
+      }, 100);
+    } else {
+      // Không có subcategory -> lọc accounts theo category này
+      setSelectedParent(category);
+      setSelectedSubcategory(null);
+      // Scroll to accounts section
+      setTimeout(() => {
+        accountsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  };
+
+  // Handle subcategory selection
+  const handleSubcategoryClick = (subcategory) => {
+    setSelectedSubcategory(subcategory);
+    // Scroll to accounts section
     setTimeout(() => {
       accountsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
@@ -232,83 +365,60 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pt-24">
       <SEOHead
         title="Mua Bán Tài Khoản FC Online, FIFA Online 4 Giá Rẻ Uy Tín"
         description="Shop chuyên mua bán tài khoản FC Online (FIFA Online 4) giá rẻ, uy tín, chất lượng. Tài khoản FO4 đã có sẵn VPL, VLBD, cày rank, đủ mức giá, giao dịch nhanh, bảo hành an toàn."
         keywords="mua tai khoan fc online, fco, mua tai khoan fifa online 4, tai khoan fo4 gia re, ban tai khoan fc online, fifa online 4 gia re, fc online uy tin, tai khoan fo4 vpl, bp trang"
         type="website"
       />
-      {/* Hero Section - Slider (or Stack when displayMode === 'stack') */}
-      <section className="relative w-full" style={{ height: 'auto' }}>
+      {/* Hero Section - Banner 2 cột */}
+      <section>
         {sliders && sliders.length > 0 ? (
           (() => {
-            const stackSliders = sliders.filter((s) => (s.displayMode ?? 'stack') === 'stack');
-            const carouselSliders = sliders.filter((s) => (s.displayMode ?? 'stack') !== 'stack');
-
+            // Lấy 2 banner đầu tiên: [0] = trái, [1] = phải
+            const leftBanner = sliders[0];
+            const rightBanner = sliders[1] || sliders[0];
+            
             return (
-              <>
-                {/* Stack mode: ảnh xếp dọc, full width, không Swiper, không title/subtitle/overlay */}
-                {stackSliders.length > 0 && (
-                  <div className="w-full flex flex-col gap-1">
-                    {stackSliders.map((slider) => (
-                      <a
-                        key={slider._id}
-                        href={slider.link || undefined}
-                        target={slider.link ? '_blank' : undefined}
-                        rel={slider.link ? 'noopener noreferrer' : undefined}
-                        className="block w-full overflow-hidden rounded-md"
-                      >
+              <div className="container-custom">
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-1">
+                  {/* Banner Trái - 1/3 */}
+                  <div className="w-full overflow-hidden rounded-md">
+                    <img
+                      src={leftBanner.image}
+                      alt={leftBanner.title || 'Banner trái'}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  
+                  {/* Banner Phải - 2/3 */}
+                  <div className="relative w-full overflow-hidden rounded-md">
+                    {rightBanner.link ? (
+                      <a href={rightBanner.link} target="_blank" rel="noopener noreferrer">
                         <img
-                          src={slider.image}
-                          alt={slider.title || ''}
-                          className="block w-full h-auto object-cover"
-                          loading="lazy"
+                          src={rightBanner.image}
+                          alt={rightBanner.title || 'Banner phải'}
+                          className="w-full h-full object-cover"
                         />
                       </a>
-                    ))}
+                    ) : (
+                      <img
+                        src={rightBanner.image}
+                        alt={rightBanner.title || 'Banner phải'}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
                   </div>
-                )}
-
-                {/* Carousel mode: Swiper như cũ */}
-                {carouselSliders.length > 0 && (
-                  <div className="w-full" style={{ height: '50vh', overflow: 'hidden' }}>
-                    <Swiper
-                      modules={[Autoplay, Pagination]}
-                      autoplay={{ delay: 5000 }}
-                      loop={true}
-                      className="h-full"
-                    >
-                      {carouselSliders.map((slider) => (
-                        <SwiperSlide key={slider._id}>
-                          <div className="relative w-full h-full">
-                            {/* Parallax Image */}
-                            <div
-                              className="absolute inset-0 w-full"
-                              style={{
-                                transform: `translateY(${scrollY * 0.3}px)`,
-                                height: 'calc(50vh)',
-                              }}
-                            >
-                              <img
-                                src={slider.image}
-                                alt={slider.title}
-                                className="w-full h-full object-contain md:object-cover object-top"
-                              />
-                            </div>
-
-                          </div>
-                        </SwiperSlide>
-                      ))}
-                    </Swiper>
-                  </div>
-                )}
-              </>
+                </div>
+              </div>
             );
           })()
         ) : (
-          /* Fallback: Static Banner */
-          <div className="w-full bg-gradient-to-br from-primary-dark via-primary to-accent animate-gradient" style={{ minHeight: '40vh' }} />
+          /* Fallback */
+          <div className="container-custom">
+            <div className="w-full bg-gradient-to-br from-primary-dark via-primary to-accent rounded-md" style={{ minHeight: '200px' }} />
+          </div>
         )}
       </section>
 
@@ -322,6 +432,22 @@ const Home = () => {
                 <span className="accent">Danh mục</span> Game
               </span>
             </div>
+
+            {/* "Tất cả" button - reset to default view */}
+            {(selectedParent || selectedSubcategory) && (
+              <div className="mb-2">
+                <button
+                  onClick={() => {
+                    setSelectedParent(null);
+                    setSelectedSubcategory(null);
+                  }}
+                  className="text-sm text-primary hover:text-primary-light font-medium flex items-center gap-1"
+                >
+                  <FiChevronRight className="w-4 h-4 rotate-180" />
+                  <span>Tất cả danh mục</span>
+                </button>
+              </div>
+            )}
 
             {/* Show skeleton while loading, real data when loaded, empty state if no categories */}
             {categoriesLoading ? (
@@ -340,11 +466,12 @@ const Home = () => {
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                 {displayCategories.map((category) => {
                   const count = (accountsByCategory[category._id] || []).length;
-                  const isActive = selectedCategory === category._id;
+                  const hasSubs = category.subcategories && category.subcategories.length > 0;
+                  const isActive = selectedParent?._id === category._id;
                   return (
                     <button
                       key={category._id}
-                      onClick={() => handleCategoryClick(category._id)}
+                      onClick={() => handleCategoryClick(category)}
                       className={`category-card ${isActive ? 'ring-2 ring-primary shadow-lg' : ''}`}
                     >
                       {category.thumbnail ? (
@@ -369,6 +496,8 @@ const Home = () => {
                             <span className="category-count__num">{count}</span>
                             <span className="category-count__label">tài khoản</span>
                           </>
+                        ) : hasSubs ? (
+                          <span className="category-count__label">{category.subcategories.length} danh mục con</span>
                         ) : (
                           <span className="category-count__label">Sắp có</span>
                         )}
@@ -379,6 +508,13 @@ const Home = () => {
                           {category.description}
                         </p>
                       )}
+                      
+                      {/* Icon hiển thị có subcategories */}
+                      {hasSubs && (
+                        <div className="absolute top-2 right-2 bg-primary/90 text-white text-xs px-2 py-0.5 rounded-full">
+                          {category.subcategories.length} danh mục
+                        </div>
+                      )}
                     </button>
                   );
                 })}
@@ -387,7 +523,8 @@ const Home = () => {
           </div>
         </section>
 
-        {/* Filter Bar */}
+        {/* Filter Bar - Chỉ hiển thị khi không chọn danh mục cha */}
+        {!(selectedParent && !selectedSubcategory) && (
         <section className="py-2">
           <div className="container-custom">
             <div className="card p-2">
@@ -503,24 +640,45 @@ const Home = () => {
             </div>
           </div>
         </section>
+        )}
       </div>
 
-      {/* Filtered Accounts Section */}
+      {/* Subcategory Grid - Hiển thị khi đã chọn category cha có danh mục con */}
+      {selectedParent && !selectedSubcategory && selectedParent.subcategories?.length > 0 && (
+        <SubcategoryGrid
+          parentCategory={selectedParent}
+          subcategories={selectedParent.subcategories}
+          onSelectSubcategory={handleSubcategoryClick}
+        />
+      )}
+
+      {/* Filtered Accounts Section - Chỉ hiển thị khi chọn danh mục con hoặc không chọn gì */}
+      {!selectedParent || selectedSubcategory ? (
       <section className="py-2" ref={accountsRef}>
         <div className="container-custom">
           {/* Section Header */}
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              {selectedCategory ? (
+              {selectedSubcategory ? (
                 <>
-                  {displayCategories.find(cat => cat._id === selectedCategory)?.thumbnail && (
+                  {selectedSubcategory.thumbnail && (
                     <img
-                      src={displayCategories.find(cat => cat._id === selectedCategory)?.thumbnail}
-                      alt={displayCategories.find(cat => cat._id === selectedCategory)?.name}
+                      src={selectedSubcategory.thumbnail}
+                      alt={selectedSubcategory.name}
                       className="w-6 h-6 rounded object-cover"
                     />
                   )}
-                  {displayCategories.find(cat => cat._id === selectedCategory)?.name}
+                  {selectedSubcategory.name}
+                  {/* Breadcrumb - click parent to go back to subcategory grid */}
+                  {selectedParent && (
+                    <button
+                      onClick={() => setSelectedSubcategory(null)}
+                      className="text-xs text-primary hover:text-primary-light ml-2 flex items-center gap-1"
+                    >
+                      <FiChevronLeft className="w-3 h-3" />
+                      <span>{selectedParent.name}</span>
+                    </button>
+                  )}
                 </>
               ) : (
                 'Tất cả tài khoản'
@@ -556,6 +714,7 @@ const Home = () => {
           )}
         </div>
       </section>
+      ) : null}
 
       {/* Features */}
       <section className="py-2">

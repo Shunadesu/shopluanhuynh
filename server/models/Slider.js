@@ -20,11 +20,6 @@ const sliderSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
-  },
-  displayMode: {
-    type: String,
-    enum: ['slider', 'stack'],
-    default: 'stack'
   }
 }, {
   timestamps: true

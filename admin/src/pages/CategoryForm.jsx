@@ -12,12 +12,31 @@ export default function CategoryForm() {
   const queryClient = useQueryClient();
   const isEditing = Boolean(id);
 
+  // Get parentId from URL query (when adding subcategory from tree view)
+  const urlParams = new URLSearchParams(window.location.search);
+  const parentIdFromUrl = urlParams.get('parentId');
+
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
     description: '',
     thumbnail: '',
+    parentId: parentIdFromUrl || '',
+    order: 0,
+    isActive: true,
   });
+
+  // Fetch all categories to get root categories for parentId select
+  const { data: allCategories } = useQuery({
+    queryKey: ['categories-all'],
+    queryFn: async () => {
+      const { data } = await api.get('/categories/all');
+      return data;
+    },
+  });
+
+  // Root categories only (no parentId) for the select
+  const rootCategories = allCategories || [];
 
   // Fetch category data when editing
   const { data: category, isLoading: loadingCategory, error } = useQuery({
@@ -38,6 +57,9 @@ export default function CategoryForm() {
         slug: category.slug || '',
         description: category.description || '',
         thumbnail: category.thumbnail || '',
+        parentId: category.parentId || '',
+        order: category.order ?? 0,
+        isActive: category.isActive ?? true,
       });
     }
   }, [category]);
@@ -229,23 +251,6 @@ export default function CategoryForm() {
 
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">
-              Slug <span className="text-red-400">*</span>
-            </label>
-            <input
-              type="text"
-              value={formData.slug}
-              onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
-              className="input-field"
-              placeholder="VD: game-pc, game-mobile"
-              required
-            />
-            <p className="text-xs text-slate-500 mt-1">
-              Slug là phiên bản thân thiện của URL, chỉ chứa chữ thường và dấu gạch ngang
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
               Mô tả
             </label>
             <textarea
@@ -255,6 +260,74 @@ export default function CategoryForm() {
               rows="4"
               placeholder="Mô tả ngắn về danh mục..."
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">
+              Danh mục cha
+            </label>
+            <select
+              value={formData.parentId}
+              onChange={(e) => setFormData((prev) => ({ ...prev, parentId: e.target.value }))}
+              className="input-field"
+              disabled={isEditing && !formData.parentId && rootCategories.find(c => c._id === id)}
+            >
+              <option value="">-- Danh mục gốc --</option>
+              {rootCategories
+                .filter(c => c._id !== id)
+                .map(cat => (
+                  <option key={cat._id} value={cat._id}>{cat.name}</option>
+                ))}
+            </select>
+            <p className="text-xs text-slate-500 mt-1">
+              Chọn danh mục cha nếu muốn tạo danh mục con
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Thứ tự
+              </label>
+              <input
+                type="number"
+                value={formData.order}
+                onChange={(e) => setFormData((prev) => ({ ...prev, order: parseInt(e.target.value) || 0 }))}
+                className="input-field"
+                min="0"
+                placeholder="0"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Slug <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.slug}
+                onChange={(e) => setFormData((prev) => ({ ...prev, slug: e.target.value }))}
+                className="input-field"
+                placeholder="VD: game-pc, game-mobile"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <label className="flex items-center cursor-pointer">
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  checked={formData.isActive}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, isActive: e.target.checked }))}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-500"></div>
+              </div>
+              <span className="ms-3 text-sm font-medium text-slate-300">
+                Kích hoạt
+              </span>
+            </label>
           </div>
 
           <UploadImage

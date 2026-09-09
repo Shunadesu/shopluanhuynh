@@ -11,12 +11,10 @@ export default function Sliders() {
   const [editingSlider, setEditingSlider] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
-    subtitle: '',
     image: '',
     link: '',
     order: 0,
     isActive: true,
-    displayMode: 'slider',
   });
 
   const { data: sliders, isLoading } = useQuery({
@@ -67,39 +65,22 @@ export default function Sliders() {
       setEditingSlider(slider);
       setFormData({
         title: slider.title,
-        subtitle: slider.subtitle || '',
         image: slider.image,
         link: slider.link || '',
         order: slider.order || 0,
         isActive: slider.isActive ?? true,
-        displayMode: slider.displayMode || 'slider',
       });
     } else {
       setEditingSlider(null);
       setFormData({
         title: '',
-        subtitle: '',
         image: '',
         link: '',
         order: 0,
         isActive: true,
-        displayMode: 'slider',
       });
     }
     setIsModalOpen(true);
-  };
-
-  const handleQuickToggleDisplayMode = async (slider) => {
-    const next = slider.displayMode === 'stack' ? 'slider' : 'stack';
-    const label = next === 'stack' ? 'Stack (xếp dọc)' : 'Slider (trượt qua lại)';
-    if (!window.confirm(`Chuyển sang chế độ "${label}"?`)) return;
-    try {
-      await api.put(`/admin/sliders/${slider._id}`, { displayMode: next });
-      queryClient.invalidateQueries(['sliders']);
-      toast.success('Đã đổi kiểu hiển thị');
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
-    }
   };
 
   const closeModal = () => {
@@ -171,8 +152,8 @@ export default function Sliders() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-100">Banner Slider</h1>
-          <p className="text-slate-400 mt-1">Quản lý banner trang chủ</p>
+          <h1 className="text-3xl font-bold text-slate-100">Banner Trang Chủ</h1>
+          <p className="text-slate-400 mt-1">Quản lý banner trang chủ - Hiển thị 2 banner cạnh nhau (trái 33%, phải 67%)</p>
         </div>
         <button onClick={() => openModal()} className="btn-primary flex items-center gap-2">
           <FiPlus /> Thêm banner
@@ -198,9 +179,7 @@ export default function Sliders() {
               <tr className="border-b border-slate-700 bg-slate-800/50">
                 <th className="text-left px-4 py-3 text-slate-400 font-medium">Hình ảnh</th>
                 <th className="text-left px-4 py-3 text-slate-400 font-medium">Tiêu đề</th>
-                <th className="text-left px-4 py-3 text-slate-400 font-medium hidden md:table-cell">Phụ đề</th>
                 <th className="text-center px-4 py-3 text-slate-400 font-medium">Thứ tự</th>
-                <th className="text-center px-4 py-3 text-slate-400 font-medium">Kiểu hiển thị</th>
                 <th className="text-center px-4 py-3 text-slate-400 font-medium">Trạng thái</th>
                 <th className="text-center px-4 py-3 text-slate-400 font-medium">Hành động</th>
               </tr>
@@ -241,25 +220,9 @@ export default function Sliders() {
                       </a>
                     )}
                   </td>
-                  {/* Subtitle */}
-                  <td className="px-4 py-3 text-slate-400 hidden md:table-cell">
-                    {slider.subtitle || <span className="text-slate-600 italic">—</span>}
-                  </td>
                   {/* Order */}
                   <td className="px-4 py-3 text-center">
                     <span className="badge badge-info">#{slider.order}</span>
-                  </td>
-                  {/* Display Mode */}
-                  <td className="px-4 py-3 text-center">
-                    <span
-                      className={`badge ${
-                        slider.displayMode === 'stack'
-                          ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
-                          : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-                      }`}
-                    >
-                      {slider.displayMode === 'stack' ? 'Stack' : 'Slider'}
-                    </span>
                   </td>
                   {/* Status */}
                   <td className="px-4 py-3 text-center">
@@ -270,13 +233,6 @@ export default function Sliders() {
                   {/* Actions */}
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-center gap-2">
-                      <button
-                        onClick={() => handleQuickToggleDisplayMode(slider)}
-                        className="p-2 rounded hover:bg-purple-500/20 text-slate-400 hover:text-purple-400 transition-all"
-                        title={slider.displayMode === 'stack' ? 'Chuyển sang Slider' : 'Chuyển sang Stack'}
-                      >
-                        <FiLayers size={16} />
-                      </button>
                       <button
                         onClick={() => openModal(slider)}
                         className="p-2 rounded hover:bg-cyan-500/20 text-slate-400 hover:text-cyan-400 transition-all"
@@ -317,19 +273,8 @@ export default function Sliders() {
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   className="input-field"
+                  placeholder="VD: Banner khuyến mãi mùa hè"
                   required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Phụ đề
-                </label>
-                <input
-                  type="text"
-                  value={formData.subtitle}
-                  onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-                  className="input-field"
                 />
               </div>
 
@@ -354,51 +299,34 @@ export default function Sliders() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Thứ tự hiển thị
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.order}
-                    onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) })}
-                    className="input-field"
-                    min="0"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Trạng thái
-                  </label>
-                  <select
-                    value={formData.isActive}
-                    onChange={(e) => setFormData({ ...formData, isActive: e.target.value === 'true' })}
-                    className="input-field"
-                  >
-                    <option value="true">Active</option>
-                    <option value="false">Inactive</option>
-                  </select>
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Thứ tự hiển thị
+                </label>
+                <input
+                  type="number"
+                  value={formData.order}
+                  onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) })}
+                  className="input-field"
+                  min="0"
+                />
+                <p className="text-slate-500 text-xs mt-1">
+                  Thứ tự 0 sẽ hiển thị bên trái (1/3), thứ tự 1 sẽ hiển thị bên phải (2/3).
+                </p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  <FiLayers className="inline mr-2" />
-                  Kiểu hiển thị
+                  Trạng thái
                 </label>
                 <select
-                  value={formData.displayMode}
-                  onChange={(e) => setFormData({ ...formData, displayMode: e.target.value })}
+                  value={formData.isActive}
+                  onChange={(e) => setFormData({ ...formData, isActive: e.target.value === 'true' })}
                   className="input-field"
                 >
-                  <option value="slider">Slider (trượt qua lại như hiện tại)</option>
-                  <option value="stack">Stack (xếp dọc, hiển thị tuần tự)</option>
+                  <option value="true">Active</option>
+                  <option value="false">Inactive</option>
                 </select>
-                <p className="text-slate-500 text-xs mt-1">
-                  Stack: hiển thị ảnh nối tiếp nhau theo thứ tự, full width, không Swiper.
-                </p>
               </div>
 
               <div className="flex gap-2 pt-2">

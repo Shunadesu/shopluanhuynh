@@ -8,12 +8,17 @@ const router = express.Router();
 // Get all accounts with filters
 router.get('/', async (req, res) => {
   try {
-    const { category, minPrice, maxPrice, search, code, sortBy, page = 1, limit = 12 } = req.query;
+    const { category, subcategory, minPrice, maxPrice, search, code, sortBy, page = 1, limit = 12 } = req.query;
 
     const query = { status: 'available' };
 
     if (category) {
       query.categoryId = category;
+    }
+
+    // Filter by subcategory - subcategory is just a category with parentId
+    if (subcategory) {
+      query.categoryId = subcategory;
     }
 
     if (minPrice || maxPrice) {
@@ -58,7 +63,7 @@ router.get('/', async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const accounts = await GameAccount.find(query)
-      .populate('categoryId', 'name slug')
+      .populate('categoryId', 'name slug parentId')
       .select('-username -password') // Hide credentials
       .sort(sortOptions)
       .skip(skip)

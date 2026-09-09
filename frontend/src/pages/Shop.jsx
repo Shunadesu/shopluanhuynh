@@ -5,7 +5,7 @@ import { useAuthStore } from '../store/authStore';
 import { useCartStore } from '../store/cartStore';
 import { useCategories, useAccountList } from '../hooks';
 import { ShopSkeleton, AccountCardSkeleton } from '../components/SkeletonLoader';
-import { FiSearch, FiTag, FiShoppingCart, FiZap, FiChevronRight } from 'react-icons/fi';
+import { FiSearch, FiTag, FiShoppingCart, FiZap, FiChevronRight, FiChevronLeft } from 'react-icons/fi';
 import SEOHead from '../components/SEOHead';
 
 // Account Card Component (từ Home.jsx)
@@ -40,7 +40,7 @@ const AccountCard = ({ account, onAddToCart, onBuyNow, addToCartPending }) => {
           <span className="text-xs text-slate-600 dark:text-slate-300">{category.name}</span>
         </div>
       )}
-      
+
       {/* Team Value & BP */}
       <div className="flex flex-wrap gap-2 mb-2">
         {account.teamValue && (
@@ -54,17 +54,17 @@ const AccountCard = ({ account, onAddToCart, onBuyNow, addToCartPending }) => {
           </span>
         )}
       </div>
-      
+
       {/* Rank */}
       {account.rank && (
         <span className="inline-block bg-primary/20 text-primary px-2 py-0.5 rounded text-xs mb-2 w-fit">
           {account.rank}
         </span>
       )}
-      
+
       <div className="mt-auto space-y-2">
         {/* Price */}
-        <div className="flex flex-col gap-0.5">
+        <div className="flex flex-col gap-0.5 min-h-[1rem]">
           {account.originalPrice && account.originalPrice > account.price && (
             <span className="text-slate-500 text-xs line-through">
               {account.originalPrice.toLocaleString('vi-VN')}đ
@@ -144,35 +144,124 @@ const CategorySection = ({ category, accounts, onAddToCart, onBuyNow, addToCartP
   );
 };
 
+// Subcategory Section Component
+const SubcategorySection = ({ parentCategory, subcategories, onSelectSubcategory, onBack }) => {
+  if (!subcategories || subcategories.length === 0) return null;
+
+  return (
+    <section className="py-6">
+      <div className="container-custom">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-6">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-1 text-slate-600 dark:text-slate-300 hover:text-primary transition-colors"
+          >
+            <FiChevronLeft className="w-5 h-5" />
+            <span className="text-sm">Quay lại</span>
+          </button>
+          <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            {parentCategory.thumbnail && (
+              <img
+                src={parentCategory.thumbnail}
+                alt={parentCategory.name}
+                className="w-8 h-8 rounded-lg object-cover"
+              />
+            )}
+            {parentCategory.name}
+          </h2>
+        </div>
+
+        {/* Subcategories Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {subcategories.map((subcategory) => (
+            <button
+              key={subcategory._id}
+              onClick={() => onSelectSubcategory(subcategory)}
+              className="card p-4 hover:shadow-lg transition-shadow text-center"
+            >
+              {subcategory.thumbnail ? (
+                <img
+                  src={subcategory.thumbnail}
+                  alt={subcategory.name}
+                  className="w-full h-24 object-cover rounded-lg mb-3"
+                />
+              ) : (
+                <div className="w-full h-20 rounded-lg mb-3 bg-gradient-to-br from-orange-700 via-orange-600 to-amber-500 flex items-center justify-center mx-auto">
+                  <span className="text-white text-xl font-bold opacity-50">
+                    {subcategory.name.charAt(0)}
+                  </span>
+                </div>
+              )}
+              <h3 className="text-slate-900 dark:text-white font-semibold mb-1">
+                {subcategory.name}
+              </h3>
+              {subcategory.description && (
+                <p className="text-slate-500 dark:text-slate-400 text-xs line-clamp-2">
+                  {subcategory.description}
+                </p>
+              )}
+              <span className="inline-block mt-2 text-primary text-sm font-medium">
+                Xem tài khoản →
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const Shop = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { isAuthenticated } = useAuthStore();
   const incrementCart = useCartStore((s) => s.incrementCart);
 
-  // Get category from URL query params
+  // Get category and subcategory from URL query params
   const categoryFromUrl = searchParams.get('category');
+  const subcategoryFromUrl = searchParams.get('subcategory');
 
   // State
   const [search, setSearch] = useState('');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState('all');
+  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState(null);
   const [page, setPage] = useState(1);
   const [addToCartPending, setAddToCartPending] = useState(false);
 
   // Fetch categories
   const { data: categories } = useCategories();
 
-  // Set selected category from URL when categories are loaded
+  // Find selected category object
+  const selectedCategory = categories?.find(c => c._id === selectedCategoryId);
+  const hasSubcategories = selectedCategory?.subcategories?.length > 0;
+
+  // Set selected category/subcategory from URL when categories are loaded
   useEffect(() => {
-    if (categoryFromUrl && categories) {
-      const category = categories.find(c => c._id === categoryFromUrl);
-      if (category) {
-        setSelectedCategoryId(category._id);
+    if (categories) {
+      if (subcategoryFromUrl) {
+        // Find subcategory's parent
+        for (const cat of categories) {
+          if (cat.subcategories?.some(s => s._id === subcategoryFromUrl)) {
+            setSelectedCategoryId(cat._id);
+            setSelectedSubcategoryId(subcategoryFromUrl);
+            return;
+          }
+        }
+      } else if (categoryFromUrl) {
+        const category = categories.find(c => c._id === categoryFromUrl);
+        if (category) {
+          setSelectedCategoryId(category._id);
+          setSelectedSubcategoryId(null);
+        }
+      } else {
+        setSelectedCategoryId('all');
+        setSelectedSubcategoryId(null);
       }
     }
-  }, [categoryFromUrl, categories]);
+  }, [categoryFromUrl, subcategoryFromUrl, categories]);
 
   // Fetch accounts với filters
   const { accounts, loading: isLoading, pagination } = useAccountList({
@@ -181,6 +270,8 @@ const Shop = () => {
     maxPrice,
     page,
     limit: 100,
+    ...(selectedSubcategoryId ? { subcategory: selectedSubcategoryId } : {}),
+    ...(selectedCategoryId !== 'all' && !selectedSubcategoryId ? { category: selectedCategoryId } : {}),
   });
 
   const handleAddToCart = async (e, accountId) => {
@@ -225,11 +316,14 @@ const Shop = () => {
     }
   };
 
-  // Filter accounts by selected category
+  // Filter accounts by selected category/subcategory
   const filteredAccounts = useMemo(() => {
+    if (selectedSubcategoryId) {
+      return accounts.filter(account => account.category?._id === selectedSubcategoryId);
+    }
     if (selectedCategoryId === 'all') return accounts;
     return accounts.filter(account => account.category?._id === selectedCategoryId);
-  }, [accounts, selectedCategoryId]);
+  }, [accounts, selectedCategoryId, selectedSubcategoryId]);
 
   // Group accounts by category
   const accountsByCategory = useMemo(() => {
@@ -247,7 +341,7 @@ const Shop = () => {
   // Reset page khi filter thay đổi
   useEffect(() => {
     setPage(1);
-  }, [search, minPrice, maxPrice, selectedCategoryId]);
+  }, [search, minPrice, maxPrice, selectedCategoryId, selectedSubcategoryId]);
 
   // Reset filter handler
   const handleResetFilters = () => {
@@ -255,7 +349,46 @@ const Shop = () => {
     setMinPrice('');
     setMaxPrice('');
     setSelectedCategoryId('all');
+    setSelectedSubcategoryId(null);
     setPage(1);
+    setSearchParams({});
+  };
+
+  // Handle category button click
+  const handleCategoryClick = (cat) => {
+    if (cat.subcategories?.length > 0) {
+      // Có subcategories -> hiển thị subcategories
+      setSelectedCategoryId(cat._id);
+      setSelectedSubcategoryId(null);
+      navigate(`/shop?category=${cat._id}`, { replace: true });
+    } else {
+      // Không có subcategories -> lọc accounts
+      setSelectedCategoryId(cat._id);
+      setSelectedSubcategoryId(null);
+      navigate(`/shop?category=${cat._id}`, { replace: true });
+    }
+  };
+
+  // Handle subcategory selection
+  const handleSubcategoryClick = (subcategory) => {
+    setSelectedSubcategoryId(subcategory._id);
+    navigate(`/shop?category=${selectedCategoryId}&subcategory=${subcategory._id}`, { replace: true });
+  };
+
+  // Handle back from subcategories
+  const handleBackFromSubcategories = () => {
+    setSelectedSubcategoryId(null);
+    navigate(`/shop?category=${selectedCategoryId}`, { replace: true });
+  };
+
+  // Get page title
+  const getPageTitle = () => {
+    if (selectedSubcategoryId) {
+      const subcategory = selectedCategory?.subcategories?.find(s => s._id === selectedSubcategoryId);
+      return subcategory?.name || 'Tài khoản';
+    }
+    if (selectedCategoryId === 'all') return 'Cửa hàng tài khoản';
+    return selectedCategory?.name || 'Tài khoản';
   };
 
   return (
@@ -266,13 +399,52 @@ const Shop = () => {
         keywords="cua hang tai khoan game, tai khoan game gia re, mua tai khoan, lien quan, pubg, free fire"
         type="website"
       />
+      {/* Breadcrumb Navigation */}
+      <div className="container-custom mb-4">
+        <nav className="flex items-center gap-2 text-sm">
+          <button
+            onClick={() => {
+              setSelectedCategoryId('all');
+              setSelectedSubcategoryId(null);
+              navigate('/shop');
+            }}
+            className="text-slate-500 hover:text-primary transition-colors"
+          >
+            Cửa hàng
+          </button>
+          
+          {selectedCategory && selectedCategoryId !== 'all' && (
+            <>
+              <span className="text-slate-400">/</span>
+              <button
+                onClick={() => {
+                  setSelectedSubcategoryId(null);
+                  navigate(`/shop?category=${selectedCategoryId}`);
+                }}
+                className={`hover:text-primary transition-colors ${
+                  selectedSubcategoryId ? 'text-slate-500' : 'text-primary font-medium'
+                }`}
+              >
+                {selectedCategory.name}
+              </button>
+            </>
+          )}
+          
+          {selectedSubcategoryId && (
+            <>
+              <span className="text-slate-400">/</span>
+              <span className="text-primary font-medium">
+                {selectedCategory?.subcategories?.find(s => s._id === selectedSubcategoryId)?.name}
+              </span>
+            </>
+          )}
+        </nav>
+      </div>
+
       {/* Page Title */}
       <div className="container-custom mb-6">
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-          {selectedCategoryId === 'all' 
-            ? 'Cửa hàng tài khoản' 
-            : categories?.find(c => c._id === selectedCategoryId)?.name || 'Tài khoản'
-          }
+          {getPageTitle()}
         </h1>
         <p className="text-slate-600 dark:text-slate-400 mt-1">
           {filteredAccounts.length} tài khoản được tìm thấy
@@ -334,6 +506,7 @@ const Shop = () => {
           <button
             onClick={() => {
               setSelectedCategoryId('all');
+              setSelectedSubcategoryId(null);
               navigate('/shop', { replace: true });
             }}
             className={`px-4 py-1.5 rounded-lg whitespace-nowrap transition-all text-sm ${
@@ -346,31 +519,48 @@ const Shop = () => {
           </button>
           
           {/* Category buttons */}
-          {categories?.map((cat) => (
-            <button
-              key={cat._id}
-              onClick={() => {
-                setSelectedCategoryId(cat._id);
-                navigate(`/shop?category=${cat._id}`, { replace: true });
-              }}
-              className={`px-4 py-1.5 rounded-lg whitespace-nowrap transition-all text-sm flex items-center gap-2 ${
-                selectedCategoryId === cat._id
-                  ? 'bg-primary text-white font-medium'
-                  : 'bg-slate-200 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
-              }`}
-            >
-              {cat.thumbnail && (
-                <img
-                  src={cat.thumbnail}
-                  alt={cat.name}
-                  className="w-5 h-5 rounded object-cover"
-                />
-              )}
-              {cat.name}
-            </button>
-          ))}
+          {categories?.map((cat) => {
+            const hasSubs = cat.subcategories?.length > 0;
+            return (
+              <button
+                key={cat._id}
+                onClick={() => handleCategoryClick(cat)}
+                className={`px-4 py-1.5 rounded-lg whitespace-nowrap transition-all text-sm flex items-center gap-2 ${
+                  selectedCategoryId === cat._id
+                    ? 'bg-primary text-white font-medium'
+                    : 'bg-slate-200 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
+                }`}
+              >
+                {cat.thumbnail && (
+                  <img
+                    src={cat.thumbnail}
+                    alt={cat.name}
+                    className="w-5 h-5 rounded object-cover"
+                  />
+                )}
+                {cat.name}
+                {hasSubs && (
+                  <span className="text-xs opacity-70">({cat.subcategories.length})</span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
+
+      {/* Subcategory Section - Hiển thị khi đã chọn category có subcategories */}
+      {selectedCategory && hasSubcategories && !selectedSubcategoryId && (
+        <SubcategorySection
+          parentCategory={selectedCategory}
+          subcategories={selectedCategory.subcategories}
+          onSelectSubcategory={handleSubcategoryClick}
+          onBack={() => {
+            setSelectedCategoryId('all');
+            setSelectedSubcategoryId(null);
+            navigate('/shop', { replace: true });
+          }}
+        />
+      )}
 
       {/* Main Content */}
       <div>
@@ -427,11 +617,22 @@ const Shop = () => {
               </div>
             )}
           </>
-        ) : (
-          /* Hiển thị tài khoản của danh mục được chọn */
+        ) : selectedSubcategoryId ? (
+          /* Hiển thị tài khoản của subcategory được chọn */
           <div>
             <CategorySection
-              category={categories?.find(c => c._id === selectedCategoryId)}
+              category={selectedCategory?.subcategories?.find(s => s._id === selectedSubcategoryId) || selectedCategory}
+              accounts={filteredAccounts}
+              onAddToCart={handleAddToCart}
+              onBuyNow={handleBuyNow}
+              addToCartPending={addToCartPending}
+            />
+          </div>
+        ) : (
+          /* Hiển thị tài khoản của category được chọn (không có subcategory) */
+          <div>
+            <CategorySection
+              category={selectedCategory}
               accounts={filteredAccounts}
               onAddToCart={handleAddToCart}
               onBuyNow={handleBuyNow}

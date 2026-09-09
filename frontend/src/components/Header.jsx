@@ -1,12 +1,13 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useCartStore } from '../store/cartStore';
 import { useThemeStore } from '../store/themeStore';
 import { useSettings } from '../hooks/useSettings';
+import { useCategories } from '../hooks';
 import AuthDrawer from './AuthDrawer';
 import CartDrawer from './CartDrawer';
-import { FiShoppingCart, FiUser, FiLogOut, FiMenu, FiSun, FiMoon } from 'react-icons/fi';
+import { FiShoppingCart, FiUser, FiLogOut, FiMenu, FiSun, FiMoon, FiChevronDown } from 'react-icons/fi';
 
 const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, onCloseCart, authInitialView = 'login' }) => {
   const navigate = useNavigate();
@@ -17,25 +18,18 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
   const toggleTheme = useThemeStore((s) => s.toggleTheme);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [showCategoryMenu, setShowCategoryMenu] = useState(false);
+  const [hoveredCategory, setHoveredCategory] = useState(null);
+  const categoryMenuRef = useRef(null);
+
+  // Fetch categories for dropdown menu
+  const { data: categories } = useCategories();
 
   // Resolve theme (fallback to DOM if not yet set in store)
   const isDark =
     theme !== null
       ? theme === 'dark'
       : typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
-
-  // Check if on home page
-  const isHomePage = location.pathname === '/';
-
-  // Track scroll position
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   // Fetch settings for logo
   const { data: settings } = useSettings();
@@ -52,52 +46,26 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
     navigate('/');
   };
 
-  // Dynamic header styles based on page, scroll, and theme
-  // - On home (transparent at top): header overlays the hero slide (always dark background),
-  //   so text is always white regardless of theme. Only after scroll does theme matter.
-  // - On other pages: theme-appropriate colors from the start.
+  // Header styles - always solid, themed colors
   const getHeaderClasses = () => {
-    const base = 'fixed top-0 left-0 right-0 z-40 transition-all duration-300';
-
-    if (isHomePage) {
-      if (isScrolled) {
-        return `${base} bg-white/95 dark:bg-dark/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/50`;
-      }
-      return `${base} bg-transparent border-b border-transparent`;
-    }
-
-    return `${base} bg-white/95 dark:bg-dark/95 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800`;
+    return 'fixed top-0 left-0 right-0 z-40 bg-white/95 dark:bg-dark/95 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800';
   };
 
-  // Text/icon color helpers for header
-  // On home (top, transparent): always white text because hero slide is dark in both themes.
-  // On home (scrolled) or other pages: use theme-appropriate colors.
+  // Text/icon color helpers for header - themed colors
   const iconColor = () => {
-    if (isHomePage && !isScrolled) {
-      return 'text-white';
-    }
     return isDark ? 'text-slate-300' : 'text-slate-700';
   };
 
   const hoverBg = () => {
-    if (isHomePage && !isScrolled) {
-      return 'hover:bg-white/10';
-    }
     return isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-100';
   };
 
   const navLinkColor = (isActive) => {
     if (isActive) return 'text-primary';
-    if (isHomePage && !isScrolled) {
-      return 'text-white/90 hover:text-white';
-    }
     return isDark ? 'text-slate-300 hover:text-white' : 'text-slate-700 hover:text-slate-900';
   };
 
   const mobileLinkColor = () => {
-    if (isHomePage && !isScrolled) {
-      return 'text-white hover:bg-white/10';
-    }
     return isDark ? 'text-slate-300 hover:bg-slate-800 hover:text-white' : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900';
   };
 
@@ -124,12 +92,117 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-1">
-              <Link
-                to="/shop"
-                className={`nav-link px-4 py-2 ${navLinkColor(location.pathname === '/shop')}`}
-              >
-                Tài khoản
-              </Link>
+              {/* Categories Dropdown */}
+              <div className="relative" ref={categoryMenuRef}>
+                <button
+                  onMouseEnter={() => setShowCategoryMenu(true)}
+                  onClick={() => navigate('/shop')}
+                  className={`nav-link px-4 py-2 flex items-center gap-1 ${navLinkColor(location.pathname.startsWith('/shop'))}`}
+                >
+                  Tài khoản
+                  <FiChevronDown className={`w-4 h-4 ${iconColor()}`} />
+                </button>
+
+                {/* Dropdown Menu */}
+                {showCategoryMenu && categories && categories.length > 0 && (
+                  <div
+                    className="absolute left-0 top-full mt-2 w-64 bg-white dark:bg-dark-light border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl z-30"
+                    onMouseEnter={() => setShowCategoryMenu(true)}
+                    onMouseLeave={() => {
+                      setShowCategoryMenu(false);
+                      setHoveredCategory(null);
+                    }}
+                  >
+                    <div className="py-2">
+                      {/* Parent Categories */}
+                      {categories.map((cat) => {
+                        const hasSubcategories = cat.subcategories && cat.subcategories.length > 0;
+                        const isHovered = hoveredCategory === cat._id;
+
+                        return (
+                          <div key={cat._id}>
+                            {hasSubcategories ? (
+                              // Category with subcategories - show as expandable
+                              <div
+                                className="relative"
+                                onMouseEnter={() => setHoveredCategory(cat._id)}
+                                onMouseLeave={() => setHoveredCategory(null)}
+                              >
+                                <button
+                                  onClick={() => {
+                                    navigate(`/shop?category=${cat._id}`);
+                                    setShowCategoryMenu(false);
+                                  }}
+                                  className={`w-full text-left px-4 py-2 flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${
+                                    isDark ? 'text-slate-300' : 'text-slate-700'
+                                  }`}
+                                >
+                                  <span>{cat.name}</span>
+                                  <FiChevronDown className="w-4 h-4 opacity-50 rotate-[-90deg]" />
+                                </button>
+
+                                {/* Subcategories Dropdown - Right side */}
+                                {isHovered && (
+                                  <div className="absolute left-full top-0 ml-1 w-48 bg-white dark:bg-dark-light border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl z-40">
+                                    <div className="py-2">
+                                      <Link
+                                        to={`/shop?category=${cat._id}`}
+                                        onClick={() => setShowCategoryMenu(false)}
+                                        className={`block px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${
+                                          isDark ? 'text-slate-300' : 'text-slate-700'
+                                        }`}
+                                      >
+                                        Tất cả {cat.name}
+                                      </Link>
+                                      {cat.subcategories.map((sub) => (
+                                        <Link
+                                          key={sub._id}
+                                          to={`/shop?subcategory=${sub._id}`}
+                                          onClick={() => setShowCategoryMenu(false)}
+                                          className={`block px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${
+                                            isDark ? 'text-slate-300' : 'text-slate-700'
+                                          }`}
+                                        >
+                                          {sub.name}
+                                        </Link>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              // Category without subcategories - direct link
+                              <Link
+                                to={`/shop?category=${cat._id}`}
+                                onClick={() => setShowCategoryMenu(false)}
+                                className={`block px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${
+                                  isDark ? 'text-slate-300' : 'text-slate-700'
+                                }`}
+                              >
+                                {cat.name}
+                              </Link>
+                            )}
+                          </div>
+                        );
+                      })}
+
+                      {/* All Categories Link */}
+                      <div className="border-t border-slate-200 dark:border-slate-700 mt-2 pt-2">
+                        <Link
+                          to="/shop"
+                          onClick={() => setShowCategoryMenu(false)}
+                          className={`block px-4 py-2 text-sm font-medium text-primary hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${
+                            isDark ? 'text-cyan-400' : 'text-primary'
+                          }`}
+                        >
+                          Xem tất cả →
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <Link
                 to="/deposit"
                 className={`nav-link px-4 py-2 ${navLinkColor(location.pathname === '/deposit')}`}
@@ -218,11 +291,9 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
                   <button
                     onClick={() => onOpenAuth('login')}
                     className={`hidden sm:block px-4 py-2 rounded-lg font-medium transition-colors ${
-                      isHomePage && !isScrolled
-                        ? 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
-                        : isDark
-                          ? 'bg-slate-700 text-white hover:bg-slate-600'
-                          : 'bg-slate-200 text-slate-900 hover:bg-slate-300'
+                      isDark
+                        ? 'bg-slate-700 text-white hover:bg-slate-600'
+                        : 'bg-slate-200 text-slate-900 hover:bg-slate-300'
                     }`}
                   >
                     Đăng nhập
@@ -250,20 +321,69 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
           {showMobileMenu && (
             <div className="md:hidden py-4 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-dark/95 backdrop-blur-md">
               <nav className="flex flex-col space-y-2">
-                <Link
-                  to="/shop"
-                  className={`px-4 py-2 rounded-lg transition-colors ${mobileLinkColor()}`}
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  Tài khoản
-                </Link>
-                <Link
-                  to="/deposit"
-                  className={`px-4 py-2 rounded-lg transition-colors ${mobileLinkColor()}`}
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  Nạp thẻ
-                </Link>
+                {/* Categories Section */}
+                <div>
+                  <div className={`px-4 py-2 text-sm font-medium ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
+                    Danh mục
+                  </div>
+                  <Link
+                    to="/shop"
+                    className={`block px-4 py-2 rounded-lg transition-colors ${mobileLinkColor()}`}
+                    onClick={() => setShowMobileMenu(false)}
+                  >
+                    Tất cả tài khoản
+                  </Link>
+                  {categories?.map((cat) => {
+                    const hasSubcategories = cat.subcategories && cat.subcategories.length > 0;
+                    return (
+                      <div key={cat._id}>
+                        {hasSubcategories ? (
+                          <>
+                            <Link
+                              to={`/shop?category=${cat._id}`}
+                              className={`block px-4 py-2 rounded-lg transition-colors ${mobileLinkColor()}`}
+                              onClick={() => setShowMobileMenu(false)}
+                            >
+                              {cat.name}
+                            </Link>
+                            {/* Subcategories */}
+                            <div className="pl-8">
+                              {cat.subcategories.map((sub) => (
+                                <Link
+                                  key={sub._id}
+                                  to={`/shop?subcategory=${sub._id}`}
+                                  className={`block px-4 py-2 rounded-lg transition-colors ${mobileLinkColor()}`}
+                                  onClick={() => setShowMobileMenu(false)}
+                                >
+                                  {sub.name}
+                                </Link>
+                              ))}
+                            </div>
+                          </>
+                        ) : (
+                          <Link
+                            to={`/shop?category=${cat._id}`}
+                            className={`block px-4 py-2 rounded-lg transition-colors ${mobileLinkColor()}`}
+                            onClick={() => setShowMobileMenu(false)}
+                          >
+                            {cat.name}
+                          </Link>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="border-t border-slate-200 dark:border-slate-800 pt-2">
+                  <Link
+                    to="/deposit"
+                    className={`px-4 py-2 rounded-lg transition-colors ${mobileLinkColor()}`}
+                    onClick={() => setShowMobileMenu(false)}
+                  >
+                    Nạp thẻ
+                  </Link>
+                </div>
+
                 {!isAuthenticated && (
                   <button
                     onClick={() => {

@@ -6,6 +6,11 @@ const gameAccountSchema = new mongoose.Schema({
     ref: 'Category',
     required: true
   },
+  subcategoryId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category',
+    default: null
+  },
   code: {
     type: String,
     unique: true,

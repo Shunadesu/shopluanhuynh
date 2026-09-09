@@ -7,7 +7,7 @@ const TTL = 15 * 60 * 1000; // 15 minutes
 export const useCatalogStore = create(
   persist(
     (set, get) => ({
-      categories: [],
+      categories: [], // Mỗi category đã có subcategories bên trong
       loading: false,
       error: null,
       lastFetched: 0,
@@ -36,6 +36,20 @@ export const useCatalogStore = create(
           set({ loading: false, error: err });
           throw err;
         }
+      },
+
+      // Lấy subcategories của một category
+      getSubcategories: (parentId) => {
+        const state = get();
+        const parent = state.categories.find(c => c._id === parentId);
+        return parent?.subcategories || [];
+      },
+
+      // Kiểm tra category có subcategories không
+      hasSubcategories: (categoryId) => {
+        const state = get();
+        const category = state.categories.find(c => c._id === categoryId);
+        return category && category.subcategories && category.subcategories.length > 0;
       },
 
       reset: () => set({ categories: [], loading: false, error: null, lastFetched: 0 }),

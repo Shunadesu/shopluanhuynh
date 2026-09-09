@@ -11,6 +11,8 @@ export default function Accounts() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedSubcategory, setSelectedSubcategory] = useState('');
+  const [subcategories, setSubcategories] = useState([]);
   const [statusFilter, setStatusFilter] = useState('');
   const [gallery, setGallery] = useState({ urls: [], index: 0 }); // { urls: string[], index: number }
 
@@ -29,10 +31,11 @@ export default function Accounts() {
 
   // Use admin endpoint to get full account data
   const { data: accountsData, isLoading } = useQuery({
-    queryKey: ['admin-accounts', selectedCategory, statusFilter, searchTerm],
+    queryKey: ['admin-accounts', selectedCategory, selectedSubcategory, statusFilter, searchTerm],
     queryFn: async () => {
       let url = '/admin/accounts?';
       if (selectedCategory) url += `category=${selectedCategory}&`;
+      if (selectedSubcategory) url += `subcategory=${selectedSubcategory}&`;
       if (statusFilter) url += `status=${statusFilter}&`;
       if (searchTerm) url += `search=${encodeURIComponent(searchTerm)}&`;
       const { data } = await api.get(url);
@@ -44,6 +47,28 @@ export default function Accounts() {
     queryKey: ['categories'],
     queryFn: async () => {
       const { data } = await api.get('/categories');
+      return data;
+    },
+  });
+
+  // Fetch subcategories when category changes
+  const fetchSubcategories = async (categoryId) => {
+    if (categoryId) {
+      const { data } = await api.get(`/categories/${categoryId}/subcategories`);
+      setSubcategories(data || []);
+      // Reset subcategory selection when category changes
+      setSelectedSubcategory('');
+    } else {
+      setSubcategories([]);
+      setSelectedSubcategory('');
+    }
+  };
+
+  // Update query to include subcategories
+  const { data: categoriesWithSub } = useQuery({
+    queryKey: ['categories-all'],
+    queryFn: async () => {
+      const { data } = await api.get('/categories/all');
       return data;
     },
   });
@@ -80,6 +105,8 @@ export default function Accounts() {
   const handleRefresh = () => {
     setSearchTerm('');
     setSelectedCategory('');
+    setSelectedSubcategory('');
+    setSubcategories([]);
     setStatusFilter('');
     queryClient.invalidateQueries(['admin-accounts']);
     toast.success('Đã làm mới dữ liệu');
@@ -152,13 +179,29 @@ export default function Accounts() {
         </div>
         <select
           value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
+          onChange={(e) => {
+            setSelectedCategory(e.target.value);
+            fetchSubcategories(e.target.value);
+          }}
           className="input-field w-52"
         >
           <option value="">Tất cả danh mục</option>
-          {categories?.map((cat) => (
+          {categoriesWithSub?.map((cat) => (
             <option key={cat._id} value={cat._id}>
               {cat.name}
+            </option>
+          ))}
+        </select>
+        <select
+          value={selectedSubcategory}
+          onChange={(e) => setSelectedSubcategory(e.target.value)}
+          className="input-field w-44"
+          disabled={!selectedCategory || subcategories.length === 0}
+        >
+          <option value="">Tất cả danh mục con</option>
+          {subcategories.map((sub) => (
+            <option key={sub._id} value={sub._id}>
+              {sub.name}
             </option>
           ))}
         </select>
@@ -182,6 +225,8 @@ export default function Accounts() {
               <th className="w-16">Hình</th>
               <th>Tiêu đề</th>
               <th>Danh mục</th>
+              <th>Danh mục con</th>
+              <th>Tài khoản / Mật khẩu</th>
               <th>Giá</th>
               <th className="w-16">Hot</th>
               <th>Hàng đợi</th>
@@ -258,6 +303,22 @@ export default function Accounts() {
                     <span className="text-sm text-slate-300">
                       {(account.category || account.categoryId)?.name || '-'}
                     </span>
+                  </td>
+
+                  <td>
+                    <span className="text-sm text-slate-300">
+                      {account.subcategory?.name || account.subcategoryId?.name || ''}
+                    </span>
+                  </td>
+
+                  {/* Tài khoản / Mật khẩu */}
+                  <td className="text-sm min-w-40">
+                    <div className="text-slate-300 truncate" title={account.username || ''}>
+                      TK: {account.username || '-'}
+                    </div>
+                    <div className="text-slate-400 truncate" title={account.password || ''}>
+                      MK: {account.password || '-'}
+                    </div>
                   </td>
 
                   {/* Giá */}
@@ -348,7 +409,7 @@ export default function Accounts() {
               ))
             ) : (
               <tr>
-                <td colSpan="9" className="text-center text-slate-400 py-8">
+                <td colSpan="11" className="text-center text-slate-400 py-8">
                   Chưa có tài khoản nào
                 </td>
               </tr>

@@ -117,8 +117,7 @@ export const useSettingsStore = create(
       name: 'settings-storage',
       version: 2,
       migrate: (persistedState, fromVersion) => {
-        // Bump cache so any cached sliders without `displayMode` are refetched
-        // from the server after the admin feature was introduced.
+        // Clear cached sliders on version migration
         if (!persistedState) return persistedState;
         if (fromVersion < 2) {
           persistedState.sliders = [];
