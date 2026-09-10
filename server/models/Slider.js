@@ -17,6 +17,12 @@ const sliderSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  width: {
+    type: Number,
+    default: 33,
+    min: 5,
+    max: 95
+  },
   isActive: {
     type: Boolean,
     default: true

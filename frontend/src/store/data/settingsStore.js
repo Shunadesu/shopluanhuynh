@@ -115,11 +115,11 @@ export const useSettingsStore = create(
     }),
     {
       name: 'settings-storage',
-      version: 2,
+      version: 3,
       migrate: (persistedState, fromVersion) => {
-        // Clear cached sliders on version migration
+        // Clear cached sliders on version migration to get new width field
         if (!persistedState) return persistedState;
-        if (fromVersion < 2) {
+        if (fromVersion < 3) {
           persistedState.sliders = [];
           persistedState.lastFetched = { ...(persistedState.lastFetched || {}), sliders: 0 };
         }

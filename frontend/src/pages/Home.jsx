@@ -379,20 +379,37 @@ const Home = () => {
             // Lấy 2 banner đầu tiên: [0] = trái, [1] = phải
             const leftBanner = sliders[0];
             const rightBanner = sliders[1] || sliders[0];
-            
+
+            // Chiều rộng cột trái từ banner đầu tiên (default 33%)
+            const leftWidth = leftBanner.width ?? 33;
+            const rightWidth = 100 - leftWidth;
+
             return (
               <div className="container-custom">
-                <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-1">
-                  {/* Banner Trái - 1/3 */}
+                <div
+                  className="grid gap-1 rounded-md overflow-hidden"
+                  style={{ gridTemplateColumns: `${leftWidth}fr ${rightWidth}fr` }}
+                >
+                  {/* Banner Trái */}
                   <div className="w-full overflow-hidden rounded-md">
-                    <img
-                      src={leftBanner.image}
-                      alt={leftBanner.title || 'Banner trái'}
-                      className="w-full h-full object-cover"
-                    />
+                    {leftBanner.link ? (
+                      <a href={leftBanner.link} target="_blank" rel="noopener noreferrer">
+                        <img
+                          src={leftBanner.image}
+                          alt={leftBanner.title || 'Banner trái'}
+                          className="w-full h-full object-cover"
+                        />
+                      </a>
+                    ) : (
+                      <img
+                        src={leftBanner.image}
+                        alt={leftBanner.title || 'Banner trái'}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
                   </div>
-                  
-                  {/* Banner Phải - 2/3 */}
+
+                  {/* Banner Phải */}
                   <div className="relative w-full overflow-hidden rounded-md">
                     {rightBanner.link ? (
                       <a href={rightBanner.link} target="_blank" rel="noopener noreferrer">

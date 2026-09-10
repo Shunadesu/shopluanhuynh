@@ -409,6 +409,35 @@ router.put('/accounts/:id', adminAuth, async (req, res) => {
   }
 });
 
+// Get single account by ID (admin) - with decrypted credentials
+router.get('/accounts/:id', adminAuth, async (req, res) => {
+  try {
+    const account = await GameAccount.findById(req.params.id)
+      .populate('categoryId', 'name');
+
+    if (!account) {
+      return res.status(404).json({ message: 'Tài khoản không tồn tại' });
+    }
+
+    const accountObj = account.toObject();
+
+    // Decrypt credentials
+    accountObj.username = decrypt(accountObj.username);
+    accountObj.password = decrypt(accountObj.password);
+
+    // Create loginInfo for frontend
+    accountObj.loginInfo = `Username: ${accountObj.username}\nPassword: ${accountObj.password}`;
+
+    // Map categoryId to category for frontend compatibility
+    accountObj.category = accountObj.categoryId;
+
+    res.json(accountObj);
+  } catch (error) {
+    console.error('Get account error:', error);
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
 // Delete account
 router.delete('/accounts/:id', adminAuth, async (req, res) => {
   try {

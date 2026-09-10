@@ -14,6 +14,7 @@ export default function Sliders() {
     image: '',
     link: '',
     order: 0,
+    width: 33,
     isActive: true,
   });
 
@@ -68,6 +69,7 @@ export default function Sliders() {
         image: slider.image,
         link: slider.link || '',
         order: slider.order || 0,
+        width: slider.width ?? 33,
         isActive: slider.isActive ?? true,
       });
     } else {
@@ -77,6 +79,7 @@ export default function Sliders() {
         image: '',
         link: '',
         order: 0,
+        width: 33,
         isActive: true,
       });
     }
@@ -153,7 +156,7 @@ export default function Sliders() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-slate-100">Banner Trang Chủ</h1>
-          <p className="text-slate-400 mt-1">Quản lý banner trang chủ - Hiển thị 2 banner cạnh nhau (trái 33%, phải 67%)</p>
+          <p className="text-slate-400 mt-1">Quản lý banner trang chủ - Hiển thị 2 banner cạnh nhau với tỉ lệ tùy chỉnh</p>
         </div>
         <button onClick={() => openModal()} className="btn-primary flex items-center gap-2">
           <FiPlus /> Thêm banner
@@ -179,6 +182,7 @@ export default function Sliders() {
               <tr className="border-b border-slate-700 bg-slate-800/50">
                 <th className="text-left px-4 py-3 text-slate-400 font-medium">Hình ảnh</th>
                 <th className="text-left px-4 py-3 text-slate-400 font-medium">Tiêu đề</th>
+                <th className="text-center px-4 py-3 text-slate-400 font-medium">Chiều rộng</th>
                 <th className="text-center px-4 py-3 text-slate-400 font-medium">Thứ tự</th>
                 <th className="text-center px-4 py-3 text-slate-400 font-medium">Trạng thái</th>
                 <th className="text-center px-4 py-3 text-slate-400 font-medium">Hành động</th>
@@ -220,6 +224,10 @@ export default function Sliders() {
                       </a>
                     )}
                   </td>
+                  {/* Width */}
+                  <td className="px-4 py-3 text-center">
+                    <span className="badge badge-info">{slider.width ?? 33}%</span>
+                  </td>
                   {/* Order */}
                   <td className="px-4 py-3 text-center">
                     <span className="badge badge-info">#{slider.order}</span>
@@ -259,23 +267,80 @@ export default function Sliders() {
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
-          <div className="card max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold text-slate-100 mb-6">
+          <div className="card max-w-xl w-full max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl font-bold text-slate-100 mb-4">
               {editingSlider ? 'Sửa banner' : 'Thêm banner'}
             </h2>
-            <form onSubmit={handleSubmit} className="space-y-2">
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Tiêu đề
-                </label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="input-field"
-                  placeholder="VD: Banner khuyến mãi mùa hè"
-                  required
-                />
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                    Tiêu đề
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="input-field"
+                    placeholder="VD: Banner khuyến mãi mùa hè"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                    Link (tùy chọn)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.link}
+                    onChange={(e) => setFormData({ ...formData, link: e.target.value })}
+                    className="input-field"
+                    placeholder="https://example.com"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                    Thứ tự
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.order}
+                    onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) })}
+                    className="input-field"
+                    min="0"
+                  />
+                  <p className="text-slate-500 text-xs mt-1">Thứ tự 0 = banner 1, thứ tự 1 = banner 2.</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                    Chiều rộng (%) — cột trái
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      value={formData.width}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
+                        if (!isNaN(val) && val >= 5 && val <= 95) {
+                          setFormData({ ...formData, width: val });
+                        } else if (e.target.value === '') {
+                          setFormData({ ...formData, width: '' });
+                        }
+                      }}
+                      className="input-field"
+                      min="5"
+                      max="95"
+                      placeholder="33"
+                    />
+                    <span className="text-slate-400 text-sm">%</span>
+                  </div>
+                  <p className="text-slate-500 text-xs mt-1">
+                    Cột trái {formData.width || 0}% · Cột phải {100 - (formData.width || 0)}%
+                  </p>
+                </div>
               </div>
 
               <div>
@@ -287,36 +352,7 @@ export default function Sliders() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Link (tùy chọn)
-                </label>
-                <input
-                  type="text"
-                  value={formData.link}
-                  onChange={(e) => setFormData({ ...formData, link: e.target.value })}
-                  className="input-field"
-                  placeholder="https://example.com"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Thứ tự hiển thị
-                </label>
-                <input
-                  type="number"
-                  value={formData.order}
-                  onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) })}
-                  className="input-field"
-                  min="0"
-                />
-                <p className="text-slate-500 text-xs mt-1">
-                  Thứ tự 0 sẽ hiển thị bên trái (1/3), thứ tự 1 sẽ hiển thị bên phải (2/3).
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">
                   Trạng thái
                 </label>
                 <select
@@ -329,7 +365,33 @@ export default function Sliders() {
                 </select>
               </div>
 
-              <div className="flex gap-2 pt-2">
+              {/* ===== Live Preview ===== */}
+              <div className="border border-slate-600 rounded-lg p-3 bg-slate-800/50">
+                <p className="text-xs font-medium text-slate-400 mb-2 flex items-center gap-1.5">
+                  <FiLayers size={12} />
+                  Xem trước ({formData.width || 0}% / {100 - (formData.width || 0)}%)
+                </p>
+                <div className="grid gap-0.5 rounded overflow-hidden" style={{
+                  gridTemplateColumns: `${formData.width || 33}fr ${100 - (formData.width || 33)}fr`
+                }}>
+                  <div className="bg-slate-700 border border-slate-600 rounded h-16 flex items-center justify-center overflow-hidden">
+                    {formData.image ? (
+                      <img src={formData.image} alt="Preview trái" className="w-full h-full object-cover opacity-60" />
+                    ) : (
+                      <span className="text-xs text-slate-500">Banner trái</span>
+                    )}
+                  </div>
+                  <div className="bg-slate-700 border border-slate-600 rounded h-16 flex items-center justify-center overflow-hidden">
+                    {formData.image ? (
+                      <img src={formData.image} alt="Preview phải" className="w-full h-full object-cover opacity-60" />
+                    ) : (
+                      <span className="text-xs text-slate-500">Banner phải</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-1">
                 <button type="submit" className="flex-1 btn-primary">
                   {editingSlider ? 'Cập nhật' : 'Tạo mới'}
                 </button>

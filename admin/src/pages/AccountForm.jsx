@@ -19,7 +19,8 @@ export default function AccountForm() {
     subcategory: '',
     price: '',
     description: '',
-    loginInfo: '',
+    username: '',
+    password: '',
     images: [],
     teamValue: '',
     bp: '',
@@ -27,7 +28,6 @@ export default function AccountForm() {
     email: '',
     cccd: '',
     status: 'available',
-    isHot: false,
   });
 
   // Fetch categories for dropdown
@@ -43,8 +43,7 @@ export default function AccountForm() {
   const { data: account, isLoading: loadingAccount, error: accountError } = useQuery({
     queryKey: ['account', id],
     queryFn: async () => {
-      if (!id) throw new Error('Account ID is required');
-      const { data } = await api.get(`/accounts/${id}`);
+      const { data } = await api.get(`/admin/accounts/${id}`);
       return data;
     },
     enabled: Boolean(id),
@@ -59,7 +58,8 @@ export default function AccountForm() {
         subcategory: account.subcategory?._id || account.subcategoryId?._id || account.subcategoryId || '',
         price: account.price || '',
         description: account.description || '',
-        loginInfo: account.loginInfo || '',
+        username: account.username || '',
+        password: account.password || '',
         images: account.images || [],
         teamValue: account.teamValue || '',
         bp: account.bp || '',
@@ -67,7 +67,6 @@ export default function AccountForm() {
         email: account.email || '',
         cccd: account.cccd || '',
         status: account.status || 'available',
-        isHot: account.isHot || false,
       });
     }
   }, [account]);
@@ -101,28 +100,64 @@ export default function AccountForm() {
 
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
+  // Find selected parent category to access its subcategories
+  const selectedParentCategory = categories?.find(
+    (cat) => String(cat._id) === String(formData.category)
+  );
+  const availableSubcategories = selectedParentCategory?.subcategories || [];
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (!formData.title.trim()) {
       toast.error('Vui lòng nhập tiêu đề');
       return;
     }
-    
+
     if (!formData.category) {
       toast.error('Vui lòng chọn danh mục');
       return;
     }
-    
+
     if (!formData.price || formData.price <= 0) {
       toast.error('Vui lòng nhập giá hợp lệ');
       return;
     }
 
+    if (!formData.username.trim()) {
+      toast.error('Vui lòng nhập Username');
+      return;
+    }
+
+    if (!formData.password.trim()) {
+      toast.error('Vui lòng nhập Password');
+      return;
+    }
+
+    // Map frontend field names → backend field names
+    // Backend parses loginInfo to extract username/password, so we format it consistently
+    const loginInfo = `Username: ${formData.username}\nPassword: ${formData.password}`;
+
+    const payload = {
+      title: formData.title,
+      categoryId: formData.category,
+      subcategoryId: formData.subcategory || null,
+      price: Number(formData.price),
+      description: formData.description,
+      loginInfo,
+      images: formData.images,
+      teamValue: formData.teamValue,
+      bp: formData.bp,
+      phone: formData.phone,
+      email: formData.email,
+      cccd: formData.cccd,
+      status: formData.status,
+    };
+
     if (isEditing) {
-      updateMutation.mutate({ id, data: { ...formData, subcategoryId: formData.subcategory || null } });
+      updateMutation.mutate({ id, data: payload });
     } else {
-      createMutation.mutate({ ...formData, subcategoryId: formData.subcategory || null });
+      createMutation.mutate(payload);
     }
   };
 
@@ -161,6 +196,19 @@ export default function AccountForm() {
     );
   }
 
+  // Reusable form group wrapper for consistent spacing
+  const FormGroup = ({ label, required, children, fullWidth }) => (
+    <div className={fullWidth ? 'md:col-span-2' : ''}>
+      {label && (
+        <label className="block text-xs font-medium text-slate-300 mb-1.5">
+          {label}
+          {required && <span className="text-red-400 ml-1">*</span>}
+        </label>
+      )}
+      {children}
+    </div>
+  );
+
   return (
     <div className="space-y-2">
       {/* Header */}
@@ -184,206 +232,213 @@ export default function AccountForm() {
       {/* Form */}
       <div className="card">
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Tiêu đề <span className="text-red-400">*</span>
-              </label>
+          {/* ===== Section 1: Thông tin cơ bản ===== */}
+          <section className="space-y-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-300 border-b border-slate-700 pb-1.5">
+              Thông tin cơ bản
+            </h2>
+
+            <FormGroup label="Tiêu đề" required fullWidth>
               <input
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 className="input-field"
-                placeholder="VD: Tài khoản FIFA Online"
+                placeholder="VD: Tài khoản FIFA Online rank Vàng"
                 required
               />
-            </div>
+            </FormGroup>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Danh mục <span className="text-red-400">*</span>
-              </label>
-              <select
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value, subcategory: '' })}
-                className="input-field"
-                required
-              >
-                <option value="">Chọn danh mục</option>
-                {categories?.map((cat) => (
-                  <option key={cat._id} value={cat._id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Danh mục con
-              </label>
-              <select
-                value={formData.subcategory}
-                onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
-                className="input-field"
-                disabled={!formData.category}
-              >
-                <option value="">Không chọn danh mục con</option>
-                {categories
-                  ?.filter((cat) => String(cat.parentId?._id || cat.parentId || '') === String(formData.category))
-                  .map((cat) => (
-                    <option key={cat._id} value={cat._id}>{cat.name}</option>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <FormGroup label="Danh mục" required>
+                <select
+                  value={formData.category}
+                  onChange={(e) =>
+                    setFormData({ ...formData, category: e.target.value, subcategory: '' })
+                  }
+                  className="input-field"
+                  required
+                >
+                  <option value="">Chọn danh mục</option>
+                  {categories?.map((cat) => (
+                    <option key={cat._id} value={cat._id}>
+                      {cat.name}
+                    </option>
                   ))}
-              </select>
-            </div>
+                </select>
+              </FormGroup>
 
-            <div>
-              <input
-                type="number"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                className="input-field"
-                placeholder="VD: 150000"
-                min="0"
-                required
-              />
-            </div>
+              <FormGroup label="Danh mục con">
+                <select
+                  value={formData.subcategory}
+                  onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
+                  className="input-field"
+                  disabled={!formData.category}
+                >
+                  <option value="">Không chọn</option>
+                  {availableSubcategories.map((sub) => (
+                    <option key={sub._id} value={sub._id}>
+                      {sub.name}
+                    </option>
+                  ))}
+                </select>
+              </FormGroup>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Trạng thái
-              </label>
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="input-field"
-              >
-                <option value="available">Còn hàng</option>
-                <option value="sold">Đã bán</option>
-                <option value="reserved">Đang giữ</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Đánh dấu Hot
-              </label>
-              <label className="flex items-center gap-3 cursor-pointer mt-2">
+              <FormGroup label="Giá (VNĐ)" required>
                 <input
-                  type="checkbox"
-                  checked={formData.isHot}
-                  onChange={(e) => setFormData({ ...formData, isHot: e.target.checked })}
-                  className="w-5 h-5 rounded border-slate-600 bg-slate-700 text-yellow-400 focus:ring-yellow-400 focus:ring-offset-0"
+                  type="number"
+                  value={formData.price}
+                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                  className="input-field"
+                  placeholder="VD: 150000"
+                  min="0"
+                  required
                 />
-                <span className="text-slate-300 text-sm">Hiển thị ở danh sách Hot</span>
-              </label>
-            </div>
+              </FormGroup>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Giá trị đội hình
-              </label>
-              <input
-                type="text"
-                value={formData.teamValue}
-                onChange={(e) => setFormData({ ...formData, teamValue: e.target.value })}
-                className="input-field"
-                placeholder="VD: 50 Tỷ, Full tướng"
-              />
+              <FormGroup label="Trạng thái">
+                <select
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  className="input-field"
+                >
+                  <option value="available">Còn hàng</option>
+                  <option value="sold">Đã bán</option>
+                  <option value="reserved">Đang giữ</option>
+                </select>
+              </FormGroup>
             </div>
+          </section>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Số BP
-              </label>
-              <input
-                type="text"
-                value={formData.bp}
-                onChange={(e) => setFormData({ ...formData, bp: e.target.value })}
-                className="input-field"
-                placeholder="VD: 50000 BP"
-              />
+          {/* ===== Section 2: Thông tin đăng nhập ===== */}
+          <section className="space-y-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-300 border-b border-slate-700 pb-1.5">
+              Thông tin đăng nhập
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <FormGroup label="Username" required>
+                <input
+                  type="text"
+                  value={formData.username}
+                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                  className="input-field"
+                  placeholder="VD: user123"
+                  required
+                />
+              </FormGroup>
+
+              <FormGroup label="Password" required>
+                <input
+                  type="text"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="input-field"
+                  placeholder="VD: pass123"
+                  required
+                />
+              </FormGroup>
             </div>
+          </section>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Số điện thoại
-              </label>
-              <input
-                type="text"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="input-field"
-                placeholder="VD: 0123456789"
-              />
+          {/* ===== Section 3: Chi tiết tài khoản game ===== */}
+          <section className="space-y-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-300 border-b border-slate-700 pb-1.5">
+              Chi tiết tài khoản game
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <FormGroup label="Giá trị đội hình">
+                <input
+                  type="text"
+                  value={formData.teamValue}
+                  onChange={(e) => setFormData({ ...formData, teamValue: e.target.value })}
+                  className="input-field"
+                  placeholder="VD: 50 Tỷ, Full tướng"
+                />
+              </FormGroup>
+
+              <FormGroup label="Số BP">
+                <input
+                  type="text"
+                  value={formData.bp}
+                  onChange={(e) => setFormData({ ...formData, bp: e.target.value })}
+                  className="input-field"
+                  placeholder="VD: 50000 BP"
+                />
+              </FormGroup>
             </div>
+          </section>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Email
-              </label>
-              <input
-                type="text"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="input-field"
-                placeholder="VD: email@example.com"
-              />
+          {/* ===== Section 4: Thông tin liên hệ ===== */}
+          <section className="space-y-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-300 border-b border-slate-700 pb-1.5">
+              Thông tin liên hệ
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <FormGroup label="Số điện thoại">
+                <input
+                  type="text"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="input-field"
+                  placeholder="VD: 0123456789"
+                />
+              </FormGroup>
+
+              <FormGroup label="Email">
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="input-field"
+                  placeholder="VD: email@example.com"
+                />
+              </FormGroup>
+
+              <FormGroup label="CCCD/CMND">
+                <input
+                  type="text"
+                  value={formData.cccd}
+                  onChange={(e) => setFormData({ ...formData, cccd: e.target.value })}
+                  className="input-field"
+                  placeholder="VD: 001234567890"
+                />
+              </FormGroup>
             </div>
+          </section>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                CCCD/CMND
-              </label>
-              <input
-                type="text"
-                value={formData.cccd}
-                onChange={(e) => setFormData({ ...formData, cccd: e.target.value })}
-                className="input-field"
-                placeholder="VD: 001234567890"
-              />
-            </div>
-          </div>
+          {/* ===== Section 5: Hình ảnh ===== */}
+          <section className="space-y-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-300 border-b border-slate-700 pb-1.5">
+              Hình ảnh
+            </h2>
+            <UploadImages
+              value={formData.images}
+              onChange={(images) => setFormData({ ...formData, images })}
+              label="Hình ảnh tài khoản"
+              maxImages={10}
+            />
+          </section>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+          {/* ===== Section 6: Mô tả ===== */}
+          <section className="space-y-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-300 border-b border-slate-700 pb-1.5">
               Mô tả
-            </label>
+            </h2>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               className="input-field"
-              rows="4"
+              rows="3"
               placeholder="Mô tả chi tiết về tài khoản..."
             />
-          </div>
+          </section>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
-              Thông tin đăng nhập
-            </label>
-            <textarea
-              value={formData.loginInfo}
-              onChange={(e) => setFormData({ ...formData, loginInfo: e.target.value })}
-              className="input-field"
-              rows="3"
-              placeholder="Username: xxx | Password: xxx | Email: xxx"
-            />
-          </div>
-
-          <UploadImages
-            value={formData.images}
-            onChange={(images) => setFormData({ ...formData, images })}
-            label="Hình ảnh tài khoản"
-            maxImages={10}
-          />
-
-          <div className="flex gap-3 pt-4 border-t border-slate-700">
-            <button
-              type="submit"
-              className="btn-primary flex-1"
-              disabled={isSubmitting}
-            >
+          {/* ===== Action buttons ===== */}
+          <div className="flex gap-3 pt-3 border-t border-slate-700">
+            <button type="submit" className="btn-primary flex-1" disabled={isSubmitting}>
               {isSubmitting ? (
                 <span className="flex items-center justify-center gap-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
