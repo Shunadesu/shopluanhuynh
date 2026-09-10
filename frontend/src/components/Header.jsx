@@ -85,116 +85,12 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-1">
-              {/* Categories Dropdown */}
-              <div className="relative" ref={categoryMenuRef}>
-                <button
-                  onMouseEnter={() => setShowCategoryMenu(true)}
-                  onClick={() => navigate('/shop')}
-                  className={`nav-link px-4 py-2 flex items-center gap-1 ${navLinkColor(location.pathname.startsWith('/shop'))}`}
-                >
-                  Tài khoản
-                  <FiChevronDown className={`w-4 h-4 ${iconColor()}`} />
-                </button>
-
-                {/* Dropdown Menu */}
-                {showCategoryMenu && categories && categories.length > 0 && (
-                  <div
-                    className="absolute left-0 top-full mt-2 w-64 bg-white dark:bg-dark-light border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl z-30"
-                    onMouseEnter={() => setShowCategoryMenu(true)}
-                    onMouseLeave={() => {
-                      setShowCategoryMenu(false);
-                      setHoveredCategory(null);
-                    }}
-                  >
-                    <div className="py-2">
-                      {/* Parent Categories */}
-                      {categories.map((cat) => {
-                        const hasSubcategories = cat.subcategories && cat.subcategories.length > 0;
-                        const isHovered = hoveredCategory === cat._id;
-
-                        return (
-                          <div key={cat._id}>
-                            {hasSubcategories ? (
-                              // Category with subcategories - show as expandable
-                              <div
-                                className="relative"
-                                onMouseEnter={() => setHoveredCategory(cat._id)}
-                                onMouseLeave={() => setHoveredCategory(null)}
-                              >
-                                <button
-                                  onClick={() => {
-                                    navigate(`/shop?category=${cat._id}`);
-                                    setShowCategoryMenu(false);
-                                  }}
-                                  className={`w-full text-left px-4 py-2 flex items-center justify-between hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${
-                                    isDark ? 'text-slate-300' : 'text-slate-700'
-                                  }`}
-                                >
-                                  <span>{cat.name}</span>
-                                  <FiChevronDown className="w-4 h-4 opacity-50 rotate-[-90deg]" />
-                                </button>
-
-                                {/* Subcategories Dropdown - Right side */}
-                                {isHovered && (
-                                  <div className="absolute left-full top-0 ml-1 w-48 bg-white dark:bg-dark-light border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl z-40">
-                                    <div className="py-2">
-                                      <Link
-                                        to={`/shop?category=${cat._id}`}
-                                        onClick={() => setShowCategoryMenu(false)}
-                                        className={`block px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${
-                                          isDark ? 'text-slate-300' : 'text-slate-700'
-                                        }`}
-                                      >
-                                        Tất cả {cat.name}
-                                      </Link>
-                                      {cat.subcategories.map((sub) => (
-                                        <Link
-                                          key={sub._id}
-                                          to={`/shop?subcategory=${sub._id}`}
-                                          onClick={() => setShowCategoryMenu(false)}
-                                          className={`block px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${
-                                            isDark ? 'text-slate-300' : 'text-slate-700'
-                                          }`}
-                                        >
-                                          {sub.name}
-                                        </Link>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            ) : (
-                              // Category without subcategories - direct link
-                              <Link
-                                to={`/shop?category=${cat._id}`}
-                                onClick={() => setShowCategoryMenu(false)}
-                                className={`block px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${
-                                  isDark ? 'text-slate-300' : 'text-slate-700'
-                                }`}
-                              >
-                                {cat.name}
-                              </Link>
-                            )}
-                          </div>
-                        );
-                      })}
-
-                      {/* All Categories Link */}
-                      <div className="border-t border-slate-200 dark:border-slate-700 mt-2 pt-2">
-                        <Link
-                          to="/shop"
-                          onClick={() => setShowCategoryMenu(false)}
-                          className={`block px-4 py-2 text-sm font-medium text-primary hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors ${
-                            isDark ? 'text-cyan-400' : 'text-primary'
-                          }`}
-                        >
-                          Xem tất cả →
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <Link
+                to="/shop"
+                className={`nav-link px-4 py-2 ${navLinkColor(location.pathname.startsWith('/shop'))}`}
+              >
+                Tài khoản
+              </Link>
 
               <Link
                 to="/deposit"
@@ -314,68 +210,21 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
           {showMobileMenu && (
             <div className="md:hidden py-4 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-dark/95 backdrop-blur-md">
               <nav className="flex flex-col space-y-2">
-                {/* Categories Section */}
-                <div>
-                  <div className={`px-4 py-2 text-sm font-medium ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
-                    Danh mục
-                  </div>
-                  <Link
-                    to="/shop"
-                    className={`block px-4 py-2 rounded-lg transition-colors ${mobileLinkColor()}`}
-                    onClick={() => setShowMobileMenu(false)}
-                  >
-                    Tất cả tài khoản
-                  </Link>
-                  {categories?.map((cat) => {
-                    const hasSubcategories = cat.subcategories && cat.subcategories.length > 0;
-                    return (
-                      <div key={cat._id}>
-                        {hasSubcategories ? (
-                          <>
-                            <Link
-                              to={`/shop?category=${cat._id}`}
-                              className={`block px-4 py-2 rounded-lg transition-colors ${mobileLinkColor()}`}
-                              onClick={() => setShowMobileMenu(false)}
-                            >
-                              {cat.name}
-                            </Link>
-                            {/* Subcategories */}
-                            <div className="pl-8">
-                              {cat.subcategories.map((sub) => (
-                                <Link
-                                  key={sub._id}
-                                  to={`/shop?subcategory=${sub._id}`}
-                                  className={`block px-4 py-2 rounded-lg transition-colors ${mobileLinkColor()}`}
-                                  onClick={() => setShowMobileMenu(false)}
-                                >
-                                  {sub.name}
-                                </Link>
-                              ))}
-                            </div>
-                          </>
-                        ) : (
-                          <Link
-                            to={`/shop?category=${cat._id}`}
-                            className={`block px-4 py-2 rounded-lg transition-colors ${mobileLinkColor()}`}
-                            onClick={() => setShowMobileMenu(false)}
-                          >
-                            {cat.name}
-                          </Link>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                <Link
+                  to="/shop"
+                  className={`block px-4 py-2 rounded-lg transition-colors ${mobileLinkColor()}`}
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  Tài khoản
+                </Link>
 
-                <div className="border-t border-slate-200 dark:border-slate-800 pt-2">
-                  <Link
-                    to="/deposit"
-                    className={`px-4 py-2 rounded-lg transition-colors ${mobileLinkColor()}`}
-                    onClick={() => setShowMobileMenu(false)}
-                  >
-                    Nạp thẻ
-                  </Link>
-                </div>
+                <Link
+                  to="/deposit"
+                  className={`px-4 py-2 rounded-lg transition-colors ${mobileLinkColor()}`}
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  Nạp thẻ
+                </Link>
 
                 {!isAuthenticated && (
                   <button
