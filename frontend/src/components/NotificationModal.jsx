@@ -75,18 +75,6 @@ export default function NotificationModal() {
           </button>
         )}
 
-        {/* Image */}
-        {currentNotification.image && (
-          <div className="relative h-48 overflow-hidden">
-            <img
-              src={currentNotification.image}
-              alt={currentNotification.title}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-dark-lighter to-transparent" />
-          </div>
-        )}
-
         {/* Content */}
         <div className="p-6">
           {/* Title */}
@@ -94,20 +82,39 @@ export default function NotificationModal() {
             {currentNotification.title}
           </h2>
 
+          {/* Image */}
+          {currentNotification.image && (
+            <div className="relative mb-4 overflow-hidden rounded-xl">
+              <img
+                src={currentNotification.image}
+                alt={currentNotification.title}
+                className="w-full h-auto object-cover"
+              />
+            </div>
+          )}
+
           {/* Content - supports HTML */}
           <div
-            className="text-slate-600 dark:text-slate-300 text-center leading-relaxed mb-6"
+            className="text-slate-600 dark:text-slate-300 text-center leading-relaxed"
             dangerouslySetInnerHTML={{ __html: currentNotification.content }}
           />
 
-          {/* Dismiss button */}
+          {/* Dismiss checkbox */}
           {currentNotification.dismissible && (
-            <button
-              onClick={handleDismiss}
-              className="w-full py-3 bg-primary hover:bg-primary-dark text-white font-semibold rounded-xl transition-colors"
-            >
-              ĐÓNG
-            </button>
+            <label className="flex items-center justify-center gap-2 mt-6 cursor-pointer group">
+              <input
+                type="checkbox"
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    handleDismiss();
+                  }
+                }}
+                className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-primary focus:ring-primary focus:ring-offset-0 cursor-pointer"
+              />
+              <span className="text-sm text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors">
+                Đóng trong 24 giờ
+              </span>
+            </label>
           )}
         </div>
       </div>

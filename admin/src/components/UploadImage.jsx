@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { FiUpload, FiX, FiImage } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import api, { getImageUrl } from '../utils/api';
@@ -7,6 +7,15 @@ export default function UploadImage({ value, onChange, label = 'Hình ảnh' }) 
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState(value ? getImageUrl(value) : '');
   const fileInputRef = useRef(null);
+
+  // Sync preview when value changes from outside
+  useEffect(() => {
+    if (value) {
+      setPreview(getImageUrl(value));
+    } else {
+      setPreview('');
+    }
+  }, [value]);
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];

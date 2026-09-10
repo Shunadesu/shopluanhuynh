@@ -319,6 +319,17 @@ const AccountItem = ({ item, orderStatus, showPasswords, onTogglePassword, onCop
             />
           )}
 
+          {acc.password2 && (
+            <CredentialRow
+              label="Mật khẩu 2"
+              value={acc.password2}
+              visible={visible}
+              canReveal={true}
+              onReveal={() => onTogglePassword(acc._id)}
+              onCopy={() => onCopy(acc.password2, 'mật khẩu 2')}
+            />
+          )}
+
           {acc.additionalInfo && (
             <div>
               <p className="text-slate-500 dark:text-slate-500 text-xs mb-1 font-medium">Thông tin thêm</p>

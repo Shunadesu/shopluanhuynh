@@ -7,6 +7,19 @@ import toast from 'react-hot-toast';
 import UploadImages from '../components/UploadImages';
 import { AccountFormSkeleton } from '../components/SkeletonLoader';
 
+// Reusable form group wrapper for consistent spacing
+const FormGroup = ({ label, required, children, fullWidth }) => (
+  <div className={fullWidth ? 'md:col-span-2' : ''}>
+    {label && (
+      <label className="block text-xs font-medium text-slate-300 mb-1.5">
+        {label}
+        {required && <span className="text-red-400 ml-1">*</span>}
+      </label>
+    )}
+    {children}
+  </div>
+);
+
 export default function AccountForm() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -21,6 +34,7 @@ export default function AccountForm() {
     description: '',
     username: '',
     password: '',
+    password2: '',
     images: [],
     teamValue: '',
     bp: '',
@@ -60,6 +74,7 @@ export default function AccountForm() {
         description: account.description || '',
         username: account.username || '',
         password: account.password || '',
+        password2: account.password2 || '',
         images: account.images || [],
         teamValue: account.teamValue || '',
         bp: account.bp || '',
@@ -135,8 +150,8 @@ export default function AccountForm() {
     }
 
     // Map frontend field names → backend field names
-    // Backend parses loginInfo to extract username/password, so we format it consistently
-    const loginInfo = `Username: ${formData.username}\nPassword: ${formData.password}`;
+    // Backend parses loginInfo to extract username/password/password2, so we format it consistently
+    const loginInfo = `Username: ${formData.username}\nPassword: ${formData.password}${formData.password2 ? `\nPassword 2: ${formData.password2}` : ''}`;
 
     const payload = {
       title: formData.title,
@@ -195,19 +210,6 @@ export default function AccountForm() {
       </div>
     );
   }
-
-  // Reusable form group wrapper for consistent spacing
-  const FormGroup = ({ label, required, children, fullWidth }) => (
-    <div className={fullWidth ? 'md:col-span-2' : ''}>
-      {label && (
-        <label className="block text-xs font-medium text-slate-300 mb-1.5">
-          {label}
-          {required && <span className="text-red-400 ml-1">*</span>}
-        </label>
-      )}
-      {children}
-    </div>
-  );
 
   return (
     <div className="space-y-2">
@@ -336,6 +338,16 @@ export default function AccountForm() {
                   className="input-field"
                   placeholder="VD: pass123"
                   required
+                />
+              </FormGroup>
+
+              <FormGroup label="Password 2" fullWidth>
+                <input
+                  type="text"
+                  value={formData.password2}
+                  onChange={(e) => setFormData({ ...formData, password2: e.target.value })}
+                  className="input-field"
+                  placeholder="VD: pass456 (nếu tài khoản có mật khẩu cấp 2)"
                 />
               </FormGroup>
             </div>

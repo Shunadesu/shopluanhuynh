@@ -15,6 +15,7 @@ import Deposits from './pages/Deposits';
 import Users from './pages/Users';
 import Sliders from './pages/Sliders';
 import Notifications from './pages/Notifications';
+import NotificationForm from './pages/NotificationForm';
 import Settings from './pages/Settings';
 import { useAuthStore } from './store/authStore';
 import SEOHead from './components/SEOHead';
@@ -86,6 +87,8 @@ function App() {
             <Route path="users" element={<Users />} />
             <Route path="sliders" element={<Sliders />} />
             <Route path="notifications" element={<Notifications />} />
+            <Route path="notifications/add" element={<NotificationForm />} />
+            <Route path="notifications/edit/:id" element={<NotificationForm />} />
             <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>

@@ -187,7 +187,11 @@ export default function BankAccounts() {
       toast.error('Vui lòng chọn hoặc nhập tên ngân hàng');
       return;
     }
-    const payload = { ...form, bankName: finalBankName };
+    const payload = {
+      ...form,
+      bankName: finalBankName,
+      qrCodeImage: qrPreview || '',
+    };
     delete payload.bankNameCustom;
 
     if (editingId) {

@@ -111,10 +111,12 @@ router.get('/:id', async (req, res) => {
     if (account.status === 'sold' && req.user && account.soldTo && account.soldTo.toString() === req.user._id.toString()) {
       accountObj.username = decrypt(accountObj.username);
       accountObj.password = decrypt(accountObj.password);
+      accountObj.password2 = decrypt(accountObj.password2 || '');
     } else {
       // Hide credentials if not purchased
       accountObj.username = undefined;
       accountObj.password = undefined;
+      accountObj.password2 = undefined;
     }
 
     res.json(accountObj);

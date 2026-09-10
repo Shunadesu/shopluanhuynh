@@ -317,8 +317,13 @@ export default function Accounts() {
                       TK: {account.username || '-'}
                     </div>
                     <div className="text-slate-400 truncate" title={account.password || ''}>
-                      MK: {account.password || '-'}
+                      MK1: {account.password || '-'}
                     </div>
+                    {account.password2 && (
+                      <div className="text-slate-400 truncate" title={account.password2}>
+                        MK2: {account.password2}
+                      </div>
+                    )}
                   </td>
 
                   {/* Giá */}

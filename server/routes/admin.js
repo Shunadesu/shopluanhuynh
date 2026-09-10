@@ -263,6 +263,7 @@ router.get('/accounts', adminAuth, async (req, res) => {
 
     const accounts = await GameAccount.find(query)
       .populate('categoryId', 'name')
+      .populate('subcategoryId', 'name')
       .populate('soldTo', 'fullName username')
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -273,10 +274,14 @@ router.get('/accounts', adminAuth, async (req, res) => {
       const accObj = acc.toObject();
       accObj.username = decrypt(accObj.username);
       accObj.password = decrypt(accObj.password);
+      // Only decrypt password2 if it exists and is not empty
+      accObj.password2 = accObj.password2 ? decrypt(accObj.password2) : '';
       // Create loginInfo for frontend compatibility
-      accObj.loginInfo = `Username: ${accObj.username}\nPassword: ${accObj.password}`;
+      accObj.loginInfo = `Username: ${accObj.username}\nPassword: ${accObj.password}${accObj.password2 ? `\nPassword 2: ${accObj.password2}` : ''}`;
       // Map categoryId to category for frontend compatibility
       accObj.category = accObj.categoryId;
+      // Map subcategoryId to subcategory for frontend compatibility
+      accObj.subcategory = accObj.subcategoryId;
       // Add thumbnail (first image)
       accObj.thumbnail = accObj.images?.[0] || null;
       return accObj;
@@ -304,9 +309,10 @@ router.post('/accounts', adminAuth, async (req, res) => {
   try {
     const { loginInfo, ...restData } = req.body;
     
-    // Parse loginInfo to extract username and password
+    // Parse loginInfo to extract username, password, and password2
     let username = '';
     let password = '';
+    let password2 = '';
     
     if (loginInfo) {
       const lines = loginInfo.split('\n');
@@ -316,7 +322,10 @@ router.post('/accounts', adminAuth, async (req, res) => {
           const match = line.match(/(?:username|user)[:\s]*([^\n|]+)/i);
           if (match) username = match[1].trim();
         }
-        if (lowerLine.includes('password:') || lowerLine.includes('pass:')) {
+        if (lowerLine.includes('password 2:') || lowerLine.includes('pass2:') || lowerLine.includes('password2:')) {
+          const match = line.match(/(?:password\s*2|pass2|password2)[:\s]*([^\n|]+)/i);
+          if (match) password2 = match[1].trim();
+        } else if (lowerLine.includes('password:') || lowerLine.includes('pass:')) {
           const match = line.match(/(?:password|pass)[:\s]*([^\n|]+)/i);
           if (match) password = match[1].trim();
         }
@@ -335,8 +344,9 @@ router.post('/accounts', adminAuth, async (req, res) => {
     const accountData = {
       ...restData,
       categoryId: restData.category || restData.categoryId, // Map category to categoryId
-      username: username || 'N/A',
-      password: password || 'N/A'
+      username: encrypt(username || 'N/A'),
+      password: encrypt(password || 'N/A'),
+      password2: password2 ? encrypt(password2) : ''
     };
     delete accountData.category; // Remove category if exists
 
@@ -349,6 +359,10 @@ router.post('/accounts', adminAuth, async (req, res) => {
     // Build response with category for frontend compatibility
     const accountObj = account.toObject();
     accountObj.category = accountObj.categoryId;
+    // Decrypt for response
+    accountObj.username = decrypt(accountObj.username);
+    accountObj.password = decrypt(accountObj.password);
+    accountObj.password2 = accountObj.password2 ? decrypt(accountObj.password2) : '';
 
     res.status(201).json(accountObj);
   } catch (error) {
@@ -364,10 +378,11 @@ router.put('/accounts/:id', adminAuth, async (req, res) => {
     
     const updateData = { ...restData };
     
-    // Parse loginInfo to extract username and password if provided
+    // Parse loginInfo to extract username, password, and password2 if provided
     if (loginInfo) {
       let username = '';
       let password = '';
+      let password2 = '';
       
       const lines = loginInfo.split('\n');
       lines.forEach(line => {
@@ -376,14 +391,19 @@ router.put('/accounts/:id', adminAuth, async (req, res) => {
           const match = line.match(/(?:username|user)[:\s]*([^\n|]+)/i);
           if (match) username = match[1].trim();
         }
-        if (lowerLine.includes('password:') || lowerLine.includes('pass:')) {
+        if (lowerLine.includes('password 2:') || lowerLine.includes('pass2:') || lowerLine.includes('password2:')) {
+          const match = line.match(/(?:password\s*2|pass2|password2)[:\s]*([^\n|]+)/i);
+          if (match) password2 = match[1].trim();
+        } else if (lowerLine.includes('password:') || lowerLine.includes('pass:')) {
           const match = line.match(/(?:password|pass)[:\s]*([^\n|]+)/i);
           if (match) password = match[1].trim();
         }
       });
       
-      if (username) updateData.username = username;
-      if (password) updateData.password = password;
+      // Encrypt credentials before saving
+      if (username) updateData.username = encrypt(username);
+      if (password) updateData.password = encrypt(password);
+      if (password2) updateData.password2 = encrypt(password2);
     }
     
     // Map category to categoryId for database compatibility
@@ -400,7 +420,13 @@ router.put('/accounts/:id', adminAuth, async (req, res) => {
 
     // Build response with category for frontend compatibility
     const accountObj = account ? account.toObject() : null;
-    if (accountObj) accountObj.category = accountObj.categoryId;
+    if (accountObj) {
+      accountObj.category = accountObj.categoryId;
+      // Decrypt credentials for response
+      accountObj.username = decrypt(accountObj.username);
+      accountObj.password = decrypt(accountObj.password);
+      accountObj.password2 = accountObj.password2 ? decrypt(accountObj.password2) : '';
+    }
 
     res.json(accountObj);
   } catch (error) {
@@ -413,7 +439,8 @@ router.put('/accounts/:id', adminAuth, async (req, res) => {
 router.get('/accounts/:id', adminAuth, async (req, res) => {
   try {
     const account = await GameAccount.findById(req.params.id)
-      .populate('categoryId', 'name');
+      .populate('categoryId', 'name')
+      .populate('subcategoryId', 'name');
 
     if (!account) {
       return res.status(404).json({ message: 'Tài khoản không tồn tại' });
@@ -424,12 +451,16 @@ router.get('/accounts/:id', adminAuth, async (req, res) => {
     // Decrypt credentials
     accountObj.username = decrypt(accountObj.username);
     accountObj.password = decrypt(accountObj.password);
+    // Only decrypt password2 if it exists and is not empty
+    accountObj.password2 = accountObj.password2 ? decrypt(accountObj.password2) : '';
 
     // Create loginInfo for frontend
-    accountObj.loginInfo = `Username: ${accountObj.username}\nPassword: ${accountObj.password}`;
+    accountObj.loginInfo = `Username: ${accountObj.username}\nPassword: ${accountObj.password}${accountObj.password2 ? `\nPassword 2: ${accountObj.password2}` : ''}`;
 
     // Map categoryId to category for frontend compatibility
     accountObj.category = accountObj.categoryId;
+    // Map subcategoryId to subcategory for frontend compatibility
+    accountObj.subcategory = accountObj.subcategoryId;
 
     res.json(accountObj);
   } catch (error) {
@@ -614,10 +645,24 @@ router.get('/bank-accounts', adminAuth, async (req, res) => {
 // Create bank account
 router.post('/bank-accounts', adminAuth, async (req, res) => {
   try {
-    const bankAccount = new BankAccount(req.body);
+    const { bankName, accountNumber, qrCodeImage, isActive, order } = req.body;
+    const payload = {
+      bankName,
+      accountNumber,
+      accountName: req.body.accountName,
+      qrCodeImage: qrCodeImage || '',
+      isActive: isActive !== undefined ? isActive : true,
+      order: order || 0,
+      // identifier: định danh duy nhất = bankName + accountNumber (không có khoảng trắng)
+      identifier: `${bankName?.toLowerCase().replace(/\s+/g, '')}_${accountNumber}`,
+    };
+    const bankAccount = new BankAccount(payload);
     await bankAccount.save();
     res.status(201).json(bankAccount);
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({ message: 'Tài khoản ngân hàng này đã tồn tại' });
+    }
     res.status(500).json({ message: 'Lỗi server', error: error.message });
   }
 });
@@ -625,13 +670,24 @@ router.post('/bank-accounts', adminAuth, async (req, res) => {
 // Update bank account
 router.put('/bank-accounts/:id', adminAuth, async (req, res) => {
   try {
-    const bankAccount = await BankAccount.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
+    const bankAccount = await BankAccount.findById(req.params.id);
+    if (!bankAccount) {
+      return res.status(404).json({ message: 'Không tìm thấy tài khoản ngân hàng' });
+    }
+    // Cập nhật từng trường, giữ nguyên identifier
+    const { bankName, accountNumber, accountName, qrCodeImage, isActive, order } = req.body;
+    if (bankName !== undefined) bankAccount.bankName = bankName;
+    if (accountNumber !== undefined) bankAccount.accountNumber = accountNumber;
+    if (accountName !== undefined) bankAccount.accountName = accountName;
+    if (qrCodeImage !== undefined) bankAccount.qrCodeImage = qrCodeImage;
+    if (isActive !== undefined) bankAccount.isActive = isActive;
+    if (order !== undefined) bankAccount.order = order;
+    await bankAccount.save();
     res.json(bankAccount);
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({ message: 'Tài khoản ngân hàng này đã tồn tại' });
+    }
     res.status(500).json({ message: 'Lỗi server', error: error.message });
   }
 });
@@ -774,6 +830,19 @@ router.get('/notifications', adminAuth, async (req, res) => {
   try {
     const notifications = await Notification.find().sort({ order: 1 });
     res.json(notifications);
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
+// Get single notification
+router.get('/notifications/:id', adminAuth, async (req, res) => {
+  try {
+    const notification = await Notification.findById(req.params.id);
+    if (!notification) {
+      return res.status(404).json({ message: 'Không tìm thấy thông báo' });
+    }
+    res.json(notification);
   } catch (error) {
     res.status(500).json({ message: 'Lỗi server', error: error.message });
   }

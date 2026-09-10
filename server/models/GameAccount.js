@@ -35,6 +35,10 @@ const gameAccountSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  password2: {
+    type: String,
+    default: ''
+  },
   price: {
     type: Number,
     required: true
