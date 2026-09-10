@@ -1,13 +1,12 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useCartStore } from '../store/cartStore';
 import { useThemeStore } from '../store/themeStore';
 import { useSettings } from '../hooks/useSettings';
-import { useCategories } from '../hooks';
 import AuthDrawer from './AuthDrawer';
 import CartDrawer from './CartDrawer';
-import { FiShoppingCart, FiUser, FiLogOut, FiMenu, FiSun, FiMoon, FiChevronDown } from 'react-icons/fi';
+import { FiShoppingCart, FiUser, FiLogOut, FiMenu, FiSun, FiMoon } from 'react-icons/fi';
 
 const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, onCloseCart, authInitialView = 'login' }) => {
   const navigate = useNavigate();
@@ -18,12 +17,6 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
   const toggleTheme = useThemeStore((s) => s.toggleTheme);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [showCategoryMenu, setShowCategoryMenu] = useState(false);
-  const [hoveredCategory, setHoveredCategory] = useState(null);
-  const categoryMenuRef = useRef(null);
-
-  // Fetch categories for dropdown menu
-  const { data: categories } = useCategories();
 
   // Resolve theme (fallback to DOM if not yet set in store)
   const isDark =

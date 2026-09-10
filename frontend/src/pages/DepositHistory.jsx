@@ -37,7 +37,7 @@ const DepositHistory = () => {
   };
 
   return (
-    <div className="min-h-screen pt-20 pb-6">
+    <div className="min-h-screen pt-20 pb-12">
       <div className="container-custom">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-white">Lịch sử nạp tiền</h1>
@@ -46,7 +46,7 @@ const DepositHistory = () => {
               Nạp tiền
             </Link>
             <Link to="/profile" className="text-primary hover:text-primary-light">
-              ← Quay lại
+              ←
             </Link>
           </div>
         </div>

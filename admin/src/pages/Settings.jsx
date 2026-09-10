@@ -919,7 +919,7 @@ export default function Settings() {
                   {seoForm.seoTitle || 'Shop Luan Huynh - Mua Bán Tài Khoản Game Giá Rẻ'}
                 </p>
                 <p className="text-green-700 text-xs truncate">
-                  shopluanhuynh.com
+                  luanfco.com
                 </p>
                 <p className="text-gray-600 text-sm line-clamp-2 mt-1">
                   {seoForm.seoDescription || 'Cung cấp tài khoản game giá rẻ, uy tín, chất lượng. Mua bán tài khoản Liên Quân, PUBG, Free Fire, Genshin Impact.'}

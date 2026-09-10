@@ -4,10 +4,12 @@ const Skeleton = ({ className = '' }) => (
 
 // Skeleton cho toàn bộ trang AccountDetail
 export const AccountDetailSkeleton = () => (
-  <div className="min-h-screen pt-20 pb-6">
+  <div className="min-h-screen pt-20 pb-4">
     <div className="container-custom">
       {/* Breadcrumb */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-2 mb-2 text-xs">
+        <Skeleton className="h-4 w-16" />
+        <Skeleton className="h-4 w-4" />
         <Skeleton className="h-4 w-20" />
         <Skeleton className="h-4 w-4" />
         <Skeleton className="h-4 w-24" />
@@ -18,63 +20,109 @@ export const AccountDetailSkeleton = () => (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-stretch">
         {/* Image side */}
         <div>
-          {/* Hero image */}
-          <Skeleton className="w-full h-72 rounded-lg mb-2" />
+          {/* Hero image card */}
+          <div className="card p-1 mb-2 relative">
+            <Skeleton className="w-full h-72 rounded-lg" />
+            {/* Overlay title/category */}
+            <div className="absolute bottom-0 left-0 right-0 p-2 rounded-b-lg space-y-1">
+              <Skeleton className="h-4 w-20 rounded mb-1" />
+              <Skeleton className="h-4 w-3/4 rounded" />
+            </div>
+          </div>
+
           {/* Thumbnail grid */}
           <div className="grid grid-cols-4 gap-1">
             {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-16 rounded" />
+              <div key={i} className="relative border-2 border-slate-300 dark:border-slate-700 rounded overflow-hidden">
+                <Skeleton className="h-16 w-full rounded-none" />
+                <Skeleton className="absolute top-0.5 left-0.5 h-3 w-5 rounded" />
+              </div>
             ))}
           </div>
         </div>
 
         {/* Info side */}
         <div className="card p-3 flex flex-col gap-2">
-          <Skeleton className="h-6 w-3/4" />
-          {/* Price card */}
-          <div className="bg-slate-100 dark:bg-slate-800/80 rounded p-4 space-y-2">
-            <Skeleton className="h-4 w-32 mx-auto" />
-            <Skeleton className="h-8 w-48 mx-auto" />
+          {/* Account title (h1) */}
+          <Skeleton className="h-5 w-3/4" />
+
+          {/* Price card with discount badge */}
+          <div className="relative bg-slate-100 dark:bg-slate-800/80 rounded p-4 border border-slate-200 dark:border-slate-700 space-y-1">
+            {/* Discount badge (absolute top-right) */}
+            <Skeleton className="absolute -top-2 -right-2 h-5 w-14 rounded-full" />
+            {/* Original price struck through */}
+            <div className="flex justify-center">
+              <Skeleton className="h-3 w-24" />
+            </div>
+            {/* Label + sale price */}
+            <div className="flex flex-col items-center gap-1">
+              <Skeleton className="h-3 w-12" />
+              <Skeleton className="h-9 w-48" />
+            </div>
           </div>
-          {/* Stats */}
-          <div className="bg-slate-100 dark:bg-slate-800/50 rounded p-2 space-y-2">
-            <div className="flex justify-between">
+
+          {/* Stats card (teamValue + BP) */}
+          <div className="bg-slate-100 dark:bg-slate-800/50 rounded p-2 border border-slate-200 dark:border-slate-700 space-y-1">
+            <div className="flex items-center justify-between">
               <Skeleton className="h-3 w-24" />
               <Skeleton className="h-4 w-20" />
             </div>
-            <div className="flex justify-between pt-2 border-t border-slate-200 dark:border-slate-700">
-              <Skeleton className="h-3 w-12" />
+            <div className="flex items-center justify-between pt-1 border-t border-slate-200 dark:border-slate-700">
+              <Skeleton className="h-3 w-8" />
               <Skeleton className="h-4 w-16" />
             </div>
           </div>
-          {/* Description */}
-          <div className="space-y-2 mt-2">
+
+          {/* Description block */}
+          <div className="space-y-1">
             <Skeleton className="h-3 w-16" />
             <Skeleton className="h-3 w-full" />
             <Skeleton className="h-3 w-5/6" />
             <Skeleton className="h-3 w-4/6" />
           </div>
+
+          {/* Additional info block */}
+          <div className="space-y-1">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-3 w-3/4" />
+          </div>
+
           {/* Actions */}
           <div className="flex gap-2 mt-auto pt-2">
-            <Skeleton className="h-12 flex-1 rounded-lg" />
-            <Skeleton className="h-12 flex-1 rounded-lg" />
+            <Skeleton className="flex-1 h-12 rounded-lg" />
+            <Skeleton className="flex-1 h-12 rounded-lg" />
           </div>
         </div>
       </div>
 
       {/* Gallery section */}
       <div className="mt-4">
-        <Skeleton className="h-12 w-full rounded mb-2" />
+        {/* Toggle header */}
+        <div className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2 rounded mb-2 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-4 w-4 rounded-full" />
+            <div className="space-y-1">
+              <Skeleton className="h-3 w-32" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+          </div>
+          <Skeleton className="h-4 w-4 rounded-full" />
+        </div>
+        {/* Gallery images */}
         <div className="space-y-2">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="w-full h-72 rounded" />
+            <div key={i} className="relative rounded overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <Skeleton className="absolute top-1 left-1 h-4 w-10 rounded z-10" />
+              <Skeleton className="w-full h-72 max-h-[500px] rounded-none" />
+            </div>
           ))}
         </div>
       </div>
 
       {/* Related section */}
       <div className="mt-4">
-        <Skeleton className="h-6 w-56 mb-2" />
+        <Skeleton className="h-5 w-56 mb-2" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="card p-2 space-y-2">
@@ -93,12 +141,24 @@ export const AccountDetailSkeleton = () => (
 // Skeleton riêng cho Gallery (hình ảnh chi tiết) — dùng cho lazy load
 export const AccountGallerySkeleton = () => (
   <div className="mt-4">
-    {/* Header */}
-    <Skeleton className="h-12 w-full rounded mb-2" />
+    {/* Toggle header */}
+    <div className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2 rounded mb-2 flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-4 w-4 rounded-full" />
+        <div className="space-y-1">
+          <Skeleton className="h-3 w-32" />
+          <Skeleton className="h-3 w-16" />
+        </div>
+      </div>
+      <Skeleton className="h-4 w-4 rounded-full" />
+    </div>
     {/* Images */}
     <div className="space-y-2">
       {[1, 2, 3].map((i) => (
-        <Skeleton key={i} className="w-full h-72 rounded" />
+        <div key={i} className="relative rounded overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+          <Skeleton className="absolute top-1 left-1 h-4 w-10 rounded z-10" />
+          <Skeleton className="w-full h-72 max-h-[500px] rounded-none" />
+        </div>
       ))}
     </div>
   </div>

@@ -6,6 +6,7 @@ import { useAccountDetail, useAccountList } from '../hooks';
 import { FiShoppingCart, FiImage, FiChevronDown, FiChevronUp, FiZoomIn, FiX } from 'react-icons/fi';
 import { useState, useEffect, useMemo } from 'react';
 import SEOHead from '../components/SEOHead';
+import { useAccountDetailStore } from '../store/data/accountDetailStore';
 import { AccountDetailSkeleton, RelatedAccountsSkeleton } from '../components/SkeletonLoader';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Zoom } from 'swiper/modules';
@@ -28,6 +29,8 @@ const AccountDetail = ({ onOpenAuth }) => {
   const [addToCartPending, setAddToCartPending] = useState(false);
 
   const { data: account, isLoading } = useAccountDetail(id);
+  // Lấy trực tiếp entry từ store để biết đã có data chưa (tránh hiển thị "không tìm thấy" khi đang load)
+  const accountEntry = useAccountDetailStore((s) => s.byId[id]);
   const { accounts: allRelated, isLoading: isRelatedLoading } = useAccountList({ limit: 20 });
 
   // ESC to close lightbox + lock body scroll
@@ -105,7 +108,7 @@ const AccountDetail = ({ onOpenAuth }) => {
     }
   };
 
-  if (isLoading) return <AccountDetailSkeleton />;
+  if (isLoading || !accountEntry) return <AccountDetailSkeleton />;
 
   if (!account) {
     return (

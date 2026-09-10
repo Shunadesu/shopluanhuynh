@@ -158,7 +158,7 @@ const SubcategorySection = ({ parentCategory, subcategories, onSelectSubcategory
             className="flex items-center gap-1 text-slate-600 dark:text-slate-300 hover:text-primary transition-colors"
           >
             <FiChevronLeft className="w-5 h-5" />
-            <span className="text-sm">Quay lại</span>
+            {/* <span className="text-sm">Quay lại</span> */}
           </button>
           <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             {parentCategory.thumbnail && (
