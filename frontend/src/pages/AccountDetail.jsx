@@ -6,7 +6,7 @@ import { useAccountDetail, useAccountList } from '../hooks';
 import { FiShoppingCart, FiImage, FiChevronDown, FiChevronUp, FiZoomIn, FiX } from 'react-icons/fi';
 import { useState, useEffect, useMemo } from 'react';
 import SEOHead from '../components/SEOHead';
-import { AccountDetailSkeleton } from '../components/SkeletonLoader';
+import { AccountDetailSkeleton, RelatedAccountsSkeleton } from '../components/SkeletonLoader';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Zoom } from 'swiper/modules';
 import 'swiper/css';
@@ -28,6 +28,7 @@ const AccountDetail = ({ onOpenAuth }) => {
   const [addToCartPending, setAddToCartPending] = useState(false);
 
   const { data: account, isLoading } = useAccountDetail(id);
+  const { accounts: allRelated, isLoading: isRelatedLoading } = useAccountList({ limit: 20 });
 
   // ESC to close lightbox + lock body scroll
   useEffect(() => {
@@ -42,7 +43,6 @@ const AccountDetail = ({ onOpenAuth }) => {
   }, [lightboxOpen]);
 
   // ─── Related / Random Accounts ───────────────────────────
-  const { accounts: allRelated } = useAccountList({ limit: 20 });
 
   const relatedAccounts = useMemo(() => {
     const all = (allRelated || []).filter(
@@ -62,7 +62,12 @@ const AccountDetail = ({ onOpenAuth }) => {
     }
     setAddToCartPending(true);
     try {
-      await useCartStore.getState().addToCartAdd(id);
+      if (isAuthenticated) {
+        await useCartStore.getState().addToCartAdd(id);
+      } else {
+        // Guest: pass full account object for local storage
+        await useCartStore.getState().addToCart(account);
+      }
       incrementCart();
       toast.success('Đã thêm vào giỏ hàng');
     } catch (error) {
@@ -104,7 +109,7 @@ const AccountDetail = ({ onOpenAuth }) => {
 
   if (!account) {
     return (
-      <div className="min-h-screen pt-16 pb-4 flex items-center justify-center">
+      <div className="min-h-screen pt-20 pb-4 flex items-center justify-center">
         <p className="text-slate-500 dark:text-slate-400 text-sm">Không tìm thấy tài khoản</p>
       </div>
     );
@@ -120,7 +125,7 @@ const AccountDetail = ({ onOpenAuth }) => {
     : null;
 
   return (
-    <div className="min-h-screen pt-16 pb-4">
+    <div className="min-h-screen pt-20 pb-4">
       <SEOHead
         title={account?.title || 'Chi Tiết Tài Khoản'}
         description={`Mua tài khoản ${account?.title} - Rank ${account?.rank} với giá chỉ ${account?.price?.toLocaleString('vi-VN')}đ. Tài khoản game chất lượng cao, bảo mật.`}
@@ -293,15 +298,15 @@ const AccountDetail = ({ onOpenAuth }) => {
             )}
 
             {/* Actions */}
-            <div className="flex gap-1 mt-auto pt-2">
+            <div className="flex gap-2 mt-auto pt-2">
               {account.status === 'available' ? (
                 <>
                   <button
                     onClick={handleAddToCart}
                     disabled={addToCartPending}
-                    className="btn-primary flex-1 flex items-center justify-center gap-1 text-xs py-1"
+                    className="btn-secondary flex-1 flex items-center justify-center gap-2 py-3 text-sm"
                   >
-                    <FiShoppingCart className="w-3 h-3" />
+                    <FiShoppingCart className="w-4 h-4" />
                     <span>
                       {addToCartPending
                         ? 'Đang xử lý...'
@@ -311,7 +316,7 @@ const AccountDetail = ({ onOpenAuth }) => {
                   <button
                     onClick={handleBuyNow}
                     disabled={addToCartPending}
-                    className="btn-secondary flex-1 text-xs py-1"
+                    className="btn-primary flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold"
                   >
                     Mua ngay
                   </button>
@@ -379,32 +384,45 @@ const AccountDetail = ({ onOpenAuth }) => {
         )}
 
         {/* ─── Related Accounts ─── */}
-        {relatedAccounts.length > 0 && (
+        {(isRelatedLoading || relatedAccounts.length > 0) && (
           <div className="mt-4">
             <h2 className="text-base font-bold text-slate-900 dark:text-white mb-2">
               Tài khoản bạn có thể thích
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              {relatedAccounts.map((acc) => (
-                <Link
-                  key={acc._id}
-                  to={`/account/${acc._id}`}
-                  className="card p-2 group"
-                >
-                  <img
-                    src={acc.images?.[0] || '/placeholder.jpg'}
-                    alt={acc.title}
-                    className="w-full h-24 object-cover rounded mb-1 group-hover:opacity-80 transition-opacity"
-                  />
-                  <h3 className="text-slate-900 dark:text-white text-xs font-semibold line-clamp-2 mb-1">
-                    {acc.title}
-                  </h3>
-                  <p className="text-primary font-bold text-xs">
-                    {acc.price.toLocaleString('vi-VN')}đ
-                  </p>
-                </Link>
-              ))}
-            </div>
+            {isRelatedLoading ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="card p-2 space-y-2">
+                    <div className="w-full h-24 bg-slate-300 dark:bg-slate-700 rounded animate-pulse" />
+                    <div className="h-3 w-full bg-slate-300 dark:bg-slate-700 rounded animate-pulse" />
+                    <div className="h-3 w-2/3 bg-slate-300 dark:bg-slate-700 rounded animate-pulse" />
+                    <div className="h-3 w-20 bg-slate-300 dark:bg-slate-700 rounded animate-pulse" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {relatedAccounts.map((acc) => (
+                  <Link
+                    key={acc._id}
+                    to={`/account/${acc._id}`}
+                    className="card p-2 group"
+                  >
+                    <img
+                      src={acc.images?.[0] || '/placeholder.jpg'}
+                      alt={acc.title}
+                      className="w-full h-24 object-cover rounded mb-1 group-hover:opacity-80 transition-opacity"
+                    />
+                    <h3 className="text-slate-900 dark:text-white text-xs font-semibold line-clamp-2 mb-1">
+                      {acc.title}
+                    </h3>
+                    <p className="text-primary font-bold text-xs">
+                      {acc.price.toLocaleString('vi-VN')}đ
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

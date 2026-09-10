@@ -33,7 +33,7 @@ const Cart = ({ onOpenAuth }) => {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen pt-28 pb-12">
+      <div className="min-h-screen pt-20 pb-6">
         <SEOHead
           title="Giỏ Hàng Trống"
           description="Giỏ hàng của bạn đang trống. Hãy chọn tài khoản game yêu thích để thêm vào giỏ hàng."
@@ -54,7 +54,7 @@ const Cart = ({ onOpenAuth }) => {
   }
 
   return (
-    <div className="min-h-screen pt-28 pb-12">
+    <div className="min-h-screen pt-20 pb-6">
       <SEOHead
         title={`Giỏ Hàng (${items.length} sản phẩm)`}
         description={`Bạn có ${items.length} tài khoản game trong giỏ hàng. Tiếp tục mua sắm hoặc tiến hành thanh toán.`}

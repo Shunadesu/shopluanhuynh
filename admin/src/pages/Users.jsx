@@ -83,7 +83,8 @@ export default function Users() {
           <thead>
             <tr>
               <th>Tên đăng nhập</th>
-              <th>Email</th>
+              <th>Họ tên</th>
+              <th>Số điện thoại</th>
               <th>Số dư</th>
               <th>Số acc đã mua</th>
               <th>Quyền</th>
@@ -96,7 +97,8 @@ export default function Users() {
               usersData.users.map((user) => (
                 <tr key={user._id}>
                   <td className="font-medium">{user.username}</td>
-                  <td className="text-slate-400">{user.email}</td>
+                  <td className="text-slate-400">{user.fullName || 'N/A'}</td>
+                  <td className="text-slate-400">{user.phone || 'Chưa cập nhật'}</td>
                   <td className="font-semibold text-cyan-400">
                     {user.balance?.toLocaleString('vi-VN')}đ
                   </td>
@@ -141,7 +143,7 @@ export default function Users() {
               ))
             ) : (
               <tr>
-                <td colSpan="6" className="text-center text-slate-400 py-4">
+                <td colSpan="8" className="text-center text-slate-400 py-4">
                   Chưa có người dùng nào
                 </td>
               </tr>
@@ -163,7 +165,7 @@ export default function Users() {
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-slate-100">{selectedUser.username}</h3>
-                  <p className="text-slate-400">{selectedUser.email}</p>
+                  <p className="text-slate-400">{selectedUser.fullName}</p>
                 </div>
               </div>
 

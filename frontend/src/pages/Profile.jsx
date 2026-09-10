@@ -35,7 +35,7 @@ const Profile = () => {
   );
 
   return (
-    <div className="min-h-screen pt-28 pb-12">
+    <div className="min-h-screen pt-20 pb-6">
       <SEOHead
         title="Tài Khoản Của Tôi"
         description="Quản lý thông tin tài khoản, xem lịch sử đơn hàng, nạp tiền và các cài đặt khác."

@@ -15,6 +15,7 @@ import adminRoutes from './routes/admin.js';
 import settingsRoutes from './routes/settings.js';
 import uploadRoutes from './routes/upload.js';
 import sitemapRoutes from './routes/sitemap.js';
+import socialLinksRoutes from './routes/socialLinks.js';
 
 dotenv.config();
 
@@ -33,6 +34,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Trust proxy (for rate limiting behind reverse proxy)
+app.set('trust proxy', 1);
 
 // Health check (must be before any route mounts that might match /api/*)
 app.get('/api/health', (req, res) => {
@@ -60,7 +64,71 @@ app.use('/api/deposits', depositRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/social-links', socialLinksRoutes);
+app.use('/api/admin/social-links', socialLinksRoutes);
 app.use('/', sitemapRoutes);
+
+// TEMPORARY FIX ENDPOINT - xóa sau khi fix xong
+// Xóa users có username/email không hợp lệ và rebuild indexes
+app.post('/api/_fix/cleanup-users', async (req, res) => {
+  try {
+    const usersCollection = mongoose.connection.db.collection('users');
+    const result = { steps: [] };
+
+    const beforeCount = await usersCollection.countDocuments();
+    result.steps.push({ step: 'count_before', count: beforeCount });
+
+    const invalidUsers = await usersCollection.find({
+      $or: [
+        { username: null }, { username: '' }, { username: 'undefined' }, { username: 'null' },
+        { email: null }, { email: '' }, { email: 'undefined' }, { email: 'null' },
+        { username: { $exists: false } }, { email: { $exists: false } }
+      ]
+    }).toArray();
+    result.steps.push({ step: 'found_invalid', count: invalidUsers.length });
+
+    const deleteResult = await usersCollection.deleteMany({
+      $or: [
+        { username: null }, { username: '' }, { username: 'undefined' }, { username: 'null' },
+        { email: null }, { email: '' }, { email: 'undefined' }, { email: 'null' },
+        { username: { $exists: false } }, { email: { $exists: false } }
+      ]
+    });
+    result.steps.push({ step: 'deleted_invalid', deletedCount: deleteResult.deletedCount });
+
+    // Drop index cũ (email_1)
+    try {
+      await usersCollection.dropIndex('email_1');
+      result.steps.push({ step: 'dropped_index', name: 'email_1' });
+    } catch (error) {
+      if (error.code === 27) {
+        result.steps.push({ step: 'drop_index_skipped', name: 'email_1' });
+      } else {
+        result.steps.push({ step: 'drop_index_error', name: 'email_1', error: error.message });
+      }
+    }
+
+    // Tạo index mới cho username
+    try {
+      await usersCollection.createIndex({ username: 1 }, { unique: true, name: 'username_1' });
+      result.steps.push({ step: 'created_index', name: 'username_1' });
+    } catch (error) {
+      result.steps.push({ step: 'create_index_error', error: error.message });
+    }
+
+    const afterCount = await usersCollection.countDocuments();
+    result.steps.push({ step: 'count_after', count: afterCount });
+
+    result.success = true;
+    result.message = `Đã xóa ${deleteResult.deletedCount} users không hợp lệ và rebuild indexes`;
+
+    console.log('✅ Cleanup endpoint executed:', JSON.stringify(result, null, 2));
+    res.json(result);
+  } catch (error) {
+    console.error('❌ Cleanup error:', error);
+    res.status(500).json({ success: false, message: 'Lỗi khi cleanup', error: error.message });
+  }
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {

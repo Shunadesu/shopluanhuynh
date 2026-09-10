@@ -16,13 +16,9 @@ export const useAuthStore = create(
         // Check for buy now account in sessionStorage
         const buyNowAccount = sessionStorage.getItem('buyNowAccount');
 
-        // Merge guest cart with user cart (uses cartStore - shared cache)
+        // Merge guest cart with user cart (reads from localStorage automatically)
         try {
-          const guestId = localStorage.getItem('guestId');
-          if (guestId) {
-            await useCartStore.getState().mergeCart(guestId);
-            localStorage.removeItem('guestId');
-          }
+          await useCartStore.getState().mergeCart();
         } catch (error) {
           console.error('Failed to merge cart:', error);
         }
@@ -31,7 +27,7 @@ export const useAuthStore = create(
         if (buyNowAccount) {
           try {
             const account = JSON.parse(buyNowAccount);
-            await useCartStore.getState().addToCart(account._id);
+            await useCartStore.getState().addToCart(account.accountId || account._id);
             sessionStorage.removeItem('buyNowAccount');
             // Refetch cart to ensure full state sync
             await useCartStore.getState().fetchCart(true);

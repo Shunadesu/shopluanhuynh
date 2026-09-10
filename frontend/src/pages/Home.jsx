@@ -365,7 +365,7 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen pt-24">
+    <div className="min-h-screen pt-20">
       <SEOHead
         title="Mua Bán Tài Khoản FC Online, FIFA Online 4 Giá Rẻ Uy Tín"
         description="Shop chuyên mua bán tài khoản FC Online (FIFA Online 4) giá rẻ, uy tín, chất lượng. Tài khoản FO4 đã có sẵn VPL, VLBD, cày rank, đủ mức giá, giao dịch nhanh, bảo hành an toàn."
@@ -386,10 +386,20 @@ const Home = () => {
 
             return (
               <div className="container-custom">
+                {/* Mobile/Tablet: 1 cột (trên dưới) | Desktop: 2 cột theo tỉ lệ banner */}
                 <div
-                  className="grid gap-1 rounded-md overflow-hidden"
-                  style={{ gridTemplateColumns: `${leftWidth}fr ${rightWidth}fr` }}
+                  className="grid gap-1 rounded-md overflow-hidden banner-grid"
+                  style={{
+                    gridTemplateColumns: '1fr',
+                  }}
                 >
+                  <style>{`
+                    @media (min-width: 768px) {
+                      .banner-grid {
+                        grid-template-columns: ${leftWidth}fr ${rightWidth}fr !important;
+                      }
+                    }
+                  `}</style>
                   {/* Banner Trái */}
                   <div className="w-full overflow-hidden rounded-md">
                     {leftBanner.link ? (

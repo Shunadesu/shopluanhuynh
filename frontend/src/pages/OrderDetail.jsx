@@ -72,7 +72,7 @@ const OrderDetail = () => {
 
   if (!order) {
     return (
-      <div className="min-h-screen pt-28 pb-12">
+      <div className="min-h-screen pt-20 pb-6">
         <div className="container-custom text-center py-20">
           <FiInfo className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
           <p className="text-slate-900 dark:text-white text-xl font-bold mb-2">Không tìm thấy đơn hàng</p>
@@ -88,7 +88,7 @@ const OrderDetail = () => {
   const StatusIcon = statusCfg.icon;
 
   return (
-    <div className="min-h-screen pt-28 pb-12">
+    <div className="min-h-screen pt-20 pb-6">
       <SEOHead
         title={`Đơn hàng #${order.orderNumber}`}
         description={`Chi tiết đơn hàng #${order.orderNumber} - Thông tin tài khoản đã mua`}

@@ -29,24 +29,35 @@ router.post('/register', async (req, res) => {
   try {
     const { username, password, fullName, phone } = req.body;
 
+    console.log(`[REGISTER] Attempt: username="${username}", fullName="${fullName}"`);
+
     // Validate cơ bản
     if (!username || !password || !fullName) {
+      console.log('[REGISTER] Validation failed: missing required fields');
       return res.status(400).json({ message: 'Vui lòng điền đầy đủ thông tin' });
     }
 
     // Kiểm tra username đã tồn tại
-    const existingUser = await User.findOne({ username: username.toLowerCase() });
+    const normalizedUsername = username.toLowerCase().trim();
+    console.log(`[REGISTER] Checking if username exists: "${normalizedUsername}"`);
+    
+    const existingUser = await User.findOne({ username: normalizedUsername });
     if (existingUser) {
+      console.log(`[REGISTER] Username already exists: "${normalizedUsername}" (id: ${existingUser._id})`);
       return res.status(400).json({ message: 'Tên đăng nhập đã được sử dụng' });
     }
 
+    console.log(`[REGISTER] Username available, creating user...`);
+
     // Tạo user (pre-save hook sẽ hash password)
     const user = await User.create({
-      username: username.toLowerCase().trim(),
+      username: normalizedUsername,
       password,
       fullName: fullName.trim(),
       phone: phone || ''
     });
+
+    console.log(`[REGISTER] User created successfully: id=${user._id}, username="${user.username}"`);
 
     const token = generateToken(user._id);
 
@@ -56,11 +67,23 @@ router.post('/register', async (req, res) => {
       user: safeUser(user)
     });
   } catch (error) {
-    console.error('Register error:', error);
+    console.error('[REGISTER] Error:', error);
+    console.error('[REGISTER] Error details:', {
+      code: error.code,
+      codeName: error.codeName,
+      message: error.message,
+      keyPattern: error.keyPattern,
+      keyValue: error.keyValue
+    });
+    
     if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern || {})[0];
+      const value = error.keyValue ? error.keyValue[field] : 'unknown';
+      console.error(`[REGISTER] Duplicate key error: field="${field}", value="${value}"`);
       return res.status(400).json({ message: 'Tên đăng nhập đã được sử dụng' });
     }
     if (error.name === 'ValidationError') {
+      console.error('[REGISTER] Validation error:', error.message);
       return res.status(400).json({ message: error.message });
     }
     res.status(500).json({ message: 'Lỗi server', error: error.message });

@@ -28,7 +28,7 @@ const AmountChip = ({ amount, label, isSelected, onClick }) => (
     whileHover={{ scale: 1.02 }}
     whileTap={{ scale: 0.98 }}
     onClick={onClick}
-    className={`relative px-4 py-2.5 rounded-xl font-semibold text-sm transition-all overflow-hidden ${
+    className={`relative px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl font-semibold text-xs sm:text-sm transition-all overflow-hidden ${
       isSelected
         ? 'bg-primary text-white shadow-lg shadow-primary/30'
         : 'bg-slate-100 dark:bg-slate-800/70 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
@@ -118,54 +118,54 @@ const Deposit = ({ onOpenAuth }) => {
   if (banksLoading) return <DepositSkeleton />;
 
   return (
-    <div className="min-h-screen pt-28 pb-12">
+    <div className="min-h-screen pt-16 sm:pt-20 pb-16 sm:pb-6">
       <div className="container-custom">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Nạp tiền</h1>
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">Nạp tiền</h1>
           <Link 
             to="/profile/deposits" 
-            className="text-primary hover:text-primary-light transition-colors font-medium"
+            className="text-primary hover:text-primary-light transition-colors font-medium text-sm sm:text-base"
           >
-            Lịch sử nạp tiền →
+            Lịch sử →
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
           {/* Form */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-3 sm:space-y-4 lg:space-y-5">
             {/* Current Balance */}
-            <div className="card bg-gradient-to-br from-primary-dark to-primary p-6">
+            <div className="card bg-gradient-to-br from-primary-dark to-primary p-3 sm:p-4 lg:p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <FiDollarSign className="w-5 h-5 text-white/80" />
-                    <p className="text-white/80 text-sm font-medium">Số dư hiện tại</p>
+                  <div className="flex items-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+                    <FiDollarSign className="w-4 h-4 sm:w-5 h-5 text-white/80" />
+                    <p className="text-white/80 text-xs sm:text-sm font-medium">Số dư hiện tại</p>
                   </div>
                   {isAuthenticated && !userLoading ? (
-                    <p className="text-4xl font-bold text-white">
+                    <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">
                       {user?.balance !== undefined 
                         ? `${user.balance.toLocaleString('vi-VN')}đ`
                         : '---'
                       }
                     </p>
                   ) : (
-                    <div className="h-10 w-40 bg-white/20 rounded-lg animate-pulse" />
+                    <div className="h-8 sm:h-10 w-32 sm:w-40 bg-white/20 rounded-lg animate-pulse" />
                   )}
                 </div>
-                <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center">
-                  <FiDollarSign className="w-8 h-8 text-white/50" />
+                <div className="w-10 h-10 sm:w-12 h-12 lg:w-14 h-14 bg-white/10 rounded-xl sm:rounded-2xl flex items-center justify-center">
+                  <FiDollarSign className="w-5 h-5 sm:w-6 h-6 lg:w-7 h-7 text-white/50" />
                 </div>
               </div>
             </div>
 
             {/* Login Prompt - Show when not authenticated */}
             {!isAuthenticated && (
-              <div className="card bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 p-8">
+              <div className="card bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 p-4 sm:p-6 lg:p-8">
                 <div className="text-center">
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <FiCreditCard className="w-8 h-8 text-primary" />
+                  <div className="w-12 h-12 sm:w-14 h-14 lg:w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                    <FiCreditCard className="w-6 h-6 sm:w-7 h-7 lg:w-8 h-8 text-primary" />
                   </div>
-                  <p className="text-slate-600 dark:text-slate-300 mb-4">Vui lòng đăng nhập để nạp tiền</p>
+                  <p className="text-slate-600 dark:text-slate-300 mb-3 sm:mb-4 text-sm sm:text-base">Vui lòng đăng nhập để nạp tiền</p>
                   <button
                     onClick={() => window.dispatchEvent(new CustomEvent('openAuthDrawer', { detail: { view: 'login' } }))}
                     className="btn-primary"
@@ -178,31 +178,34 @@ const Deposit = ({ onOpenAuth }) => {
 
             {/* Amount Input */}
             {isAuthenticated && (
-              <div className="card p-6">
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                  <FiPhone className="w-5 h-5 text-primary" />
+              <div className="card p-3 sm:p-4 lg:p-5">
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-3 sm:mb-4 flex items-center gap-2">
+                  <FiDollarSign className="w-4 h-4 sm:w-5 h-5 text-primary" />
                   Số tiền muốn nạp
                 </h2>
                 
                 {/* Custom Amount Input */}
-                <div className="relative mb-5">
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={amount}
-                    onChange={handleCustomAmount}
-                    className="w-full h-16 px-4 pr-12 text-2xl font-bold text-center bg-slate-50 dark:bg-slate-800/70 border-2 border-slate-200 dark:border-slate-700 rounded-xl focus:border-primary focus:ring-0 transition-colors"
-                    placeholder="Nhập số tiền..."
-                  />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">đ</span>
+                <div className="mb-3 sm:mb-4">
+                  <div className="relative mb-1.5 sm:mb-2">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={amount}
+                      onChange={handleCustomAmount}
+                      className="w-full h-12 sm:h-14 px-3 sm:px-4 pr-10 sm:pr-12 text-lg sm:text-xl font-bold text-center bg-slate-50 dark:bg-slate-800/70 border-2 border-slate-200 dark:border-slate-700 rounded-xl focus:border-primary focus:ring-0 transition-colors"
+                      placeholder="Nhập số tiền..."
+                    />
+                    <span className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm sm:text-base">đ</span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 text-center">
+                    Tối thiểu 10,000đ
+                  </p>
                 </div>
                 
                 {/* Quick Amount Buttons */}
-                <div className="mb-4">
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-3 text-center">
-                    Chọn nhanh số tiền
-                  </p>
-                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                <div className="mb-3 sm:mb-4">
+                 
+                  <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5 sm:gap-2">
                     {PRESET_AMOUNTS.map((preset) => (
                       <AmountChip
                         key={preset.value}
@@ -214,90 +217,64 @@ const Deposit = ({ onOpenAuth }) => {
                     ))}
                   </div>
                 </div>
-
-                {/* Amount Info */}
-                <AnimatePresence>
-                  {amount && parseFloat(amount) > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className={`p-3 rounded-lg text-center ${
-                        parseFloat(amount) >= 10000
-                          ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
-                          : 'bg-red-50 dark:bg-red-900/20 text-red-500'
-                      }`}
-                    >
-                      {parseFloat(amount) >= 10000 ? (
-                        <span className="text-sm font-medium">
-                          ✓ Số tiền hợp lệ (tối thiểu 10,000đ)
-                        </span>
-                      ) : (
-                        <span className="text-sm font-medium">
-                          Số tiền tối thiểu là 10,000đ
-                        </span>
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
               </div>
             )}
 
             {/* Bank Selection */}
             {isAuthenticated && (
-              <div className="card p-6">
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                  <FiCreditCard className="w-5 h-5 text-primary" />
-                  Chọn tài khoản ngân hàng
+              <div className="card p-3 sm:p-4 lg:p-5">
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-3 sm:mb-4 flex items-center gap-2">
+                  <FiCreditCard className="w-4 h-4 sm:w-5 h-5 text-primary" />
+                  Chọn ngân hàng
                 </h2>
                 
                 {!bankAccounts || bankAccounts.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <FiCreditCard className="w-8 h-8 text-slate-400" />
+                  <div className="text-center py-6 sm:py-8">
+                    <div className="w-12 h-12 sm:w-14 h-14 lg:w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                      <FiCreditCard className="w-6 h-6 sm:w-7 h-7 lg:w-8 h-8 text-slate-400" />
                     </div>
-                    <p className="text-slate-500 dark:text-slate-400">Hiện chưa có tài khoản ngân hàng nào</p>
-                    <p className="text-slate-400 dark:text-slate-500 text-sm mt-1">Vui lòng thử lại sau</p>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm sm:text-base">Hiện chưa có tài khoản ngân hàng</p>
+                    <p className="text-slate-400 dark:text-slate-500 text-xs sm:text-sm mt-1">Vui lòng thử lại sau</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 gap-3">
+                  <div className="grid grid-cols-1 gap-2 sm:gap-3">
                     {bankAccounts.map((bank) => (
                       <motion.div
                         key={bank._id}
                         onClick={() => setSelectedBank(bank)}
                         whileHover={{ scale: 1.01 }}
                         whileTap={{ scale: 0.99 }}
-                        className={`p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                        className={`p-2.5 sm:p-3 border-2 rounded-lg sm:rounded-xl cursor-pointer transition-all ${
                           selectedBank?._id === bank._id
                             ? 'border-primary bg-primary/5 shadow-lg shadow-primary/10'
                             : 'border-slate-200 dark:border-slate-700 hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-slate-800/50'
                         }`}
                       >
-                        <div className="flex items-start gap-4">
+                        <div className="flex items-start gap-2.5 sm:gap-3">
                           {bank.qrCodeImage && (
                             <div className="relative shrink-0">
                               <img
                                 src={bank.qrCodeImage}
                                 alt={bank.bankName}
-                                className="w-20 h-20 object-cover rounded-lg"
+                                className="w-14 h-14 sm:w-16 h-16 object-cover rounded-lg"
                               />
                               {selectedBank?._id === bank._id && (
-                                <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                                  <FiCheck className="w-4 h-4 text-white" />
+                                <div className="absolute -top-1 -right-1 w-5 h-5 sm:w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                                  <FiCheck className="w-3 h-3 sm:w-4 h-4 text-white" />
                                 </div>
                               )}
                             </div>
                           )}
                           <div className="flex-grow min-w-0">
-                            <h3 className="text-slate-900 dark:text-white font-semibold mb-1">{bank.bankName}</h3>
-                            <p className="text-slate-500 dark:text-slate-400 text-sm mb-1">
+                            <h3 className="text-slate-900 dark:text-white font-semibold text-sm sm:text-base mb-0.5 sm:mb-1">{bank.bankName}</h3>
+                            <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mb-0.5">
                               <span className="text-slate-400">STK:</span> {bank.accountNumber}
                             </p>
-                            <p className="text-slate-500 dark:text-slate-400 text-sm mb-1">
+                            <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mb-0.5">
                               <span className="text-slate-400">Tên:</span> {bank.accountName}
                             </p>
                             {bank.identifier && (
-                              <p className="text-primary text-xs mt-1">
+                              <p className="text-primary text-xs mt-0.5 sm:mt-1">
                                 <span className="text-slate-400">ID:</span> {bank.identifier}
                               </p>
                             )}
@@ -313,84 +290,84 @@ const Deposit = ({ onOpenAuth }) => {
 
           {/* Instructions */}
           <div className="lg:col-span-1">
-            <div className="card sticky top-24 p-6">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                <FiPhone className="w-5 h-5 text-primary" />
-                Hướng dẫn nạp tiền
+            <div className="card lg:sticky lg:top-20 p-3 sm:p-4 lg:p-5 max-h-[calc(100vh-6rem)] overflow-y-auto">
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-3 sm:mb-4 flex items-center gap-2">
+                <FiPhone className="w-4 h-4 sm:w-5 h-5 text-primary" />
+                Hướng dẫn
               </h3>
 
               {!isAuthenticated ? (
-                <div className="text-center py-6">
-                  <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <FiCreditCard className="w-6 h-6 text-slate-400" />
+                <div className="text-center py-4 sm:py-6">
+                  <div className="w-10 h-10 sm:w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3">
+                    <FiCreditCard className="w-5 h-5 sm:w-6 h-6 text-slate-400" />
                   </div>
-                  <p className="text-slate-500 dark:text-slate-400 mb-4 text-sm">Vui lòng đăng nhập để nạp tiền</p>
+                  <p className="text-slate-500 dark:text-slate-400 mb-3 sm:mb-4 text-xs sm:text-sm">Vui lòng đăng nhập để nạp tiền</p>
                   <button
                     onClick={() => window.dispatchEvent(new CustomEvent('openAuthDrawer', { detail: { view: 'login' } }))}
-                    className="btn-primary w-full"
+                    className="btn-primary w-full text-sm sm:text-base"
                   >
                     Đăng nhập
                   </button>
                 </div>
               ) : selectedBank && amount && parseFloat(amount) >= 10000 ? (
-                <div className="space-y-4">
+                <div className="space-y-2.5 sm:space-y-3 lg:space-y-4">
                   {/* Transfer Amount */}
-                  <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-xl p-4">
-                    <p className="text-slate-500 dark:text-slate-400 text-xs mb-1">Số tiền chuyển</p>
-                    <div className="flex items-center justify-between">
-                      <p className="text-primary font-bold text-2xl">
+                  <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-lg sm:rounded-xl p-2.5 sm:p-3 lg:p-4">
+                    <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs mb-0.5 sm:mb-1">Số tiền chuyển</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-primary font-bold text-lg sm:text-xl lg:text-2xl">
                         {parseFloat(amount).toLocaleString('vi-VN')}đ
                       </p>
                       <button
                         onClick={() => copyToClipboard(amount, 'số tiền')}
-                        className="p-2 hover:bg-primary/10 rounded-lg transition-colors"
+                        className="p-1.5 sm:p-2 hover:bg-primary/10 rounded-lg transition-colors shrink-0"
                         title="Copy số tiền"
                       >
-                        <FiCopy className="w-4 h-4 text-primary" />
+                        <FiCopy className="w-3.5 h-3.5 sm:w-4 h-4 text-primary" />
                       </button>
                     </div>
                   </div>
 
                   {/* Transfer Content */}
-                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4">
-                    <p className="text-slate-500 dark:text-slate-400 text-xs mb-1">Nội dung chuyển khoản</p>
-                    <div className="flex items-center justify-between">
-                      <p className="text-slate-900 dark:text-white font-medium text-sm break-all">
+                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg sm:rounded-xl p-2.5 sm:p-3 lg:p-4">
+                    <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs mb-0.5 sm:mb-1">Nội dung chuyển khoản</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-slate-900 dark:text-white font-medium text-xs sm:text-sm break-all">
                         {user?.username} {amount}
                       </p>
                       <button
                         onClick={() => copyToClipboard(`${user?.username} ${amount}`, 'nội dung')}
-                        className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors shrink-0 ml-2"
+                        className="p-1.5 sm:p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors shrink-0"
                         title="Copy nội dung"
                       >
-                        <FiCopy className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                        <FiCopy className="w-3.5 h-3.5 sm:w-4 h-4 text-slate-500 dark:text-slate-400" />
                       </button>
                     </div>
                   </div>
 
                   {/* Bank Info */}
-                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 space-y-2">
-                    <p className="text-slate-500 dark:text-slate-400 text-xs">Thông tin tài khoản</p>
-                    <p className="text-sm text-slate-700 dark:text-slate-300">
+                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg sm:rounded-xl p-2.5 sm:p-3 lg:p-4 space-y-1 sm:space-y-1.5">
+                    <p className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs">Thông tin tài khoản</p>
+                    <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
                       <span className="font-medium">{selectedBank.bankName}</span>
                     </p>
-                    <p className="text-sm text-slate-700 dark:text-slate-300">
+                    <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
                       STK: <span className="font-mono">{selectedBank.accountNumber}</span>
                     </p>
-                    <p className="text-sm text-slate-700 dark:text-slate-300">
+                    <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
                       Tên: {selectedBank.accountName}
                     </p>
                   </div>
 
                   {/* QR Code */}
                   {selectedBank.qrCodeImage && (
-                    <div className="text-center bg-white dark:bg-slate-800 rounded-xl p-4">
+                    <div className="text-center bg-white dark:bg-slate-800 rounded-lg sm:rounded-xl p-2.5 sm:p-3 lg:p-4">
                       <img
                         src={selectedBank.qrCodeImage}
                         alt="QR Code"
-                        className="w-40 h-40 mx-auto rounded-lg"
+                        className="w-32 h-32 sm:w-36 h-36 lg:w-40 h-40 mx-auto rounded-lg"
                       />
-                      <p className="text-xs text-slate-400 mt-2">Quét mã QR để chuyển tiền</p>
+                      <p className="text-[10px] sm:text-xs text-slate-400 mt-1.5 sm:mt-2">Quét mã QR để chuyển tiền</p>
                     </div>
                   )}
 
@@ -398,11 +375,11 @@ const Deposit = ({ onOpenAuth }) => {
                   <button
                     onClick={handleSubmit}
                     disabled={submitting}
-                    className="btn-primary w-full py-3 text-base font-semibold"
+                    className="btn-primary w-full py-2.5 sm:py-3 text-sm sm:text-base font-semibold"
                   >
                     {submitting ? (
                       <span className="flex items-center justify-center gap-2">
-                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <svg className="animate-spin h-4 w-4 sm:h-5 w-5" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                         </svg>
@@ -414,30 +391,30 @@ const Deposit = ({ onOpenAuth }) => {
                   </button>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  <div className="space-y-3 text-slate-600 dark:text-slate-400 text-sm">
-                    <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-                      <span className="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold shrink-0">1</span>
-                      <p>Chọn hoặc nhập số tiền muốn nạp (tối thiểu 10,000đ)</p>
+                <div className="space-y-2 sm:space-y-2.5 lg:space-y-3">
+                  <div className="space-y-2 sm:space-y-2.5 text-slate-600 dark:text-slate-400 text-xs sm:text-sm">
+                    <div className="flex items-start gap-2 sm:gap-2.5 p-2 sm:p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                      <span className="w-5 h-5 sm:w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold shrink-0">1</span>
+                      <p>Chọn hoặc nhập số tiền (tối thiểu 10,000đ)</p>
                     </div>
-                    <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-                      <span className="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold shrink-0">2</span>
-                      <p>Chọn tài khoản ngân hàng để nạp</p>
+                    <div className="flex items-start gap-2 sm:gap-2.5 p-2 sm:p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                      <span className="w-5 h-5 sm:w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold shrink-0">2</span>
+                      <p>Chọn tài khoản ngân hàng</p>
                     </div>
-                    <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-                      <span className="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold shrink-0">3</span>
+                    <div className="flex items-start gap-2 sm:gap-2.5 p-2 sm:p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                      <span className="w-5 h-5 sm:w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold shrink-0">3</span>
                       <p>Quét mã QR hoặc chuyển khoản thủ công</p>
                     </div>
-                    <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-                      <span className="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold shrink-0">4</span>
+                    <div className="flex items-start gap-2 sm:gap-2.5 p-2 sm:p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                      <span className="w-5 h-5 sm:w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold shrink-0">4</span>
                       <p>Nhập đúng <strong className="text-primary">nội dung chuyển khoản</strong></p>
                     </div>
-                    <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-                      <span className="w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold shrink-0">5</span>
+                    <div className="flex items-start gap-2 sm:gap-2.5 p-2 sm:p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                      <span className="w-5 h-5 sm:w-6 h-6 bg-primary text-white rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold shrink-0">5</span>
                       <p>Nhấn "Xác nhận đã chuyển khoản"</p>
                     </div>
-                    <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-                      <span className="w-6 h-6 bg-slate-300 dark:bg-slate-600 text-slate-600 dark:text-white rounded-full flex items-center justify-center text-xs font-bold shrink-0">6</span>
+                    <div className="flex items-start gap-2 sm:gap-2.5 p-2 sm:p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
+                      <span className="w-5 h-5 sm:w-6 h-6 bg-slate-300 dark:bg-slate-600 text-slate-600 dark:text-white rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold shrink-0">6</span>
                       <p>Chờ admin duyệt (thường trong vài phút)</p>
                     </div>
                   </div>
@@ -445,11 +422,11 @@ const Deposit = ({ onOpenAuth }) => {
               )}
 
               {/* Warning */}
-              <div className="mt-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4">
-                <p className="text-yellow-600 dark:text-yellow-400 text-sm font-medium">
+              <div className="mt-4 sm:mt-5 lg:mt-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg sm:rounded-xl p-2.5 sm:p-3 lg:p-4">
+                <p className="text-yellow-600 dark:text-yellow-400 text-xs sm:text-sm font-medium">
                   ⚠️ Lưu ý quan trọng
                 </p>
-                <ul className="text-yellow-600 dark:text-yellow-400 text-xs mt-2 space-y-1">
+                <ul className="text-yellow-600 dark:text-yellow-400 text-[10px] sm:text-xs mt-1.5 sm:mt-2 space-y-0.5 sm:space-y-1">
                   <li>• Chuyển đúng số tiền và nội dung</li>
                   <li>• Không làm tròn số tiền</li>
                   <li>• Kiểm tra kỹ trước khi xác nhận</li>

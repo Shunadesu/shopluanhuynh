@@ -41,7 +41,7 @@ const PurchasedAccounts = () => {
   if (isLoading) return <Loading />;
 
   return (
-    <div className="min-h-screen pt-28 pb-12">
+    <div className="min-h-screen pt-20 pb-6">
       <div className="container-custom">
         <div className="flex items-center justify-between mb-8">
           <div>

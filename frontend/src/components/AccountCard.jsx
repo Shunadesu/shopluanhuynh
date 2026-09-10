@@ -24,7 +24,7 @@ const AccountCard = ({ account }) => {
 
       {/* Content */}
       <div className="flex flex-col">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1 line-clamp-2 min-h-[2.5rem] group-hover:text-primary transition-colors">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1 line-clamp-2 min-h-[1rem] group-hover:text-primary transition-colors">
           {account.title}
         </h3>
 

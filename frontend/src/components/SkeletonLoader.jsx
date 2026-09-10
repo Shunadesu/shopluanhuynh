@@ -2,8 +2,9 @@ const Skeleton = ({ className = '' }) => (
   <div className={`animate-pulse bg-slate-300 dark:bg-slate-700 rounded ${className}`} />
 );
 
+// Skeleton cho toàn bộ trang AccountDetail
 export const AccountDetailSkeleton = () => (
-  <div className="min-h-screen pt-28 pb-12">
+  <div className="min-h-screen pt-20 pb-6">
     <div className="container-custom">
       {/* Breadcrumb */}
       <div className="flex gap-2 mb-6">
@@ -14,57 +15,114 @@ export const AccountDetailSkeleton = () => (
         <Skeleton className="h-4 w-32" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-stretch">
         {/* Image side */}
         <div>
-          <Skeleton className="w-full h-96 rounded-lg mb-4" />
-          <div className="grid grid-cols-4 gap-2">
+          {/* Hero image */}
+          <Skeleton className="w-full h-72 rounded-lg mb-2" />
+          {/* Thumbnail grid */}
+          <div className="grid grid-cols-4 gap-1">
             {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-20 rounded-lg" />
+              <Skeleton key={i} className="h-16 rounded" />
             ))}
           </div>
         </div>
 
         {/* Info side */}
-        <div className="card p-6 space-y-4">
-          <Skeleton className="h-8 w-3/4" />
-          <Skeleton className="h-6 w-28 rounded-full" />
-          <div className="flex gap-2">
-            <Skeleton className="h-10 w-36 rounded-lg" />
-            <Skeleton className="h-10 w-24 rounded-lg" />
+        <div className="card p-3 flex flex-col gap-2">
+          <Skeleton className="h-6 w-3/4" />
+          {/* Price card */}
+          <div className="bg-slate-100 dark:bg-slate-800/80 rounded p-4 space-y-2">
+            <Skeleton className="h-4 w-32 mx-auto" />
+            <Skeleton className="h-8 w-48 mx-auto" />
           </div>
-          <Skeleton className="h-28 rounded-lg" />
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-5/6" />
+          {/* Stats */}
+          <div className="bg-slate-100 dark:bg-slate-800/50 rounded p-2 space-y-2">
+            <div className="flex justify-between">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-4 w-20" />
+            </div>
+            <div className="flex justify-between pt-2 border-t border-slate-200 dark:border-slate-700">
+              <Skeleton className="h-3 w-12" />
+              <Skeleton className="h-4 w-16" />
+            </div>
           </div>
-          <div className="flex gap-2">
+          {/* Description */}
+          <div className="space-y-2 mt-2">
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-3 w-5/6" />
+            <Skeleton className="h-3 w-4/6" />
+          </div>
+          {/* Actions */}
+          <div className="flex gap-2 mt-auto pt-2">
             <Skeleton className="h-12 flex-1 rounded-lg" />
             <Skeleton className="h-12 flex-1 rounded-lg" />
           </div>
-          <Skeleton className="h-16 rounded-lg" />
+        </div>
+      </div>
+
+      {/* Gallery section */}
+      <div className="mt-4">
+        <Skeleton className="h-12 w-full rounded mb-2" />
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="w-full h-72 rounded" />
+          ))}
+        </div>
+      </div>
+
+      {/* Related section */}
+      <div className="mt-4">
+        <Skeleton className="h-6 w-56 mb-2" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="card p-2 space-y-2">
+              <Skeleton className="w-full h-24 rounded" />
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-3 w-2/3" />
+              <Skeleton className="h-3 w-20" />
+            </div>
+          ))}
         </div>
       </div>
     </div>
   </div>
 );
 
+// Skeleton riêng cho Gallery (hình ảnh chi tiết) — dùng cho lazy load
 export const AccountGallerySkeleton = () => (
-  <div className="space-y-3">
-    <div className="flex gap-3">
-      <Skeleton className="h-8 w-40" />
-      <Skeleton className="h-8 w-24" />
+  <div className="mt-4">
+    {/* Header */}
+    <Skeleton className="h-12 w-full rounded mb-2" />
+    {/* Images */}
+    <div className="space-y-2">
+      {[1, 2, 3].map((i) => (
+        <Skeleton key={i} className="w-full h-72 rounded" />
+      ))}
     </div>
-    <div className="space-y-3">
+  </div>
+);
+
+// Skeleton cho Related Accounts
+export const RelatedAccountsSkeleton = () => (
+  <div className="mt-4">
+    <Skeleton className="h-6 w-56 mb-2" />
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
       {[1, 2, 3, 4].map((i) => (
-        <Skeleton key={i} className="w-full h-96 rounded-lg" />
+        <div key={i} className="card p-2 space-y-2">
+          <Skeleton className="w-full h-24 rounded" />
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-2/3" />
+          <Skeleton className="h-3 w-20" />
+        </div>
       ))}
     </div>
   </div>
 );
 
 export const ProfileSkeleton = () => (
-  <div className="min-h-screen pt-28 pb-12">
+  <div className="min-h-screen pt-20 pb-6">
     <div className="container-custom space-y-4">
       {/* Hero */}
       <div className="bg-white dark:bg-dark-light border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
@@ -129,7 +187,7 @@ export const ProfileSkeleton = () => (
 );
 
 export const OrdersSkeleton = () => (
-  <div className="min-h-screen pt-28 pb-12">
+  <div className="min-h-screen pt-20 pb-6">
     <div className="container-custom space-y-4">
       {/* Hero */}
       <div className="bg-white dark:bg-dark-light border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
@@ -189,7 +247,7 @@ export const OrdersSkeleton = () => (
 );
 
 export const OrderDetailSkeleton = () => (
-  <div className="min-h-screen pt-28 pb-12">
+  <div className="min-h-screen pt-20 pb-6">
     <div className="container-custom">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 mb-6">
@@ -269,7 +327,7 @@ export const OrderDetailSkeleton = () => (
 
 // Skeleton cho Deposit Page
 export const DepositSkeleton = () => (
-  <div className="min-h-screen pt-28 pb-12">
+  <div className="min-h-screen pt-20 pb-6">
     <div className="container-custom">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
@@ -377,7 +435,7 @@ export const AccountGridSkeleton = ({ count = 8 }) => (
 
 // Skeleton cho toàn bộ trang Shop
 export const ShopSkeleton = () => (
-  <div className="min-h-screen pt-28 pb-12">
+  <div className="min-h-screen pt-20 pb-6">
     {/* Page Title */}
     <div className="container-custom mb-6 space-y-2">
       <Skeleton className="h-9 w-64" />

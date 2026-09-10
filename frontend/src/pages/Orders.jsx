@@ -71,7 +71,7 @@ const Orders = () => {
     .reduce((sum, o) => sum + (o.totalAmount || 0), 0);
 
   return (
-    <div className="min-h-screen pt-28 pb-12">
+    <div className="min-h-screen pt-20 pb-6">
       <SEOHead
         title="Đơn Hàng Của Tôi"
         description="Xem và quản lý lịch sử đơn hàng đã mua tài khoản game."

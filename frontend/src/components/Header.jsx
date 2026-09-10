@@ -13,7 +13,7 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, user, logout } = useAuthStore();
-  const { cartCount } = useCartStore();
+  const cartCount = useCartStore((s) => s.cartCount);
   const theme = useThemeStore((s) => s.theme);
   const toggleTheme = useThemeStore((s) => s.toggleTheme);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -73,14 +73,14 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
     <>
       <header className={getHeaderClasses()}>
         <div className="container-custom">
-          <div className="flex items-center justify-between h-24">
+          <div className="flex items-center justify-between h-14">
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-2">
               {settings?.logo ? (
                 <img
                   src={settings.logo}
                   alt="Shopluanhuynh"
-                  className="h-16 w-auto object-contain"
+                  className="h-12 w-auto object-contain"
                 />
               ) : (
                 <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-dark rounded-lg flex items-center justify-center">
