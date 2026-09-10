@@ -62,7 +62,7 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/deposit" className="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
+                <Link to="/profile?view=deposit" className="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
                   Nạp tiền
                 </Link>
               </li>

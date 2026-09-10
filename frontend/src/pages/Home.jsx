@@ -5,6 +5,10 @@ import { FiChevronRight, FiChevronLeft, FiSearch, FiX } from 'react-icons/fi';
 import SEOHead from '../components/SEOHead';
 import AccountCard from '../components/AccountCard';
 import { AccountCardSkeleton } from '../components/SkeletonLoader';
+import BuyNowModal from '../components/BuyNowModal';
+import { useAuthStore } from '../store/authStore';
+import api from '../utils/api';
+import toast from 'react-hot-toast';
 
 // Skeleton loader components
 const SkeletonCategoryCard = () => (
@@ -46,7 +50,7 @@ const SubcategoryGrid = ({ parentCategory, subcategories, onSelectSubcategory })
                 <img
                   src={subcategory.thumbnail}
                   alt={subcategory.name}
-                  className="w-full h-32 object-cover rounded-lg mb-2"
+                  className="w-full h-auto object-cover rounded-lg mb-2"
                 />
               ) : (
                 <div className="w-full h-24 rounded-t-lg mb-2 bg-gradient-to-br from-orange-700 via-orange-600 to-amber-500 flex items-center justify-center">
@@ -188,6 +192,7 @@ const CategoryAccountSection = ({ category, accounts, isLoading, onSelectSubcate
               <AccountCard
                 key={account._id}
                 account={account}
+                onBuyNow={(e) => handleBuyNow(e, account)}
               />
             ))}
           </div>
@@ -202,6 +207,12 @@ const Home = () => {
   const [selectedParent, setSelectedParent] = useState(null); // Category cha đang chọn (để hiển thị subcategories)
   const [selectedSubcategory, setSelectedSubcategory] = useState(null); // Danh mục con đang chọn (để lọc accounts)
   const accountsRef = useRef(null);
+  const { isAuthenticated } = useAuthStore();
+  
+  // Buy Now Modal state
+  const [showBuyNowModal, setShowBuyNowModal] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState(null);
+  const [buyingNow, setBuyingNow] = useState(false);
 
   // Filter state
   const [filters, setFilters] = useState({
@@ -362,6 +373,46 @@ const Home = () => {
     });
     setTempSearchName('');
     setTempSearchCode('');
+  };
+
+  const handleBuyNow = async (e, account) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!isAuthenticated) {
+      window.dispatchEvent(new CustomEvent('openAuthDrawer', { detail: { view: 'login' } }));
+      sessionStorage.setItem('buyNowAccount', JSON.stringify(account));
+      return;
+    }
+
+    setSelectedAccount(account);
+    setShowBuyNowModal(true);
+  };
+
+  const handleConfirmBuyNow = async () => {
+    if (!selectedAccount) return;
+
+    setBuyingNow(true);
+    try {
+      const response = await api.post('/orders/buy-now', {
+        accountId: selectedAccount._id
+      });
+      
+      toast.success('Mua hàng thành công!');
+      
+      // Update balance in store
+      if (response.data.newBalance !== undefined) {
+        useAuthStore.getState().updateBalance(response.data.newBalance);
+      }
+      
+      setShowBuyNowModal(false);
+      navigate(`/orders/${response.data.order._id}`);
+    } catch (error) {
+      const message = error.response?.data?.message || 'Không thể mua hàng';
+      toast.error(message);
+    } finally {
+      setBuyingNow(false);
+    }
   };
 
   return (
@@ -735,6 +786,7 @@ const Home = () => {
                 <AccountCard
                   key={account._id}
                   account={account}
+                  onBuyNow={(e) => handleBuyNow(e, account)}
                 />
               ))}
             </div>
@@ -777,6 +829,15 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* Buy Now Modal */}
+      <BuyNowModal
+        isOpen={showBuyNowModal}
+        account={selectedAccount}
+        loading={buyingNow}
+        onClose={() => setShowBuyNowModal(false)}
+        onConfirm={handleConfirmBuyNow}
+      />
     </div>
   );
 };

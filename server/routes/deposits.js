@@ -54,6 +54,64 @@ router.post('/request', auth, async (req, res) => {
   }
 });
 
+// Random bank deposit request - user chỉ nhập số tiền, server random 1 ngân hàng active
+// và tạo DepositRequest pending ngay. Admin sẽ duyệt tay.
+router.post('/random-request', auth, async (req, res) => {
+  try {
+    const { amount } = req.body;
+
+    if (!amount || amount < 10000) {
+      return res.status(400).json({ message: 'Số tiền nạp tối thiểu là 10,000đ' });
+    }
+
+    // Lấy tất cả tài khoản ngân hàng đang active
+    const bankAccounts = await BankAccount.find({ isActive: true });
+
+    if (bankAccounts.length === 0) {
+      return res.status(400).json({ message: 'Hiện chưa có tài khoản ngân hàng nào đang hoạt động' });
+    }
+
+    // Random 1 ngân hàng
+    const randomIndex = Math.floor(Math.random() * bankAccounts.length);
+    const selectedBank = bankAccounts[randomIndex];
+
+    // Lấy username để tạo nội dung chuyển khoản
+    const user = await User.findById(req.user._id).select('username');
+    const transferNote = `${user?.username || 'user'} ${amount}`;
+
+    // Tạo DepositRequest pending ngay
+    const depositRequest = new DepositRequest({
+      userId: req.user._id,
+      amount,
+      bankAccountId: selectedBank._id,
+      transferNote,
+    });
+
+    await depositRequest.save();
+
+    res.status(201).json({
+      message: 'Đã tạo yêu cầu nạp tiền',
+      bank: {
+        _id: selectedBank._id,
+        bankName: selectedBank.bankName,
+        accountNumber: selectedBank.accountNumber,
+        accountName: selectedBank.accountName,
+        qrCodeImage: selectedBank.qrCodeImage,
+        identifier: selectedBank.identifier,
+      },
+      deposit: {
+        _id: depositRequest._id,
+        amount: depositRequest.amount,
+        transferNote: depositRequest.transferNote,
+        status: depositRequest.status,
+      },
+    });
+  } catch (error) {
+    console.error('Random deposit request error:', error);
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
 // Get my deposit requests
 router.get('/my-requests', auth, async (req, res) => {
   try {

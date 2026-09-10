@@ -6,7 +6,7 @@ import { useThemeStore } from '../store/themeStore';
 import { useSettings } from '../hooks/useSettings';
 import AuthDrawer from './AuthDrawer';
 import CartDrawer from './CartDrawer';
-import { FiShoppingCart, FiUser, FiLogOut, FiMenu, FiSun, FiMoon } from 'react-icons/fi';
+import { FiShoppingCart, FiUser, FiLogOut, FiMenu, FiSun, FiMoon, FiPlus } from 'react-icons/fi';
 
 const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, onCloseCart, authInitialView = 'login' }) => {
   const navigate = useNavigate();
@@ -93,8 +93,8 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
               </Link>
 
               <Link
-                to="/deposit"
-                className={`nav-link px-4 py-2 ${navLinkColor(location.pathname === '/deposit')}`}
+                to="/profile?view=deposit"
+                className={`nav-link px-4 py-2 ${navLinkColor(location.pathname === '/profile' && location.search === '?view=deposit')}`}
               >
                 Nạp thẻ
               </Link>
@@ -102,6 +102,25 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
 
             {/* Right Actions */}
             <div className="flex items-center space-x-2">
+              {/* Balance Display - Only for authenticated users */}
+              {isAuthenticated && (
+                <div className="hidden sm:flex items-center bg-gradient-to-r from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10 rounded-lg px-3 py-1.5 border border-primary/20">
+                  <div className="flex flex-col items-end mr-2">
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">Số dư</span>
+                    <span className="text-sm font-bold text-primary leading-tight">
+                      {user?.balance?.toLocaleString('vi-VN') || '0'}đ
+                    </span>
+                  </div>
+                  <Link
+                    to="/profile?view=deposit"
+                    className="p-1.5 bg-primary hover:bg-primary-dark text-white rounded-md transition-colors"
+                    title="Nạp tiền"
+                  >
+                    <FiPlus className="w-4 h-4" />
+                  </Link>
+                </div>
+              )}
+
               {/* Theme Toggle */}
               <button
                 onClick={toggleTheme}
@@ -209,6 +228,28 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
           {/* Mobile Menu */}
           {showMobileMenu && (
             <div className="md:hidden py-4 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-dark/95 backdrop-blur-md">
+              {/* Balance Display - Mobile */}
+              {isAuthenticated && (
+                <div className="px-4 mb-4">
+                  <div className="flex items-center justify-between bg-gradient-to-r from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10 rounded-lg px-4 py-3 border border-primary/20">
+                    <div>
+                      <span className="text-xs text-slate-500 dark:text-slate-400 block">Số dư hiện tại</span>
+                      <span className="text-lg font-bold text-primary">
+                        {user?.balance?.toLocaleString('vi-VN') || '0'}đ
+                      </span>
+                    </div>
+                    <Link
+                      to="/profile?view=deposit"
+                      onClick={() => setShowMobileMenu(false)}
+                      className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg transition-colors font-medium"
+                    >
+                      <FiPlus className="w-4 h-4" />
+                      <span>Nạp tiền</span>
+                    </Link>
+                  </div>
+                </div>
+              )}
+
               <nav className="flex flex-col space-y-2">
                 <Link
                   to="/shop"
@@ -219,7 +260,7 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
                 </Link>
 
                 <Link
-                  to="/deposit"
+                  to="/profile?view=deposit"
                   className={`px-4 py-2 rounded-lg transition-colors ${mobileLinkColor()}`}
                   onClick={() => setShowMobileMenu(false)}
                 >

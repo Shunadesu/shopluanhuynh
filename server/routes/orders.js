@@ -8,6 +8,72 @@ import { decrypt } from '../utils/encryption.js';
 
 const router = express.Router();
 
+// Buy now - Direct purchase without cart
+router.post('/buy-now', auth, async (req, res) => {
+  try {
+    const { accountId } = req.body;
+
+    // Check if account exists and available
+    const account = await GameAccount.findById(accountId);
+    if (!account) {
+      return res.status(404).json({ message: 'Tài khoản không tồn tại' });
+    }
+
+    if (account.status !== 'available') {
+      return res.status(400).json({ message: 'Tài khoản không còn khả dụng' });
+    }
+
+    // Check user balance
+    const user = await User.findById(req.user._id);
+    if (user.balance < account.price) {
+      return res.status(400).json({
+        message: `Số dư không đủ. Cần ${account.price.toLocaleString('vi-VN')}đ, hiện có ${user.balance.toLocaleString('vi-VN')}đ`,
+        required: account.price,
+        current: user.balance
+      });
+    }
+
+    // Create order
+    const orderNumber = 'ORD' + Date.now();
+    const order = new Order({
+      userId: req.user._id,
+      orderNumber,
+      items: [{
+        accountId: account._id,
+        price: account.price
+      }],
+      totalAmount: account.price,
+      status: 'completed',
+      paymentMethod: 'balance'
+    });
+
+    await order.save();
+
+    // Update user balance and purchase history
+    user.balance -= account.price;
+    user.purchaseHistory.push(order._id);
+    await user.save();
+
+    // Update game account status
+    account.status = 'sold';
+    account.soldTo = req.user._id;
+    account.soldAt = new Date();
+    await account.save();
+
+    res.json({
+      message: 'Mua tài khoản thành công',
+      order: {
+        _id: order._id,
+        orderNumber: order.orderNumber
+      },
+      newBalance: user.balance
+    });
+  } catch (error) {
+    console.error('Buy now error:', error);
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
 // Add to cart
 router.post('/cart/add', auth, async (req, res) => {
   try {

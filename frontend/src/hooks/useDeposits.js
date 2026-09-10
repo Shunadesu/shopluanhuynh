@@ -3,17 +3,19 @@ import { useDepositStore } from '../store/data/depositStore';
 
 const REQUESTS_TTL = 30 * 1000;
 
-export function useBankAccounts() {
+export function useBankAccounts(options = {}) {
+  const { enabled = true } = options;
   const data = useDepositStore((s) => s.bankAccounts);
   const loading = useDepositStore((s) => s.banksLoading);
   const lastFetched = useDepositStore((s) => s.lastFetchedBanks);
 
   useEffect(() => {
+    if (!enabled) return;
     if (!data || data.length === 0 || Date.now() - lastFetched > 30 * 60 * 1000) {
       useDepositStore.getState().fetchBankAccounts().catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [enabled]);
 
   return {
     data: data || [],
@@ -22,17 +24,19 @@ export function useBankAccounts() {
   };
 }
 
-export function useMyDepositRequests() {
+export function useMyDepositRequests(options = {}) {
+  const { enabled = true } = options;
   const data = useDepositStore((s) => s.myRequests);
   const loading = useDepositStore((s) => s.requestsLoading);
   const lastFetched = useDepositStore((s) => s.lastFetchedRequests);
 
   useEffect(() => {
+    if (!enabled) return;
     if (!data || Date.now() - lastFetched > REQUESTS_TTL) {
       useDepositStore.getState().fetchMyRequests().catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [enabled]);
 
   return {
     data: data || [],

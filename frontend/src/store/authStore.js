@@ -47,6 +47,13 @@ export const useAuthStore = create(
       updateUser: (user) => {
         set({ user });
       },
+
+      updateBalance: (newBalance) => {
+        const { user } = get();
+        if (user) {
+          set({ user: { ...user, balance: newBalance } });
+        }
+      },
     }),
     {
       name: 'auth-storage',

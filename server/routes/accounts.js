@@ -64,15 +64,17 @@ router.get('/', async (req, res) => {
 
     const accounts = await GameAccount.find(query)
       .populate('categoryId', 'name slug parentId')
+      .populate('subcategoryId', 'name slug parentId')
       .select('-username -password') // Hide credentials
       .sort(sortOptions)
       .skip(skip)
       .limit(parseInt(limit));
 
-    // Map categoryId to category for frontend compatibility
+    // Ưu tiên subcategory nếu có (tài khoản thuộc danh mục con),
+    // fallback về category cha nếu tài khoản chỉ gắn với danh mục cha.
     const mappedAccounts = accounts.map(acc => {
       const accObj = acc.toObject();
-      accObj.category = accObj.categoryId;
+      accObj.category = accObj.subcategoryId || accObj.categoryId;
       return accObj;
     });
 

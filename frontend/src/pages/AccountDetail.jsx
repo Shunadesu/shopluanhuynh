@@ -10,6 +10,8 @@ import { useAccountDetailStore } from '../store/data/accountDetailStore';
 import { AccountDetailSkeleton, RelatedAccountsSkeleton } from '../components/SkeletonLoader';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Zoom } from 'swiper/modules';
+import BuyNowModal from '../components/BuyNowModal';
+import api from '../utils/api';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/zoom';
@@ -27,6 +29,8 @@ const AccountDetail = ({ onOpenAuth }) => {
   const [galleryOpen, setGalleryOpen] = useState(true);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [addToCartPending, setAddToCartPending] = useState(false);
+  const [showBuyNowModal, setShowBuyNowModal] = useState(false);
+  const [buyingNow, setBuyingNow] = useState(false);
 
   const { data: account, isLoading } = useAccountDetail(id);
   // Lấy trực tiếp entry từ store để biết đã có data chưa (tránh hiển thị "không tìm thấy" khi đang load)
@@ -85,26 +89,39 @@ const AccountDetail = ({ onOpenAuth }) => {
     }
   };
 
-  const handleBuyNow = async () => {
-    if (account.status !== 'available') {
-      toast.error('Tài khoản không còn khả dụng');
-      return;
-    }
+  const handleBuyNow = () => {
     if (!isAuthenticated) {
-      toast.error('Vui lòng đăng nhập để mua ngay');
+      toast.error('Vui lòng đăng nhập để mua');
       onOpenAuth?.('login');
       sessionStorage.setItem('buyNowAccount', JSON.stringify({ accountId: id }));
       return;
     }
+    if (account.status !== 'available') {
+      toast.error('Tài khoản không còn khả dụng');
+      return;
+    }
+    setShowBuyNowModal(true);
+  };
+
+  const handleConfirmBuyNow = async () => {
+    setBuyingNow(true);
     try {
-      await useCartStore.getState().addToCartAdd(id);
-      navigate('/cart');
+      const { data } = await api.post('/orders/buy-now', {
+        accountId: account._id
+      });
+      
+      // Cập nhật balance trong store
+      useAuthStore.getState().updateBalance(data.balance);
+      
+      toast.success(data.message);
+      setShowBuyNowModal(false);
+      
+      // Redirect đến trang chi tiết đơn hàng
+      navigate(`/orders/${data.orderId}`);
     } catch (error) {
-      if (error?.__skipped || error.response?.status === 401) {
-        toast.error('Vui lòng đăng nhập để mua ngay');
-      } else {
-        toast.error(error.response?.data?.message || 'Không thể xử lý');
-      }
+      toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
+    } finally {
+      setBuyingNow(false);
     }
   };
 
@@ -488,6 +505,15 @@ const AccountDetail = ({ onOpenAuth }) => {
           </div>
         </div>
       )}
+
+      {/* Buy Now Modal */}
+      <BuyNowModal
+        isOpen={showBuyNowModal}
+        onClose={() => setShowBuyNowModal(false)}
+        account={account}
+        onConfirm={handleConfirmBuyNow}
+        loading={buyingNow}
+      />
     </div>
   );
 };

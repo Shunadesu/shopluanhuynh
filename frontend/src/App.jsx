@@ -20,7 +20,6 @@ import Checkout from './pages/Checkout';
 import Profile from './pages/Profile';
 import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
-import Deposit from './pages/Deposit';
 import DepositHistory from './pages/DepositHistory';
 import PurchasedAccounts from './pages/PurchasedAccounts';
 
@@ -168,14 +167,6 @@ function App() {
             element={
               <ProtectedRoute>
                 <OrderDetail />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/deposit"
-            element={
-              <ProtectedRoute>
-                <Deposit />
               </ProtectedRoute>
             }
           />

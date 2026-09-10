@@ -7,6 +7,8 @@ import { useCategories, useAccountList } from '../hooks';
 import { ShopSkeleton, AccountCardSkeleton } from '../components/SkeletonLoader';
 import { FiSearch, FiTag, FiShoppingCart, FiZap, FiChevronRight, FiChevronLeft } from 'react-icons/fi';
 import SEOHead from '../components/SEOHead';
+import BuyNowModal from '../components/BuyNowModal';
+import api from '../utils/api';
 
 // Account Card Component (từ Home.jsx)
 const AccountCard = ({ account, onAddToCart, onBuyNow, addToCartPending }) => {
@@ -230,6 +232,9 @@ const Shop = () => {
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState(null);
   const [page, setPage] = useState(1);
   const [addToCartPending, setAddToCartPending] = useState(false);
+  const [showBuyNowModal, setShowBuyNowModal] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState(null);
+  const [buyingNow, setBuyingNow] = useState(false);
 
   // Fetch categories
   const { data: categories } = useCategories();
@@ -304,15 +309,33 @@ const Shop = () => {
       return;
     }
 
+    setSelectedAccount(account);
+    setShowBuyNowModal(true);
+  };
+
+  const handleConfirmBuyNow = async () => {
+    if (!selectedAccount) return;
+
+    setBuyingNow(true);
     try {
-      await useCartStore.getState().addToCart(account._id);
-      navigate('/checkout');
-    } catch (error) {
-      if (error?.__skipped || error.response?.status === 401) {
-        toast.error('Vui lòng đăng nhập để mua ngay');
-      } else {
-        toast.error(error.response?.data?.message || 'Không thể xử lý');
+      const response = await api.post('/orders/buy-now', {
+        accountId: selectedAccount._id
+      });
+      
+      toast.success('Mua hàng thành công!');
+      
+      // Update balance in store
+      if (response.data.newBalance !== undefined) {
+        useAuthStore.getState().updateBalance(response.data.newBalance);
       }
+      
+      setShowBuyNowModal(false);
+      navigate(`/orders/${response.data.order._id}`);
+    } catch (error) {
+      const message = error.response?.data?.message || 'Không thể mua hàng';
+      toast.error(message);
+    } finally {
+      setBuyingNow(false);
     }
   };
 
@@ -666,6 +689,15 @@ const Shop = () => {
           </div>
         )}
       </div>
+
+      {/* Buy Now Modal */}
+      <BuyNowModal
+        isOpen={showBuyNowModal}
+        onClose={() => setShowBuyNowModal(false)}
+        account={selectedAccount}
+        onConfirm={handleConfirmBuyNow}
+        loading={buyingNow}
+      />
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Loading from '../components/Loading';
+import AccountSidebar from '../components/AccountSidebar';
 import { usePurchasedAccounts } from '../hooks/useOrders';
 import { FiCopy, FiEye, FiEyeOff, FiShoppingBag, FiCalendar, FiTag, FiServer } from 'react-icons/fi';
 import toast from 'react-hot-toast';
@@ -43,20 +44,24 @@ const PurchasedAccounts = () => {
   return (
     <div className="min-h-screen pt-20 pb-6">
       <div className="container-custom">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Tài khoản đã mua</h1>
-            <p className="text-slate-500 dark:text-slate-400">
-              {accounts?.length || 0} tài khoản đã mua
-            </p>
-          </div>
-          <Link 
-            to="/profile" 
-            className="text-primary hover:text-primary-light"
-          >
-            ← Quay lại profile
-          </Link>
-        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4">
+          <AccountSidebar />
+
+          <div className="min-w-0">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Tài khoản đã mua</h1>
+                <p className="text-slate-500 dark:text-slate-400">
+                  {accounts?.length || 0} tài khoản đã mua
+                </p>
+              </div>
+              <Link
+                to="/profile"
+                className="text-primary hover:text-primary-light"
+              >
+                ← Quay lại profile
+              </Link>
+            </div>
 
         {isLoading ? (
           <Loading />
@@ -219,6 +224,8 @@ const PurchasedAccounts = () => {
             ))}
           </div>
         )}
+          </div>
+        </div>
       </div>
     </div>
   );

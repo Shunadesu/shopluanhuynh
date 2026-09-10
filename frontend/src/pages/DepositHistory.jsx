@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import Loading from '../components/Loading';
+import AccountSidebar from '../components/AccountSidebar';
 import { useMyDepositRequests } from '../hooks/useDeposits';
 import { FiClock, FiCheckCircle, FiXCircle, FiDollarSign } from 'react-icons/fi';
 
@@ -39,23 +40,27 @@ const DepositHistory = () => {
   return (
     <div className="min-h-screen pt-20 pb-12">
       <div className="container-custom">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-white">Lịch sử nạp tiền</h1>
-          <div className="flex items-center space-x-2">
-            <Link to="/deposit" className="btn-primary">
-              Nạp tiền
-            </Link>
-            <Link to="/profile" className="text-primary hover:text-primary-light">
-              ←
-            </Link>
-          </div>
-        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4">
+          <AccountSidebar />
+
+          <div className="min-w-0">
+            <div className="flex items-center justify-between mb-8">
+              <h1 className="text-3xl font-bold text-white">Lịch sử nạp tiền</h1>
+              <div className="flex items-center space-x-2">
+                <Link to="/profile?view=deposit" className="btn-primary">
+                  Nạp tiền
+                </Link>
+                <Link to="/profile" className="text-primary hover:text-primary-light">
+                  ←
+                </Link>
+              </div>
+            </div>
 
         {!deposits || deposits.length === 0 ? (
           <div className="card text-center py-20">
             <FiDollarSign className="w-20 h-20 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
             <p className="text-slate-500 dark:text-slate-400 text-lg mb-6">Bạn chưa có lịch sử nạp tiền</p>
-            <Link to="/deposit" className="btn-primary inline-block">
+            <Link to="/profile?view=deposit" className="btn-primary inline-block">
               Nạp tiền ngay
             </Link>
           </div>
@@ -125,6 +130,8 @@ const DepositHistory = () => {
             ))}
           </div>
         )}
+          </div>
+        </div>
       </div>
     </div>
   );

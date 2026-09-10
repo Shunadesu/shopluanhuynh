@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useOrders } from '../hooks/useOrders';
 import SEOHead from '../components/SEOHead';
 import { OrdersSkeleton } from '../components/SkeletonLoader';
+import AccountSidebar from '../components/AccountSidebar';
 import {
   FiPackage, FiClock, FiCheckCircle, FiXCircle,
   FiArrowRight, FiShoppingBag, FiDollarSign, FiX
@@ -77,8 +78,11 @@ const Orders = () => {
         description="Xem và quản lý lịch sử đơn hàng đã mua tài khoản game."
         type="website"
       />
-      <div className="container-custom space-y-4">
+      <div className="container-custom">
+        <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4">
+          <AccountSidebar />
 
+          <div className="space-y-4 min-w-0">
         {/* ── Hero ──────────────────────────────────────── */}
         <div className="bg-white dark:bg-dark-light border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -184,6 +188,8 @@ const Orders = () => {
               ))
             )}
           </div>
+        </div>
+      </div>
         </div>
       </div>
 

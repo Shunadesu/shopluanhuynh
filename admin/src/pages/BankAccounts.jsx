@@ -127,19 +127,29 @@ export default function BankAccounts() {
       return;
     }
 
-    // Preview local
+    // Lưu blob URL để preview tạm thời
+    const blobUrl = URL.createObjectURL(file);
     setQrFile(file);
-    setQrPreview(URL.createObjectURL(file));
+    setQrPreview(blobUrl);
     setIsUploadingQr(true);
 
     try {
       const { data } = await api.uploadImage(file);
       const url = data?.url || data?.urls?.[0] || '';
+      // Validate response: phải là đường dẫn tương đối hoặc URL đầy đủ
+      if (!url || (!url.startsWith('/uploads/') && !url.startsWith('http'))) {
+        throw new Error('Response upload không hợp lệ');
+      }
+      // Giải phóng blob URL tạm
+      URL.revokeObjectURL(blobUrl);
       setQrPreview(url);
       setQrFile(null);
       toast.success('Upload ảnh QR thành công');
-    } catch {
+    } catch (err) {
+      console.error('Upload QR error:', err);
       toast.error('Upload ảnh QR thất bại');
+      // Reset preview nếu upload lỗi, không giữ blob URL
+      setQrPreview('');
       setQrFile(null);
     } finally {
       setIsUploadingQr(false);
@@ -185,6 +195,16 @@ export default function BankAccounts() {
       form.bankName === 'OTHER' ? form.bankNameCustom.trim() : (VIETNAMESE_BANKS.find((b) => b.code === form.bankName)?.name || '');
     if (!finalBankName) {
       toast.error('Vui lòng chọn hoặc nhập tên ngân hàng');
+      return;
+    }
+    // Chặn submit khi đang upload
+    if (isUploadingQr) {
+      toast.error('Vui lòng đợi upload ảnh QR hoàn tất');
+      return;
+    }
+    // Validate qrPreview: nếu có giá trị phải là path hợp lệ, không phải blob URL
+    if (qrPreview && qrPreview.startsWith('blob:')) {
+      toast.error('Ảnh QR chưa upload xong, vui lòng đợi');
       return;
     }
     const payload = {

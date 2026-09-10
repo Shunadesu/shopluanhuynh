@@ -1,32 +1,33 @@
 import { Link } from 'react-router-dom';
 
-const AccountCard = ({ account }) => {
+const AccountCard = ({ account, onBuyNow }) => {
   return (
-    <Link
-      to={`/account/${account._id}`}
-      className="card hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-300 group"
-    >
+    <div className="card hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-300 group relative">
       {/* Image */}
-      <div className="relative overflow-hidden rounded-lg mb-2">
-        <img
-          src={account.images?.[0] || '/placeholder.jpg'}
-          alt={account.title}
-          className="w-full h-32 object-cover group-hover:scale-110 transition-transform duration-300"
-        />
-        {account.status === 'sold' && (
-          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-            <span className="bg-red-500 text-white px-2 py-1 rounded text-xs font-semibold">
-              ĐÃ BÁN
-            </span>
-          </div>
-        )}
-      </div>
+      <Link to={`/account/${account._id}`} className="block">
+        <div className="relative overflow-hidden rounded-lg mb-2">
+          <img
+            src={account.images?.[0] || '/placeholder.jpg'}
+            alt={account.title}
+            className="w-full h-32 object-cover group-hover:scale-110 transition-transform duration-300"
+          />
+          {account.status === 'sold' && (
+            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+              <span className="bg-red-500 text-white px-2 py-1 rounded text-xs font-semibold">
+                ĐÃ BÁN
+              </span>
+            </div>
+          )}
+        </div>
+      </Link>
 
       {/* Content */}
       <div className="flex flex-col">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1 line-clamp-2 min-h-[1rem] group-hover:text-primary transition-colors">
-          {account.title}
-        </h3>
+        <Link to={`/account/${account._id}`}>
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1 line-clamp-2 min-h-[1rem] group-hover:text-primary transition-colors">
+            {account.title}
+          </h3>
+        </Link>
 
         {/* Account Code */}
         {account.code && (
@@ -76,10 +77,16 @@ const AccountCard = ({ account }) => {
           <div className="flex flex-col gap-1.5 min-h-[3.25rem]">
             {account.status === 'available' && (
               <>
-                <button className="btn-primary text-xs w-full py-1.5">
+                <Link
+                  to={`/account/${account._id}`}
+                  className="btn-primary text-xs w-full py-1.5 text-center"
+                >
                   Xem chi tiết
-                </button>
-                <button className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold px-3 py-1.5 rounded transition-colors w-full">
+                </Link>
+                <button
+                  onClick={(e) => onBuyNow?.(e, account)}
+                  className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold px-3 py-1.5 rounded transition-colors w-full"
+                >
                   Mua ngay
                 </button>
               </>
@@ -87,7 +94,7 @@ const AccountCard = ({ account }) => {
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 };
 
