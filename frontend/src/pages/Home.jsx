@@ -795,40 +795,7 @@ const Home = () => {
       </section>
       ) : null}
 
-      {/* Features */}
-      <section className="py-2">
-        <div className="container-custom">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-            <div className="text-center">
-              <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-2">
-                <span className="text-primary text-xl">⚡</span>
-              </div>
-              <h3 className="text-slate-900 dark:text-white font-semibold text-sm mb-1">Giao dịch nhanh</h3>
-              <p className="text-slate-600 dark:text-slate-400 text-xs">
-                Nhận tài khoản ngay sau khi thanh toán thành công
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-2">
-                <span className="text-primary text-xl">🔒</span>
-              </div>
-              <h3 className="text-slate-900 dark:text-white font-semibold text-sm mb-1">Bảo mật cao</h3>
-              <p className="text-slate-600 dark:text-slate-400 text-xs">
-                Thông tin tài khoản được mã hóa và bảo vệ tuyệt đối
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-2">
-                <span className="text-primary text-xl">💰</span>
-              </div>
-              <h3 className="text-slate-900 dark:text-white font-semibold text-sm mb-1">Giá tốt nhất</h3>
-              <p className="text-slate-600 dark:text-slate-400 text-xs">
-                Cam kết giá cả cạnh tranh và ưu đãi hấp dẫn
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+
 
       {/* Buy Now Modal */}
       <BuyNowModal

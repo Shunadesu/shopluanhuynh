@@ -166,11 +166,7 @@ function App() {
           />
           <Route
             path="/spin"
-            element={
-              <ProtectedRoute>
-                <SpinWheel />
-              </ProtectedRoute>
-            }
+            element={<SpinWheel />}
           />
           <Route
             path="/spin/history"

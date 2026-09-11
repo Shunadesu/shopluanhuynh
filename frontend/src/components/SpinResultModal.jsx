@@ -3,7 +3,7 @@ import { FaTimes, FaGift, FaCoins, FaTicketAlt, FaGamepad } from 'react-icons/fa
 import Confetti from 'react-confetti';
 import { useState, useEffect } from 'react';
 
-const SpinResultModal = ({ isOpen, onClose, result, spinType }) => {
+const SpinResultModal = ({ isOpen, onClose, result }) => {
   const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {

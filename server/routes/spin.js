@@ -10,8 +10,8 @@ import { spinLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
-// Get spin configuration for user (active rewards only)
-router.get('/config', auth, async (req, res) => {
+// Get spin configuration for user (active rewards only) - PUBLIC so guests can view the wheel
+router.get('/config', async (req, res) => {
   try {
     // Check if spin feature is enabled
     const spinEnabled = await SiteSetting.findOne({ key: 'spin_enabled' });
@@ -47,14 +47,38 @@ router.get('/config', auth, async (req, res) => {
   }
 });
 
-// Get user's spin counts
-router.get('/my-spins', auth, async (req, res) => {
+// Get user's spin counts - PUBLIC (returns 0 for guests)
+router.get('/my-spins', async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select('spins totalSpent');
-    
+    // Try to read user from optional auth header
+    const authHeader = req.headers.authorization;
+    let userId = null;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.slice(7);
+        const jwt = (await import('jsonwebtoken')).default;
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        userId = decoded.userId;
+      } catch (e) {
+        // Token invalid/expired, treat as guest
+        userId = null;
+      }
+    }
+
+    if (!userId) {
+      return res.json({ spins: 0, totalSpent: 0, isAuthenticated: false });
+    }
+
+    const user = await User.findById(userId).select('spins totalSpent');
+
+    if (!user) {
+      return res.json({ spins: 0, totalSpent: 0, isAuthenticated: false });
+    }
+
     res.json({
       spins: user.spins || 0,
-      totalSpent: user.totalSpent || 0
+      totalSpent: user.totalSpent || 0,
+      isAuthenticated: true
     });
   } catch (error) {
     console.error('Get my spins error:', error);

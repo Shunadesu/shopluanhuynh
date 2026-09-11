@@ -105,21 +105,19 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
                 </div>
               )}
 
-              {/* Spin Wheel Button - Only for authenticated users */}
-              {isAuthenticated && (
-                <Link
-                  to="/spin"
-                  className={`relative p-2 rounded-lg transition-colors ${hoverBg()} group`}
-                  title="Vòng quay may mắn"
-                >
-                  <GiSpinningBlades className={`w-6 h-6 ${iconColor()} group-hover:animate-spin`} />
-                  {(user?.spins || 0) > 0 && (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">
-                      {user.spins}
-                    </span>
-                  )}
-                </Link>
-              )}
+              {/* Spin Wheel Button - Always visible */}
+              <Link
+                to="/spin"
+                className={`relative p-2 rounded-lg transition-colors ${hoverBg()} group`}
+                title="Vòng quay may mắn"
+              >
+                <GiSpinningBlades className={`w-6 h-6 ${iconColor()} group-hover:animate-spin`} />
+                {isAuthenticated && (user?.spins || 0) > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">
+                    {user.spins}
+                  </span>
+                )}
+              </Link>
 
               {/* Theme Toggle */}
               <button
@@ -267,6 +265,15 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
 
               <nav className="flex flex-col space-y-2">
                 <Link
+                  to="/spin"
+                  className={`px-4 py-2 rounded-lg transition-colors ${mobileLinkColor()} flex items-center gap-2`}
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  <GiSpinningBlades className="w-5 h-5" />
+                  Vòng quay may mắn
+                </Link>
+
+                <Link
                   to="/profile?view=deposit"
                   className={`px-4 py-2 rounded-lg transition-colors ${mobileLinkColor()}`}
                   onClick={() => setShowMobileMenu(false)}
@@ -274,17 +281,6 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
                   Nạp thẻ
                 </Link>
 
-                {!isAuthenticated && (
-                  <button
-                    onClick={() => {
-                      setShowMobileMenu(false);
-                      onOpenAuth('login');
-                    }}
-                    className={`px-4 py-2 rounded-lg transition-colors text-left ${mobileLinkColor()}`}
-                  >
-                    Đăng nhập
-                  </button>
-                )}
               </nav>
             </div>
           )}
