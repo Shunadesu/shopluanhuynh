@@ -3,6 +3,7 @@ import DepositRequest from '../models/DepositRequest.js';
 import BankAccount from '../models/BankAccount.js';
 import User from '../models/User.js';
 import { auth } from '../middleware/auth.js';
+import { depositLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
@@ -20,8 +21,8 @@ router.get('/bank-accounts', async (req, res) => {
   }
 });
 
-// Create deposit request
-router.post('/request', auth, async (req, res) => {
+// Create deposit request - WITH RATE LIMITING
+router.post('/request', auth, depositLimiter, async (req, res) => {
   try {
     const { amount, bankAccountId, transferNote } = req.body;
 

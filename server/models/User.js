@@ -30,6 +30,14 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  spins: {
+    type: Number,
+    default: 0
+  },
+  totalSpent: {
+    type: Number,
+    default: 0
+  },
   role: {
     type: String,
     enum: ['user', 'admin'],

@@ -7,7 +7,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "create-admin": "node scripts/createAdmin.js"
+    "create-admin": "node scripts/createAdmin.js",
+    "check-transaction": "node scripts/check-transaction-support.js",
+    "test-race": "node scripts/test-race-condition.js"
   },
   "keywords": [],
   "author": "",

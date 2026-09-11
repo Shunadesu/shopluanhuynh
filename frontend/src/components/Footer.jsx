@@ -62,11 +62,6 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/profile?view=deposit" className="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
-                  Nạp tiền
-                </Link>
-              </li>
-              <li>
                 <Link to="/profile" className="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
                   Tài khoản
                 </Link>
@@ -79,24 +74,29 @@ const Footer = () => {
             <h3 className="text-slate-900 dark:text-white font-semibold mb-4">Hỗ trợ</h3>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
+                <Link to="/guide" className="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
                   Hướng dẫn mua hàng
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
+                <Link to="/account-security" className="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
+                  Bảo mật tài khoản
+                </Link>
+              </li>
+              <li>
+                <Link to="/privacy" className="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
                   Chính sách bảo mật
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
+                <Link to="/terms" className="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
                   Điều khoản sử dụng
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
+                <Link to="/faq" className="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
                   Câu hỏi thường gặp
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

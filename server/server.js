@@ -16,6 +16,7 @@ import settingsRoutes from './routes/settings.js';
 import uploadRoutes from './routes/upload.js';
 import sitemapRoutes from './routes/sitemap.js';
 import socialLinksRoutes from './routes/socialLinks.js';
+import spinRoutes from './routes/spin.js';
 
 dotenv.config();
 
@@ -64,8 +65,14 @@ app.use('/api/deposits', depositRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/spin', spinRoutes);
 app.use('/api/social-links', socialLinksRoutes);
 app.use('/api/admin/social-links', socialLinksRoutes);
+
+// Admin spin routes
+import adminSpinRoutes from './routes/adminSpin.js';
+app.use('/api/admin/spin', adminSpinRoutes);
+
 app.use('/', sitemapRoutes);
 
 // TEMPORARY FIX ENDPOINT - xóa sau khi fix xong

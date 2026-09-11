@@ -7,6 +7,7 @@ import { useSettings } from '../hooks/useSettings';
 import AuthDrawer from './AuthDrawer';
 import CartDrawer from './CartDrawer';
 import { FiShoppingCart, FiUser, FiLogOut, FiMenu, FiSun, FiMoon, FiPlus } from 'react-icons/fi';
+import { GiSpinningBlades } from 'react-icons/gi';
 
 const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, onCloseCart, authInitialView = 'login' }) => {
   const navigate = useNavigate();
@@ -83,23 +84,6 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
 
             </Link>
 
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-1">
-              <Link
-                to="/shop"
-                className={`nav-link px-4 py-2 ${navLinkColor(location.pathname.startsWith('/shop'))}`}
-              >
-                Tài khoản
-              </Link>
-
-              <Link
-                to="/profile?view=deposit"
-                className={`nav-link px-4 py-2 ${navLinkColor(location.pathname === '/profile' && location.search === '?view=deposit')}`}
-              >
-                Nạp thẻ
-              </Link>
-            </nav>
-
             {/* Right Actions */}
             <div className="flex items-center space-x-2">
               {/* Balance Display - Only for authenticated users */}
@@ -119,6 +103,22 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
                     <FiPlus className="w-4 h-4" />
                   </Link>
                 </div>
+              )}
+
+              {/* Spin Wheel Button - Only for authenticated users */}
+              {isAuthenticated && (
+                <Link
+                  to="/spin"
+                  className={`relative p-2 rounded-lg transition-colors ${hoverBg()} group`}
+                  title="Vòng quay may mắn"
+                >
+                  <GiSpinningBlades className={`w-6 h-6 ${iconColor()} group-hover:animate-spin`} />
+                  {(user?.spins || 0) > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">
+                      {user.spins}
+                    </span>
+                  )}
+                </Link>
               )}
 
               {/* Theme Toggle */}
@@ -176,7 +176,22 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
                           Tài khoản
                         </Link>
                         <Link
-                          to="/profile/orders"
+                          to="/spin"
+                          className="block px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors flex items-center justify-between"
+                          onClick={() => setShowUserMenu(false)}
+                        >
+                          <span className="flex items-center gap-2">
+                            <GiSpinningBlades />
+                            Vòng quay
+                          </span>
+                          {(user?.spins || 0) > 0 && (
+                            <span className="px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">
+                              {user.spins}
+                            </span>
+                          )}
+                        </Link>
+                        <Link
+                          to="/profile?view=orders"
                           className="block px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors"
                           onClick={() => setShowUserMenu(false)}
                         >
@@ -251,14 +266,6 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
               )}
 
               <nav className="flex flex-col space-y-2">
-                <Link
-                  to="/shop"
-                  className={`block px-4 py-2 rounded-lg transition-colors ${mobileLinkColor()}`}
-                  onClick={() => setShowMobileMenu(false)}
-                >
-                  Tài khoản
-                </Link>
-
                 <Link
                   to="/profile?view=deposit"
                   className={`px-4 py-2 rounded-lg transition-colors ${mobileLinkColor()}`}

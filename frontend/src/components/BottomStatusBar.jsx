@@ -76,7 +76,6 @@ const BottomStatusBar = () => {
   // Navigation items for mobile
   const navItems = [
     { path: '/', icon: FiHome, label: 'Trang chủ' },
-    { path: '/shop', icon: FiUser, label: 'Tài khoản' },
     { path: '/deposit', icon: FiCreditCard, label: 'Nạp tiền' },
     { path: user ? '/profile' : '#', icon: FiUserCheck, label: user?.fullName || 'Đăng nhập' }
   ];

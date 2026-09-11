@@ -8,6 +8,8 @@ import BankAccount from '../models/BankAccount.js';
 import Slider from '../models/Slider.js';
 import Notification from '../models/Notification.js';
 import SiteSetting from '../models/SiteSetting.js';
+import SpinReward from '../models/SpinReward.js';
+import SpinHistory from '../models/SpinHistory.js';
 import { adminAuth } from '../middleware/auth.js';
 import { encrypt, decrypt } from '../utils/encryption.js';
 
@@ -216,7 +218,7 @@ router.put('/categories/:id', adminAuth, async (req, res) => {
     const category = await Category.findByIdAndUpdate(
       req.params.id,
       req.body,
-      { new: true }
+      { returnDocument: 'after' }
     );
     if (!category) {
       return res.status(404).json({ message: 'Danh mục không tồn tại' });
@@ -415,7 +417,7 @@ router.put('/accounts/:id', adminAuth, async (req, res) => {
     const account = await GameAccount.findByIdAndUpdate(
       req.params.id,
       updateData,
-      { new: true }
+      { returnDocument: 'after' }
     ).populate('categoryId', 'name');
 
     // Build response with category for frontend compatibility
@@ -805,7 +807,7 @@ router.put('/sliders/:id', adminAuth, async (req, res) => {
     const slider = await Slider.findByIdAndUpdate(
       req.params.id,
       req.body,
-      { new: true }
+      { returnDocument: 'after' }
     );
     res.json(slider);
   } catch (error) {
@@ -865,7 +867,7 @@ router.put('/notifications/:id', adminAuth, async (req, res) => {
     const notification = await Notification.findByIdAndUpdate(
       req.params.id,
       req.body,
-      { new: true }
+      { returnDocument: 'after' }
     );
     res.json(notification);
   } catch (error) {
@@ -924,7 +926,7 @@ router.put('/settings/logo', adminAuth, async (req, res) => {
           type: 'image',
           description: 'Logo hiển thị trên header'
         },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
       );
     }
 
@@ -937,7 +939,7 @@ router.put('/settings/logo', adminAuth, async (req, res) => {
           type: 'image',
           description: 'Logo hiển thị trên footer'
         },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
       );
     }
 
@@ -959,7 +961,7 @@ router.put('/logo', adminAuth, async (req, res) => {
     await SiteSetting.findOneAndUpdate(
       { key: 'logo' },
       { key: 'logo', value: logo, type: 'image' },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
 
     res.json({ message: 'Đã cập nhật logo', logo });
@@ -988,7 +990,7 @@ router.put('/settings', adminAuth, async (req, res) => {
           type: typeof value === 'object' ? 'object' : 'text',
           updatedAt: new Date(),
         },
-        { upsert: true, new: true, setDefaultsOnInsert: true }
+        { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true }
       );
       results.push(setting);
     }
@@ -1013,11 +1015,230 @@ router.put('/settings/:key', adminAuth, async (req, res) => {
         type: type || 'text',
         description: description || ''
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
 
     res.json(setting);
   } catch (error) {
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
+// ==================== SPIN REWARDS ====================
+
+// Get all spin rewards
+router.get('/spin/rewards', adminAuth, async (req, res) => {
+  try {
+    const { type } = req.query; // 'free' or 'premium'
+    const filter = type ? { type } : {};
+    
+    const rewards = await SpinReward.find(filter)
+      .populate('accountId', 'title images price')
+      .sort({ createdAt: -1 });
+
+    res.json(rewards);
+  } catch (error) {
+    console.error('Get spin rewards error:', error);
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
+// Create spin reward
+router.post('/spin/rewards', adminAuth, async (req, res) => {
+  try {
+    const {
+      type,
+      label,
+      rewardType,
+      value,
+      accountId,
+      voucherCode,
+      voucherDiscount,
+      probability,
+      color,
+      icon,
+      isActive,
+      stock
+    } = req.body;
+
+    // Validation
+    if (!type || !['free', 'premium'].includes(type)) {
+      return res.status(400).json({ message: 'Type phải là free hoặc premium' });
+    }
+
+    if (!rewardType || !['cash', 'account', 'voucher'].includes(rewardType)) {
+      return res.status(400).json({ message: 'RewardType không hợp lệ' });
+    }
+
+    // Check total probability
+    const existingRewards = await SpinReward.find({ type, isActive: true });
+    const totalProb = existingRewards.reduce((sum, r) => sum + r.probability, 0);
+    
+    if (totalProb + probability > 100) {
+      return res.status(400).json({ 
+        message: `Tổng xác suất vượt quá 100%. Hiện tại: ${totalProb}%, thêm ${probability}% sẽ = ${totalProb + probability}%`
+      });
+    }
+
+    const reward = new SpinReward({
+      type,
+      label,
+      rewardType,
+      value: value || 0,
+      accountId: accountId || null,
+      voucherCode: voucherCode || '',
+      voucherDiscount: voucherDiscount || 0,
+      probability,
+      color: color || '#FF6D00',
+      icon: icon || '',
+      isActive: isActive !== undefined ? isActive : true,
+      stock: stock || null
+    });
+
+    await reward.save();
+    await reward.populate('accountId', 'title images price');
+
+    res.status(201).json(reward);
+  } catch (error) {
+    console.error('Create spin reward error:', error);
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
+// Update spin reward
+router.put('/spin/rewards/:id', adminAuth, async (req, res) => {
+  try {
+    const {
+      label,
+      rewardType,
+      value,
+      accountId,
+      voucherCode,
+      voucherDiscount,
+      probability,
+      color,
+      icon,
+      isActive,
+      stock
+    } = req.body;
+
+    const reward = await SpinReward.findById(req.params.id);
+    if (!reward) {
+      return res.status(404).json({ message: 'Reward không tồn tại' });
+    }
+
+    // Check total probability if changing probability or isActive
+    if (probability !== undefined || isActive !== undefined) {
+      const existingRewards = await SpinReward.find({
+        type: reward.type,
+        isActive: true,
+        _id: { $ne: req.params.id }
+      });
+      
+      const totalProb = existingRewards.reduce((sum, r) => sum + r.probability, 0);
+      const newProb = probability !== undefined ? probability : reward.probability;
+      const willBeActive = isActive !== undefined ? isActive : reward.isActive;
+      
+      if (willBeActive && totalProb + newProb > 100) {
+        return res.status(400).json({ 
+          message: `Tổng xác suất vượt quá 100%. Hiện tại: ${totalProb}%, thêm ${newProb}% sẽ = ${totalProb + newProb}%`
+        });
+      }
+    }
+
+    // Update fields
+    if (label !== undefined) reward.label = label;
+    if (rewardType !== undefined) reward.rewardType = rewardType;
+    if (value !== undefined) reward.value = value;
+    if (accountId !== undefined) reward.accountId = accountId;
+    if (voucherCode !== undefined) reward.voucherCode = voucherCode;
+    if (voucherDiscount !== undefined) reward.voucherDiscount = voucherDiscount;
+    if (probability !== undefined) reward.probability = probability;
+    if (color !== undefined) reward.color = color;
+    if (icon !== undefined) reward.icon = icon;
+    if (isActive !== undefined) reward.isActive = isActive;
+    if (stock !== undefined) reward.stock = stock;
+
+    await reward.save();
+    await reward.populate('accountId', 'title images price');
+
+    res.json(reward);
+  } catch (error) {
+    console.error('Update spin reward error:', error);
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
+// Delete spin reward
+router.delete('/spin/rewards/:id', adminAuth, async (req, res) => {
+  try {
+    const reward = await SpinReward.findByIdAndDelete(req.params.id);
+    
+    if (!reward) {
+      return res.status(404).json({ message: 'Reward không tồn tại' });
+    }
+
+    res.json({ message: 'Đã xóa reward' });
+  } catch (error) {
+    console.error('Delete spin reward error:', error);
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
+// Toggle spin feature
+router.patch('/spin/toggle', adminAuth, async (req, res) => {
+  try {
+    const { enabled } = req.body;
+
+    const setting = await SiteSetting.findOneAndUpdate(
+      { key: 'spin_enabled' },
+      { 
+        key: 'spin_enabled',
+        value: enabled ? 'true' : 'false',
+        type: 'boolean',
+        description: 'Bật/tắt tính năng vòng quay'
+      },
+      { upsert: true, returnDocument: 'after' }
+    );
+
+    res.json(setting);
+  } catch (error) {
+    console.error('Toggle spin error:', error);
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
+// Get all spin history (admin view)
+router.get('/spin/history', adminAuth, async (req, res) => {
+  try {
+    const { page = 1, limit = 50, spinType, userId } = req.query;
+    const skip = (page - 1) * limit;
+
+    const filter = {};
+    if (spinType) filter.spinType = spinType;
+    if (userId) filter.userId = userId;
+
+    const history = await SpinHistory.find(filter)
+      .populate('userId', 'username fullName')
+      .populate('rewardId', 'label type')
+      .populate('accountId', 'title images')
+      .sort({ spinAt: -1 })
+      .limit(parseInt(limit))
+      .skip(skip);
+
+    const total = await SpinHistory.countDocuments(filter);
+
+    res.json({
+      history,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Get spin history error:', error);
     res.status(500).json({ message: 'Lỗi server', error: error.message });
   }
 });

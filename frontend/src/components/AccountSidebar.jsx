@@ -9,14 +9,10 @@ import {
   FiCreditCard,
   FiPhone,
 } from 'react-icons/fi';
+import { GiSpinningBlades } from 'react-icons/gi';
 
 const MENU_ITEMS = [
-  {
-    key: 'balance',
-    label: 'Số dư tài khoản',
-    path: '/profile',
-    icon: FiDollarSign,
-  },
+
   {
     key: 'profile',
     label: 'Trang tài khoản',
@@ -24,28 +20,35 @@ const MENU_ITEMS = [
     icon: FiUser,
   },
   {
+    key: 'spin',
+    label: 'Vòng quay may mắn',
+    path: '/spin',
+    icon: GiSpinningBlades,
+    highlight: true,
+  },
+  {
     key: 'policies',
     label: 'Thống kê chính sách',
-    path: '/profile/policies',
+    path: '/profile?view=policies',
     icon: FiTrendingUp,
     disabled: true,
   },
   {
     key: 'orders',
     label: 'Đơn hàng',
-    path: '/profile/orders',
+    path: '/profile?view=orders',
     icon: FiShoppingBag,
   },
   {
     key: 'purchased',
     label: 'Tài khoản đã mua',
-    path: '/profile/purchased-accounts',
+    path: '/profile?view=purchased-accounts',
     icon: FiKey,
   },
   {
     key: 'deposits',
     label: 'Lịch sử giao dịch',
-    path: '/profile/deposits',
+    path: '/profile?view=deposits',
     icon: FiClock,
   },
   {
@@ -68,21 +71,36 @@ const MENU_ITEMS = [
 export default function AccountSidebar() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const isDepositView =
-    location.pathname === '/profile' && searchParams.get('view') === 'deposit';
+  const viewParam = searchParams.get('view');
+  const isOnProfile = location.pathname === '/profile';
+  const isOnSpin = location.pathname === '/spin' || location.pathname.startsWith('/spin');
+  const isDepositView = isOnProfile && viewParam === 'deposit';
+  const isOrdersView = isOnProfile && viewParam === 'orders';
+  const isOrderDetailView = isOnProfile && viewParam === 'order-detail';
+  const isPurchasedView = isOnProfile && viewParam === 'purchased-accounts';
+  const isDepositsView = isOnProfile && viewParam === 'deposits';
 
   const isActive = (item) => {
     if (item.disabled) return false;
-    if (item.key === 'balance' || item.key === 'profile') {
-      return location.pathname === '/profile' && !isDepositView;
+    if (item.key === 'profile') {
+      return isOnProfile && !viewParam;
+    }
+    if (item.key === 'spin') {
+      return isOnSpin;
     }
     if (item.key === 'deposit-bank') {
       return isDepositView;
     }
-    return (
-      location.pathname === item.path ||
-      location.pathname.startsWith(item.path + '/')
-    );
+    if (item.key === 'orders' || item.key === 'order-detail') {
+      return isOrdersView || isOrderDetailView;
+    }
+    if (item.key === 'purchased') {
+      return isPurchasedView;
+    }
+    if (item.key === 'deposits') {
+      return isDepositsView;
+    }
+    return false;
   };
 
   const renderItem = (item, isMobile = false) => {

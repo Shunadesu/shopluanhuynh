@@ -17,6 +17,7 @@ import Sliders from './pages/Sliders';
 import Notifications from './pages/Notifications';
 import NotificationForm from './pages/NotificationForm';
 import Settings from './pages/Settings';
+import SpinRewards from './pages/SpinRewards';
 import { useAuthStore } from './store/authStore';
 import SEOHead from './components/SEOHead';
 import api from './utils/api';
@@ -86,6 +87,7 @@ function App() {
             <Route path="deposits" element={<Deposits />} />
             <Route path="users" element={<Users />} />
             <Route path="sliders" element={<Sliders />} />
+            <Route path="spin-rewards" element={<SpinRewards />} />
             <Route path="notifications" element={<Notifications />} />
             <Route path="notifications/add" element={<NotificationForm />} />
             <Route path="notifications/edit/:id" element={<NotificationForm />} />

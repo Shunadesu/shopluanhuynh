@@ -3,6 +3,7 @@ import {
   FiHome, FiGrid, FiShoppingBag, FiShoppingCart, 
   FiDollarSign, FiUsers, FiImage, FiBell, FiSettings, FiLogOut, FiCreditCard 
 } from 'react-icons/fi';
+import { GiSpinningBlades } from 'react-icons/gi';
 import { useAuthStore } from '../store/authStore';
 import toast from 'react-hot-toast';
 
@@ -25,6 +26,7 @@ export default function AdminLayout() {
     { path: '/bank-accounts', icon: FiCreditCard, label: 'Tài khoản NH' },
     { path: '/users', icon: FiUsers, label: 'Người dùng' },
     { path: '/sliders', icon: FiImage, label: 'Banner' },
+    { path: '/spin-rewards', icon: GiSpinningBlades, label: 'Vòng quay' },
     { path: '/notifications', icon: FiBell, label: 'Thông báo' },
     { path: '/settings', icon: FiSettings, label: 'Cài đặt' },
   ];

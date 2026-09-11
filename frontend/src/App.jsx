@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { useState, useCallback, useEffect } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -18,10 +18,13 @@ import AccountDetail from './pages/AccountDetail';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Profile from './pages/Profile';
-import Orders from './pages/Orders';
-import OrderDetail from './pages/OrderDetail';
-import DepositHistory from './pages/DepositHistory';
-import PurchasedAccounts from './pages/PurchasedAccounts';
+import SpinWheel from './pages/SpinWheel';
+import SpinHistory from './pages/SpinHistory';
+import Guide from './pages/Guide';
+import Privacy from './pages/Privacy';
+import Terms from './pages/Terms';
+import FAQ from './pages/FAQ';
+import AccountSecurity from './pages/AccountSecurity';
 
 // Scroll to top on route change
 function ScrollToTop() {
@@ -137,6 +140,13 @@ function App() {
           {/* Cart - Public (no auth required to add/view cart) */}
           <Route path="/cart" element={<Cart onOpenAuth={handleOpenAuth} />} />
 
+          {/* Info Pages */}
+          <Route path="/guide" element={<Guide />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/account-security" element={<AccountSecurity />} />
+
           {/* Protected Routes */}
           <Route
             path="/checkout"
@@ -155,37 +165,27 @@ function App() {
             }
           />
           <Route
-            path="/profile/orders"
+            path="/spin"
             element={
               <ProtectedRoute>
-                <Orders />
+                <SpinWheel />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/profile/orders/:id"
+            path="/spin/history"
             element={
               <ProtectedRoute>
-                <OrderDetail />
+                <SpinHistory />
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/profile/deposits"
-            element={
-              <ProtectedRoute>
-                <DepositHistory />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile/purchased-accounts"
-            element={
-              <ProtectedRoute>
-                <PurchasedAccounts />
-              </ProtectedRoute>
-            }
-          />
+          {/* Redirect backward-compat routes to Profile query params */}
+          <Route path="/profile/orders" element={<Navigate to="/profile?view=orders" replace />} />
+          <Route path="/profile/orders/:id" element={<Navigate to="/profile?view=order-detail" replace />} />
+          <Route path="/profile/deposits" element={<Navigate to="/profile?view=deposits" replace />} />
+          <Route path="/profile/purchased-accounts" element={<Navigate to="/profile?view=purchased-accounts" replace />} />
+          <Route path="/profile/policies" element={<Navigate to="/profile?view=policies" replace />} />
         </Routes>
       </main>
 

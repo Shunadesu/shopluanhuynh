@@ -1,31 +1,39 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import Cart from '../models/Cart.js';
 import Order from '../models/Order.js';
 import GameAccount from '../models/GameAccount.js';
 import User from '../models/User.js';
 import { auth } from '../middleware/auth.js';
 import { decrypt } from '../utils/encryption.js';
+import { calculateSpinsAwarded } from '../utils/spinLogic.js';
+import { purchaseLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
-// Buy now - Direct purchase without cart
-router.post('/buy-now', auth, async (req, res) => {
+// Buy now - Direct purchase without cart - WITH TRANSACTION + RATE LIMITING
+router.post('/buy-now', auth, purchaseLimiter, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const { accountId } = req.body;
 
-    // Check if account exists and available
-    const account = await GameAccount.findById(accountId);
-    if (!account) {
-      return res.status(404).json({ message: 'Tài khoản không tồn tại' });
-    }
+    // Check if account exists and available with lock
+    const account = await GameAccount.findOne({
+      _id: accountId,
+      status: 'available'
+    }).session(session);
 
-    if (account.status !== 'available') {
-      return res.status(400).json({ message: 'Tài khoản không còn khả dụng' });
+    if (!account) {
+      await session.abortTransaction();
+      return res.status(404).json({ message: 'Tài khoản không tồn tại hoặc đã được bán' });
     }
 
     // Check user balance
-    const user = await User.findById(req.user._id);
+    const user = await User.findById(req.user._id).session(session);
     if (user.balance < account.price) {
+      await session.abortTransaction();
       return res.status(400).json({
         message: `Số dư không đủ. Cần ${account.price.toLocaleString('vi-VN')}đ, hiện có ${user.balance.toLocaleString('vi-VN')}đ`,
         required: account.price,
@@ -47,18 +55,30 @@ router.post('/buy-now', auth, async (req, res) => {
       paymentMethod: 'balance'
     });
 
-    await order.save();
+    await order.save({ session });
 
     // Update user balance and purchase history
+    const prevTotalSpent = user.totalSpent || 0;
     user.balance -= account.price;
+    user.totalSpent = prevTotalSpent + account.price;
     user.purchaseHistory.push(order._id);
-    await user.save();
 
-    // Update game account status
+    // Calculate and award spins
+    const spinsAwarded = calculateSpinsAwarded(prevTotalSpent, user.totalSpent);
+    user.spins = (user.spins || 0) + spinsAwarded;
+    order.spinsAwarded = spinsAwarded;
+
+    await order.save({ session });
+    await user.save({ session });
+
+    // Update game account status atomically
     account.status = 'sold';
     account.soldTo = req.user._id;
     account.soldAt = new Date();
-    await account.save();
+    await account.save({ session });
+
+    // Commit transaction
+    await session.commitTransaction();
 
     res.json({
       message: 'Mua tài khoản thành công',
@@ -66,11 +86,15 @@ router.post('/buy-now', auth, async (req, res) => {
         _id: order._id,
         orderNumber: order.orderNumber
       },
-      newBalance: user.balance
+      newBalance: user.balance,
+      spinsAwarded: order.spinsAwarded
     });
   } catch (error) {
+    await session.abortTransaction();
     console.error('Buy now error:', error);
     res.status(500).json({ message: 'Lỗi server', error: error.message });
+  } finally {
+    session.endSession();
   }
 });
 
@@ -151,29 +175,42 @@ router.delete('/cart/:accountId', auth, async (req, res) => {
   }
 });
 
-// Checkout
-router.post('/checkout', auth, async (req, res) => {
+// Checkout - WITH TRANSACTION + RATE LIMITING
+router.post('/checkout', auth, purchaseLimiter, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    const cart = await Cart.findOne({ userId: req.user._id }).populate('items');
+    const cart = await Cart.findOne({ userId: req.user._id })
+      .populate('items')
+      .session(session);
 
     if (!cart || cart.items.length === 0) {
+      await session.abortTransaction();
       return res.status(400).json({ message: 'Giỏ hàng trống' });
     }
 
     // Check if all items are available
     const unavailableItems = cart.items.filter(item => item.status !== 'available');
     if (unavailableItems.length > 0) {
-      return res.status(400).json({ message: 'Một số tài khoản không còn khả dụng' });
+      await session.abortTransaction();
+      return res.status(400).json({ 
+        message: 'Một số tài khoản không còn khả dụng',
+        unavailableItems: unavailableItems.map(i => i.title)
+      });
     }
 
     // Calculate total
     const totalAmount = cart.items.reduce((sum, item) => sum + item.price, 0);
 
     // Check user balance
-    const user = await User.findById(req.user._id);
+    const user = await User.findById(req.user._id).session(session);
     if (user.balance < totalAmount) {
+      await session.abortTransaction();
       return res.status(400).json({ 
-        message: `Số dư không đủ. Bạn cần ${totalAmount.toLocaleString('vi-VN')}đ, hiện có ${user.balance.toLocaleString('vi-VN')}đ`
+        message: `Số dư không đủ. Bạn cần ${totalAmount.toLocaleString('vi-VN')}đ, hiện có ${user.balance.toLocaleString('vi-VN')}đ`,
+        required: totalAmount,
+        current: user.balance
       });
     }
 
@@ -189,29 +226,49 @@ router.post('/checkout', auth, async (req, res) => {
       orderNumber,
       items: orderItems,
       totalAmount,
-      status: 'completed'
+      status: 'completed',
+      paymentMethod: 'balance'
     });
 
-    await order.save();
+    await order.save({ session });
 
-    // Update user balance
+    // Update user balance and totalSpent
+    const prevTotalSpent = user.totalSpent || 0;
     user.balance -= totalAmount;
+    user.totalSpent = prevTotalSpent + totalAmount;
     user.purchaseHistory.push(order._id);
-    await user.save();
 
-    // Update game accounts status
+    // Calculate and award spins
+    const spinsAwarded = calculateSpinsAwarded(prevTotalSpent, user.totalSpent);
+    user.spins = (user.spins || 0) + spinsAwarded;
+    order.spinsAwarded = spinsAwarded;
+
+    await order.save({ session });
+    await user.save({ session });
+
+    // Update game accounts status atomically
     for (const item of cart.items) {
-      item.status = 'sold';
-      item.soldTo = req.user._id;
-      item.soldAt = new Date();
-      await item.save();
+      await GameAccount.findByIdAndUpdate(
+        item._id,
+        {
+          $set: {
+            status: 'sold',
+            soldTo: req.user._id,
+            soldAt: new Date()
+          }
+        },
+        { session }
+      );
     }
 
     // Clear cart
     cart.items = [];
-    await cart.save();
+    await cart.save({ session });
 
-    // Populate order for response
+    // Commit transaction
+    await session.commitTransaction();
+
+    // Populate order for response (outside transaction)
     await order.populate({
       path: 'items.accountId',
       populate: { path: 'categoryId' }
@@ -219,11 +276,16 @@ router.post('/checkout', auth, async (req, res) => {
 
     res.json({ 
       message: 'Thanh toán thành công!',
-      order
+      order,
+      newBalance: user.balance,
+      spinsAwarded: order.spinsAwarded
     });
   } catch (error) {
+    await session.abortTransaction();
     console.error('Checkout error:', error);
     res.status(500).json({ message: 'Lỗi server', error: error.message });
+  } finally {
+    session.endSession();
   }
 });
 
