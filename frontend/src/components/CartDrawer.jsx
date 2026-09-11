@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { useCart } from '../hooks/useCart';
 import { FiTrash2, FiX, FiShoppingBag, FiArrowRight } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getImageUrl } from '../utils/api';
 
 const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
   const navigate = useNavigate();
@@ -197,7 +198,7 @@ const CartDrawer = ({ isOpen, onClose, onOpenAuth }) => {
                             className="flex-shrink-0"
                           >
                             <motion.img
-                              src={item.images?.[0] || '/placeholder.jpg'}
+                              src={getImageUrl(item.images?.[0]) || '/placeholder.jpg'}
                               alt={item.title}
                               className="w-20 h-20 object-cover rounded-lg"
                               whileHover={{ scale: 1.05 }}

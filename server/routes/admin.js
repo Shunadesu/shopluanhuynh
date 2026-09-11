@@ -13,6 +13,7 @@ import SpinReward from '../models/SpinReward.js';
 import SpinHistory from '../models/SpinHistory.js';
 import { adminAuth } from '../middleware/auth.js';
 import { encrypt, decrypt } from '../utils/encryption.js';
+import { calculateSpinsAwarded } from '../utils/spinLogic.js';
 
 const router = express.Router();
 
@@ -587,6 +588,17 @@ router.put('/orders/:id/status', adminAuth, async (req, res) => {
 
 // ==================== DEPOSITS ====================
 
+// Get pending deposits count
+router.get('/deposits/pending-count', adminAuth, async (req, res) => {
+  try {
+    const count = await DepositRequest.countDocuments({ status: 'pending' });
+    res.json({ count });
+  } catch (error) {
+    console.error('Get pending count error:', error);
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
 // Get all deposit requests
 router.get('/deposits', adminAuth, async (req, res) => {
   try {
@@ -655,6 +667,14 @@ router.put('/deposits/:id/approve', adminAuth, async (req, res) => {
 
     // Update user balance
     user.balance += deposit.amount;
+
+    // Award spins based on cumulative deposit (mỗi 200k = 1 lượt, cộng dồn)
+    const prevTotalDeposited = user.totalDeposited || 0;
+    const newTotalDeposited = prevTotalDeposited + deposit.amount;
+    const spinsAwarded = calculateSpinsAwarded(prevTotalDeposited, newTotalDeposited);
+    user.totalDeposited = newTotalDeposited;
+    user.spins = (user.spins || 0) + spinsAwarded;
+
     await user.save({ session });
 
     // Commit transaction — cả 2 thay đổi đều được apply hoặc không có gì được apply
@@ -664,7 +684,8 @@ router.put('/deposits/:id/approve', adminAuth, async (req, res) => {
     res.json({
       message: 'Đã duyệt yêu cầu nạp tiền',
       deposit,
-      userBalance: user.balance
+      userBalance: user.balance,
+      spinsAwarded
     });
   } catch (error) {
     await session.abortTransaction();
@@ -1101,10 +1122,7 @@ router.put('/settings/:key', adminAuth, async (req, res) => {
 // Get all spin rewards
 router.get('/spin/rewards', adminAuth, async (req, res) => {
   try {
-    const { type } = req.query; // 'free' or 'premium'
-    const filter = type ? { type } : {};
-    
-    const rewards = await SpinReward.find(filter)
+    const rewards = await SpinReward.find({})
       .populate('accountId', 'title images price')
       .sort({ createdAt: -1 });
 
@@ -1119,7 +1137,6 @@ router.get('/spin/rewards', adminAuth, async (req, res) => {
 router.post('/spin/rewards', adminAuth, async (req, res) => {
   try {
     const {
-      type,
       label,
       rewardType,
       value,
@@ -1133,27 +1150,21 @@ router.post('/spin/rewards', adminAuth, async (req, res) => {
       stock
     } = req.body;
 
-    // Validation
-    if (!type || !['free', 'premium'].includes(type)) {
-      return res.status(400).json({ message: 'Type phải là free hoặc premium' });
-    }
-
     if (!rewardType || !['cash', 'account', 'voucher'].includes(rewardType)) {
       return res.status(400).json({ message: 'RewardType không hợp lệ' });
     }
 
-    // Check total probability
-    const existingRewards = await SpinReward.find({ type, isActive: true });
+    // Check total probability across all active rewards
+    const existingRewards = await SpinReward.find({ isActive: true });
     const totalProb = existingRewards.reduce((sum, r) => sum + r.probability, 0);
-    
+
     if (totalProb + probability > 100) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: `Tổng xác suất vượt quá 100%. Hiện tại: ${totalProb}%, thêm ${probability}% sẽ = ${totalProb + probability}%`
       });
     }
 
     const reward = new SpinReward({
-      type,
       label,
       rewardType,
       value: value || 0,
@@ -1202,17 +1213,16 @@ router.put('/spin/rewards/:id', adminAuth, async (req, res) => {
     // Check total probability if changing probability or isActive
     if (probability !== undefined || isActive !== undefined) {
       const existingRewards = await SpinReward.find({
-        type: reward.type,
         isActive: true,
         _id: { $ne: req.params.id }
       });
-      
+
       const totalProb = existingRewards.reduce((sum, r) => sum + r.probability, 0);
       const newProb = probability !== undefined ? probability : reward.probability;
       const willBeActive = isActive !== undefined ? isActive : reward.isActive;
-      
+
       if (willBeActive && totalProb + newProb > 100) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: `Tổng xác suất vượt quá 100%. Hiện tại: ${totalProb}%, thêm ${newProb}% sẽ = ${totalProb + newProb}%`
         });
       }

@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { FiX, FiImage } from 'react-icons/fi';
 import toast from 'react-hot-toast';
-import api from '../utils/api';
+import api, { getImageUrl } from '../utils/api';
 
 export default function UploadImages({ value = [], onChange, label = 'Hình ảnh', maxImages = 10 }) {
   const [uploading, setUploading] = useState(false);
@@ -127,7 +127,7 @@ export default function UploadImages({ value = [], onChange, label = 'Hình ản
               className="relative rounded-lg overflow-hidden border border-slate-600 aspect-square bg-slate-800"
             >
               <img
-                src={url}
+                src={getImageUrl(url)}
                 alt={`Preview ${index + 1}`}
                 className="w-full h-full object-cover"
               />

@@ -13,14 +13,16 @@ import { AccountDetailSkeleton, RelatedAccountsSkeleton } from '../components/Sk
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination, Zoom } from 'swiper/modules';
 import BuyNowModal from '../components/BuyNowModal';
-import api from '../utils/api';
+import api, { getImageUrl } from '../utils/api';
 import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/zoom';
 
 // Normalize image value (object → url string)
-const resolveUrl = (img) =>
-  typeof img === 'string' ? img : (img?.url || img?.localUrl || '');
+const resolveUrl = (img) => {
+  const url = typeof img === 'string' ? img : (img?.url || img?.localUrl || '');
+  return getImageUrl(url);
+};
 
 const AccountDetail = ({ onOpenAuth }) => {
   const { id } = useParams();
@@ -442,7 +444,7 @@ const AccountDetail = ({ onOpenAuth }) => {
                     className="card p-2 group"
                   >
                     <img
-                      src={acc.images?.[0] || '/placeholder.jpg'}
+                      src={getImageUrl(acc.images?.[0]) || '/placeholder.jpg'}
                       alt={acc.title}
                       className="w-full h-24 object-cover rounded mb-1 group-hover:opacity-80 transition-opacity"
                     />

@@ -6,6 +6,7 @@ import { useCart } from '../hooks/useCart';
 import Loading from '../components/Loading';
 import { FiTrash2, FiShoppingBag } from 'react-icons/fi';
 import SEOHead from '../components/SEOHead';
+import { getImageUrl } from '../utils/api';
 
 const Cart = ({ onOpenAuth }) => {
   const navigate = useNavigate();
@@ -72,7 +73,7 @@ const Cart = ({ onOpenAuth }) => {
                   {/* Image */}
                   <Link to={`/account/${item._id}`} className="flex-shrink-0">
                     <img
-                      src={item.images?.[0] || '/placeholder.jpg'}
+                      src={getImageUrl(item.images?.[0]) || '/placeholder.jpg'}
                       alt={item.title}
                       className="w-24 h-24 object-cover rounded-lg"
                     />

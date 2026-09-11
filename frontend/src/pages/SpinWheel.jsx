@@ -278,7 +278,7 @@ const SpinWheel = () => {
                 <p className="mt-2 text-slate-600 dark:text-slate-400 text-center text-sm">
                   Đăng nhập để tham gia quay thưởng! <br />
                   <span className="text-xs">
-                    Mỗi 200,000đ mua hàng = 1 lượt quay
+                    Mỗi 200,000đ nạp thành công = 1 lượt quay
                   </span>
                 </p>
               )}
@@ -294,7 +294,7 @@ const SpinWheel = () => {
             <ul className="space-y-1 text-sm text-slate-600 dark:text-slate-400">
               <li className="flex items-start gap-2">
                 <span className="text-cyan-500 font-bold">•</span>
-                <span>Mỗi 200,000đ mua hàng = 1 lượt quay (cộng dồn)</span>
+                <span>Mỗi 200,000đ nạp thành công = 1 lượt quay (cộng dồn)</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-green-500 font-bold">•</span>

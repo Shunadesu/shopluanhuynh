@@ -9,6 +9,7 @@ import { useUserProfile } from '../hooks/useUserProfile';
 import Loading from '../components/Loading';
 import { FiCheckCircle } from 'react-icons/fi';
 import SEOHead from '../components/SEOHead';
+import { getImageUrl } from '../utils/api';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -81,7 +82,7 @@ const Checkout = () => {
                 {items.map((item) => (
                   <div key={item._id} className="flex gap-2 pb-2 border-b border-slate-200 dark:border-slate-700 last:border-0">
                     <img
-                      src={item.images?.[0] || '/placeholder.jpg'}
+                      src={getImageUrl(item.images?.[0]) || '/placeholder.jpg'}
                       alt={item.title}
                       className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
                     />

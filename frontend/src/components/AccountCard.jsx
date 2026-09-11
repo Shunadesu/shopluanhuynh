@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { getImageUrl } from '../utils/api';
 
 const AccountCard = ({ account, onBuyNow }) => {
   return (
@@ -7,7 +8,7 @@ const AccountCard = ({ account, onBuyNow }) => {
       <Link to={`/account/${account._id}`} className="block">
         <div className="relative overflow-hidden rounded-lg mb-2">
           <img
-            src={account.images?.[0] || '/placeholder.jpg'}
+            src={getImageUrl(account.images?.[0]) || '/placeholder.jpg'}
             alt={account.title}
             className="w-full h-32 object-cover group-hover:scale-110 transition-transform duration-300"
           />

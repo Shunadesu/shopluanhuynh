@@ -17,6 +17,7 @@ import uploadRoutes from './routes/upload.js';
 import sitemapRoutes from './routes/sitemap.js';
 import socialLinksRoutes from './routes/socialLinks.js';
 import spinRoutes from './routes/spin.js';
+import { initTelegramBot } from './services/telegramBot.js';
 
 dotenv.config();
 
@@ -53,7 +54,11 @@ app.use('/api', (req, res, next) => {
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('✅ Connected to MongoDB'))
+  .then(() => {
+    console.log('✅ Connected to MongoDB');
+    // Initialize Telegram bot after MongoDB connection
+    initTelegramBot();
+  })
   .catch((err) => console.error('❌ MongoDB connection error:', err));
 
 // Routes

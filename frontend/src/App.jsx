@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate, useParams } from 'react-router-dom';
 import { useState, useCallback, useEffect } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -38,6 +38,15 @@ function ScrollToTop() {
   }, [pathname]);
 
   return null;
+}
+
+// Forward dynamic path params into query string (for backward-compat routes)
+function RedirectWithParams({ paramName, view = 'order-detail', extraParams = {} }) {
+  const params = useParams();
+  const value = params[paramName];
+  const search = new URLSearchParams({ view, ...extraParams });
+  if (value) search.set(paramName, value);
+  return <Navigate to={`/profile?${search.toString()}`} replace />;
 }
 
 function App() {
@@ -131,6 +140,9 @@ function App() {
 
       <main className="flex-grow my-4">
         <Routes>
+          {/* Redirect old orders routes (root-level /orders/:id) to Profile?view=order-detail */}
+          <Route path="/orders/:id" element={<RedirectWithParams paramName="orderId" />} />
+
           {/* Public Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/shop" element={<Shop />} />
@@ -178,7 +190,10 @@ function App() {
           />
           {/* Redirect backward-compat routes to Profile query params */}
           <Route path="/profile/orders" element={<Navigate to="/profile?view=orders" replace />} />
-          <Route path="/profile/orders/:id" element={<Navigate to="/profile?view=order-detail" replace />} />
+          <Route
+            path="/profile/orders/:id"
+            element={<RedirectWithParams paramName="orderId" />}
+          />
           <Route path="/profile/deposits" element={<Navigate to="/profile?view=deposits" replace />} />
           <Route path="/profile/purchased-accounts" element={<Navigate to="/profile?view=purchased-accounts" replace />} />
           <Route path="/profile/policies" element={<Navigate to="/profile?view=policies" replace />} />

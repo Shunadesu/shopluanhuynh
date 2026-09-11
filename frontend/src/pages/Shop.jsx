@@ -8,7 +8,7 @@ import { ShopSkeleton, AccountCardSkeleton } from '../components/SkeletonLoader'
 import { FiSearch, FiTag, FiShoppingCart, FiZap, FiChevronRight, FiChevronLeft } from 'react-icons/fi';
 import SEOHead from '../components/SEOHead';
 import BuyNowModal from '../components/BuyNowModal';
-import api from '../utils/api';
+import api, { getImageUrl } from '../utils/api';
 
 // Account Card Component (từ Home.jsx)
 const AccountCard = ({ account, onAddToCart, onBuyNow, addToCartPending }) => {
@@ -19,7 +19,7 @@ const AccountCard = ({ account, onAddToCart, onBuyNow, addToCartPending }) => {
       <Link to={`/account/${account._id}`} className="block">
         <div className="relative">
           <img
-            src={account.images?.[0] || 'https://via.placeholder.com/400x300?text=No+Image'}
+            src={getImageUrl(account.images?.[0]) || 'https://via.placeholder.com/400x300?text=No+Image'}
             alt={account.title}
             className="w-full h-40 sm:h-48 object-cover rounded-lg mb-3"
           />

@@ -261,9 +261,20 @@ const Home = () => {
   const filteredAccounts = useMemo(() => {
     let result = displayAllAccounts;
 
-    // Filter by subcategory (only - parent selection just shows subcategory grid)
+    // Filter by category hierarchy
     if (selectedSubcategory) {
+      // Lọc theo subcategory (ưu tiên cao nhất)
       result = result.filter(account => account.category?._id === selectedSubcategory._id);
+    } else if (selectedParent) {
+      // Lọc theo parent category khi không chọn subcategory
+      const parentId = selectedParent._id;
+      const subcategoryIds = selectedParent.subcategories?.map(sub => sub._id) || [];
+      
+      result = result.filter(account => {
+        const accountCatId = account.category?._id;
+        // Lấy accounts thuộc danh mục cha hoặc bất kỳ danh mục con nào
+        return accountCatId === parentId || subcategoryIds.includes(accountCatId);
+      });
     }
 
     // Filter by price range
@@ -730,8 +741,8 @@ const Home = () => {
         />
       )}
 
-      {/* Filtered Accounts Section - Chỉ hiển thị khi chọn danh mục con hoặc không chọn gì */}
-      {!selectedParent || selectedSubcategory ? (
+      {/* Filtered Accounts Section - Hiển thị khi: không chọn gì, chọn subcategory, hoặc chọn parent không có subcategories */}
+      {!(selectedParent && selectedParent.subcategories?.length > 0 && !selectedSubcategory) ? (
       <section className="py-2" ref={accountsRef}>
         <div className="container-custom">
           {/* Section Header */}
@@ -757,6 +768,17 @@ const Home = () => {
                       <span>{selectedParent.name}</span>
                     </button>
                   )}
+                </>
+              ) : selectedParent ? (
+                <>
+                  {selectedParent.thumbnail && (
+                    <img
+                      src={selectedParent.thumbnail}
+                      alt={selectedParent.name}
+                      className="w-6 h-6 rounded object-cover"
+                    />
+                  )}
+                  {selectedParent.name}
                 </>
               ) : (
                 'Tất cả tài khoản'

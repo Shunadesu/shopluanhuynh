@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import api from '../utils/api';
+import api, { getImageUrl } from '../utils/api';
 import toast from 'react-hot-toast';
 import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiRefreshCw, FiStar, FiImage } from 'react-icons/fi';
 import { TableSkeleton, FilterSkeleton } from '../components/SkeletonLoader';
@@ -258,12 +258,12 @@ export default function Accounts() {
                           <div
                             className="grid grid-cols-2 gap-0.5 rounded-lg overflow-hidden cursor-pointer"
                             style={{ width: 68, height: 68 }}
-                            onClick={() => setGallery({ urls: allImages, index: 0 })}
+                            onClick={() => setGallery({ urls: allImages.map(url => getImageUrl(url)), index: 0 })}
                           >
                             {visible.map((url, i) => (
                               <div key={i} className="relative bg-slate-700">
                                 <img
-                                  src={url}
+                                  src={getImageUrl(url)}
                                   alt=""
                                   className="w-full h-full object-cover"
                                 />
@@ -283,7 +283,7 @@ export default function Accounts() {
                           {extra > 0 && (
                             <span
                               className="text-[10px] text-slate-400 text-center cursor-pointer hover:text-cyan-400"
-                              onClick={() => setGallery({ urls: allImages, index: 0 })}
+                              onClick={() => setGallery({ urls: allImages.map(url => getImageUrl(url)), index: 0 })}
                             >
                               +{extra} ảnh
                             </span>

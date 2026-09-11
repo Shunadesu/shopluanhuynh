@@ -6,7 +6,6 @@ import GameAccount from '../models/GameAccount.js';
 import User from '../models/User.js';
 import { auth } from '../middleware/auth.js';
 import { decrypt } from '../utils/encryption.js';
-import { calculateSpinsAwarded } from '../utils/spinLogic.js';
 import { purchaseLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
@@ -63,10 +62,8 @@ router.post('/buy-now', auth, purchaseLimiter, async (req, res) => {
     user.totalSpent = prevTotalSpent + account.price;
     user.purchaseHistory.push(order._id);
 
-    // Calculate and award spins
-    const spinsAwarded = calculateSpinsAwarded(prevTotalSpent, user.totalSpent);
-    user.spins = (user.spins || 0) + spinsAwarded;
-    order.spinsAwarded = spinsAwarded;
+    // Spin thưởng CHỈ tính theo nạp tiền (không cộng khi mua hàng)
+    order.spinsAwarded = 0;
 
     await order.save({ session });
     await user.save({ session });
@@ -238,10 +235,8 @@ router.post('/checkout', auth, purchaseLimiter, async (req, res) => {
     user.totalSpent = prevTotalSpent + totalAmount;
     user.purchaseHistory.push(order._id);
 
-    // Calculate and award spins
-    const spinsAwarded = calculateSpinsAwarded(prevTotalSpent, user.totalSpent);
-    user.spins = (user.spins || 0) + spinsAwarded;
-    order.spinsAwarded = spinsAwarded;
+    // Spin thưởng CHỈ tính theo nạp tiền (không cộng khi mua hàng)
+    order.spinsAwarded = 0;
 
     await order.save({ session });
     await user.save({ session });
@@ -374,6 +369,7 @@ router.get('/:id', auth, async (req, res) => {
         if (item.accountId) {
           item.accountId.username = decrypt(item.accountId.username);
           item.accountId.password = decrypt(item.accountId.password);
+          item.accountId.password2 = decrypt(item.accountId.password2);
         }
         return item;
       });

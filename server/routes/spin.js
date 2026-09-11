@@ -6,6 +6,7 @@ import User from '../models/User.js';
 import GameAccount from '../models/GameAccount.js';
 import SiteSetting from '../models/SiteSetting.js';
 import { auth } from '../middleware/auth.js';
+import { adminAuth } from '../middleware/auth.js';
 import { spinLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
@@ -66,18 +67,18 @@ router.get('/my-spins', async (req, res) => {
     }
 
     if (!userId) {
-      return res.json({ spins: 0, totalSpent: 0, isAuthenticated: false });
+      return res.json({ spins: 0, totalDeposited: 0, isAuthenticated: false });
     }
 
-    const user = await User.findById(userId).select('spins totalSpent');
+    const user = await User.findById(userId).select('spins totalDeposited');
 
     if (!user) {
-      return res.json({ spins: 0, totalSpent: 0, isAuthenticated: false });
+      return res.json({ spins: 0, totalDeposited: 0, isAuthenticated: false });
     }
 
     res.json({
       spins: user.spins || 0,
-      totalSpent: user.totalSpent || 0,
+      totalDeposited: user.totalDeposited || 0,
       isAuthenticated: true
     });
   } catch (error) {
@@ -284,19 +285,48 @@ router.post('/spin', auth, spinLimiter, async (req, res) => {
 // Get spin history
 router.get('/history', auth, async (req, res) => {
   try {
-    const { page = 1, limit = 20 } = req.query;
+    const { page = 1, limit = 20, startDate, endDate } = req.query;
     const skip = (page - 1) * limit;
 
-    const history = await SpinHistory.find({ userId: req.user._id })
-      .populate('accountId', 'title price images')
-      .sort({ spinAt: -1 })
-      .skip(skip)
-      .limit(Number(limit));
+    const filter = { userId: req.user._id };
 
-    const total = await SpinHistory.countDocuments({ userId: req.user._id });
+    if (startDate || endDate) {
+      filter.spinAt = {};
+      if (startDate) filter.spinAt.$gte = new Date(startDate);
+      if (endDate) filter.spinAt.$lte = new Date(endDate + 'T23:59:59.999Z');
+    }
+
+    const [history, total, stats] = await Promise.all([
+      SpinHistory.find(filter)
+        .populate('accountId', 'title price images')
+        .sort({ spinAt: -1 })
+        .skip(skip)
+        .limit(Number(limit)),
+      SpinHistory.countDocuments(filter),
+      SpinHistory.aggregate([
+        { $match: { userId: req.user._id } },
+        {
+          $group: {
+            _id: null,
+            totalCash: { $sum: '$rewardValue' },
+            totalSpins: { $sum: 1 },
+            cashCount: {
+              $sum: { $cond: [{ $eq: ['$rewardType', 'cash'] }, 1, 0] }
+            },
+            accountCount: {
+              $sum: { $cond: [{ $eq: ['$rewardType', 'account'] }, 1, 0] }
+            },
+            voucherCount: {
+              $sum: { $cond: [{ $eq: ['$rewardType', 'voucher'] }, 1, 0] }
+            }
+          }
+        }
+      ])
+    ]);
 
     res.json({
       history,
+      stats: stats[0] || { totalCash: 0, totalSpins: 0, cashCount: 0, accountCount: 0, voucherCount: 0 },
       pagination: {
         page: Number(page),
         limit: Number(limit),
@@ -306,6 +336,161 @@ router.get('/history', auth, async (req, res) => {
     });
   } catch (error) {
     console.error('Get spin history error:', error);
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
+// =============================================
+// ADMIN: Spin History Management
+// =============================================
+
+// Get all spin history (admin)
+router.get('/admin/history', adminAuth, async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 20,
+      userId,
+      rewardType,
+      startDate,
+      endDate,
+      search // search by username
+    } = req.query;
+
+    const filter = {};
+
+    if (userId) {
+      filter.userId = userId;
+    }
+
+    if (rewardType && rewardType !== 'all') {
+      filter.rewardType = rewardType;
+    }
+
+    if (startDate || endDate) {
+      filter.spinAt = {};
+      if (startDate) filter.spinAt.$gte = new Date(startDate);
+      if (endDate) filter.spinAt.$lte = new Date(endDate + 'T23:59:59.999Z');
+    }
+
+    if (search) {
+      // Search by username — need to join with User
+      const users = await User.find({
+        username: { $regex: search, $options: 'i' }
+      }).select('_id');
+      filter.userId = { $in: users.map(u => u._id) };
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const [history, total] = await Promise.all([
+      SpinHistory.find(filter)
+        .populate('userId', 'username fullName')
+        .populate('accountId', 'title price')
+        .sort({ spinAt: -1 })
+        .skip(skip)
+        .limit(Number(limit)),
+      SpinHistory.countDocuments(filter)
+    ]);
+
+    res.json({
+      history,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        pages: Math.ceil(total / Number(limit))
+      }
+    });
+  } catch (error) {
+    console.error('Admin get spin history error:', error);
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
+// Get spin statistics (admin)
+router.get('/admin/stats', adminAuth, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    const dateFilter = {};
+    if (startDate || endDate) {
+      dateFilter.spinAt = {};
+      if (startDate) dateFilter.spinAt.$gte = new Date(startDate);
+      if (endDate) dateFilter.spinAt.$lte = new Date(endDate + 'T23:59:59.999Z');
+    }
+
+    const [
+      totalSpins,
+      cashRewards,
+      accountRewards,
+      voucherRewards,
+      nothingRewards,
+      topUsers,
+      recentHistory
+    ] = await Promise.all([
+      // Total spins
+      SpinHistory.countDocuments(dateFilter),
+
+      // Cash rewards aggregate
+      SpinHistory.aggregate([
+        { $match: { ...dateFilter, rewardType: 'cash' } },
+        { $group: { _id: null, totalValue: { $sum: '$rewardValue' }, count: { $sum: 1 } } }
+      ]),
+
+      // Account rewards count
+      SpinHistory.countDocuments({ ...dateFilter, rewardType: 'account' }),
+
+      // Voucher rewards count
+      SpinHistory.countDocuments({ ...dateFilter, rewardType: 'voucher' }),
+
+      // Nothing count
+      SpinHistory.countDocuments({ ...dateFilter, rewardType: 'nothing' }),
+
+      // Top 5 users by spin count
+      SpinHistory.aggregate([
+        { $match: dateFilter },
+        { $group: { _id: '$userId', spinCount: { $sum: 1 } } },
+        { $sort: { spinCount: -1 } },
+        { $limit: 5 },
+        {
+          $lookup: {
+            from: 'users',
+            localField: '_id',
+            foreignField: '_id',
+            as: 'user'
+          }
+        },
+        { $unwind: '$user' },
+        {
+          $project: {
+            _id: 1,
+            username: '$user.username',
+            fullName: '$user.fullName',
+            spinCount: 1
+          }
+        }
+      ]),
+
+      // Recent 10 spins
+      SpinHistory.find(dateFilter)
+        .populate('userId', 'username')
+        .sort({ spinAt: -1 })
+        .limit(10)
+    ]);
+
+    res.json({
+      totalSpins,
+      cashTotal: cashRewards[0]?.totalValue || 0,
+      cashCount: cashRewards[0]?.count || 0,
+      accountCount: accountRewards,
+      voucherCount: voucherRewards,
+      nothingCount: nothingRewards,
+      topUsers,
+      recentHistory
+    });
+  } catch (error) {
+    console.error('Admin get spin stats error:', error);
     res.status(500).json({ message: 'Lỗi server', error: error.message });
   }
 });

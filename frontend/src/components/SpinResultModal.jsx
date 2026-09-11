@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaGift, FaCoins, FaTicketAlt, FaGamepad } from 'react-icons/fa';
 import Confetti from 'react-confetti';
 import { useState, useEffect } from 'react';
+import { getImageUrl } from '../utils/api';
 
 const SpinResultModal = ({ isOpen, onClose, result }) => {
   const [showConfetti, setShowConfetti] = useState(false);
@@ -114,7 +115,7 @@ const SpinResultModal = ({ isOpen, onClose, result }) => {
                 <div className="mt-4">
                   <div className="w-20 h-20 mx-auto rounded-lg overflow-hidden border-2 border-sky-500">
                     <img 
-                      src={result.account.images?.[0]} 
+                      src={getImageUrl(result.account.images?.[0])} 
                       alt={result.account.title}
                       className="w-full h-full object-cover"
                     />

@@ -63,7 +63,7 @@ export function useMySpins() {
   return { data, loading, error, refetch: fetchSpins };
 }
 
-export function useSpinHistory(page = 1, limit = 20) {
+export function useSpinHistory(page = 1, limit = 20, filters = {}) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -72,7 +72,12 @@ export function useSpinHistory(page = 1, limit = 20) {
     try {
       setLoading(true);
       setError(null);
-      const res = await api.get(`/spin/history?page=${page}&limit=${limit}`);
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(limit),
+        ...filters
+      });
+      const res = await api.get(`/spin/history?${params.toString()}`);
       setData(res.data);
     } catch (err) {
       setError(err.response?.data?.message || 'Lỗi tải lịch sử quay');
@@ -83,7 +88,7 @@ export function useSpinHistory(page = 1, limit = 20) {
 
   useEffect(() => {
     fetchHistory();
-  }, [page, limit]);
+  }, [page, limit, JSON.stringify(filters)]);
 
   return { data, loading, error, refetch: fetchHistory };
 }

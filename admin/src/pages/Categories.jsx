@@ -143,9 +143,10 @@ export default function Categories() {
                 };
 
                 return (
-                  <tbody key={category._id}>
+                  <>
                     {/* Parent Category Row - clickable to expand/collapse */}
                     <tr
+                      key={category._id}
                       className={`border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors bg-slate-800/50 ${
                         hasSubcategories ? 'cursor-pointer' : ''
                       }`}
@@ -360,7 +361,7 @@ export default function Categories() {
                         </td>
                       </tr>
                     ))}
-                  </tbody>
+                  </>
                 );
               })}
             </tbody>

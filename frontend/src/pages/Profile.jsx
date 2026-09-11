@@ -11,6 +11,7 @@ import DepositPanel from '../components/DepositPanel';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { getImageUrl } from '../utils/api';
 import {
   FiUser,
   FiAtSign,
@@ -556,7 +557,7 @@ const OrderCard = ({ order, onOpenDetail }) => (
                 className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 px-3 py-2 rounded-xl min-w-0 shrink-0"
               >
                 <img
-                  src={item.accountId.images?.[0]}
+                  src={getImageUrl(item.accountId.images?.[0])}
                   alt=""
                   className="w-8 h-8 rounded object-cover shrink-0"
                   onError={(e) => { e.target.src = '/placeholder.jpg'; }}
@@ -712,7 +713,7 @@ const OrderDetailSection = ({ orderId, onBack }) => {
                 item.accountId && (
                   <div key={idx} className="flex gap-3 pb-3 border-b border-slate-200 dark:border-slate-700 last:border-0 last:pb-0">
                     <img
-                      src={item.accountId.images?.[0]}
+                      src={getImageUrl(item.accountId.images?.[0])}
                       alt=""
                       className="w-12 h-12 rounded-lg object-cover shrink-0"
                       onError={(e) => { e.target.src = '/placeholder.jpg'; }}
@@ -763,7 +764,7 @@ const AccountItem = ({ item, orderStatus, showPasswords, onTogglePassword, onCop
     <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-dark-light p-5">
       <div className="flex gap-4 mb-4">
         <img
-          src={acc.images?.[0]}
+          src={getImageUrl(acc.images?.[0])}
           alt={acc.title}
           className="w-24 h-24 rounded-xl object-cover shrink-0"
           onError={(e) => { e.target.src = '/placeholder.jpg'; }}
@@ -958,7 +959,7 @@ const PurchasedAccountItem = ({ item, showPasswords, setShowPasswords }) => {
     <div className="bg-slate-100 dark:bg-slate-800/50 rounded-lg p-4">
       <div className="flex flex-col md:flex-row gap-4">
         <img
-          src={acc.images?.[0] || '/placeholder.jpg'}
+          src={getImageUrl(acc.images?.[0]) || '/placeholder.jpg'}
           alt={acc.title}
           className="w-full md:w-32 h-32 object-cover rounded-lg shrink-0"
         />

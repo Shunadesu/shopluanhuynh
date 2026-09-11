@@ -4,6 +4,7 @@ import BankAccount from '../models/BankAccount.js';
 import User from '../models/User.js';
 import { auth } from '../middleware/auth.js';
 import { depositLimiter } from '../middleware/rateLimiter.js';
+import { sendDepositNotification } from '../services/telegramBot.js';
 
 const router = express.Router();
 
@@ -44,6 +45,14 @@ router.post('/request', auth, depositLimiter, async (req, res) => {
     });
 
     await depositRequest.save();
+
+    // Send Telegram notification
+    try {
+      await sendDepositNotification(depositRequest);
+    } catch (telegramError) {
+      console.error('Telegram notification error:', telegramError);
+      // Don't throw error, allow request to continue
+    }
 
     res.status(201).json({
       message: 'Yêu cầu nạp tiền đã được gửi. Vui lòng chuyển khoản và chờ admin duyệt.',
@@ -89,6 +98,14 @@ router.post('/random-request', auth, async (req, res) => {
     });
 
     await depositRequest.save();
+
+    // Send Telegram notification
+    try {
+      await sendDepositNotification(depositRequest);
+    } catch (telegramError) {
+      console.error('Telegram notification error:', telegramError);
+      // Don't throw error, allow request to continue
+    }
 
     res.status(201).json({
       message: 'Đã tạo yêu cầu nạp tiền',
