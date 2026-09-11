@@ -78,6 +78,26 @@ export const useDepositStore = create(
         set((s) => ({ myRequests: [req, ...s.myRequests] }));
       },
 
+      // Hủy yêu cầu nạp đang chờ duyệt (user là chủ sở hữu)
+      cancelMyRequest: async (id) => {
+        try {
+          const res = await api.delete(`/deposits/${id}`);
+          const updated = res.data?.deposit;
+          if (updated) {
+            set((s) => ({
+              myRequests: s.myRequests.map((r) => (r._id === id ? updated : r)),
+            }));
+          } else {
+            // fallback: refetch toàn bộ
+            await get().fetchMyRequests(true);
+          }
+          return res.data;
+        } catch (err) {
+          set({ error: err });
+          throw err;
+        }
+      },
+
       reset: () => set({
         bankAccounts: [],
         lastFetchedBanks: 0,

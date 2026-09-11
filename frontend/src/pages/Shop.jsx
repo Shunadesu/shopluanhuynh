@@ -415,7 +415,7 @@ const Shop = () => {
   };
 
   return (
-    <div className="min-h-screen pt-20 pb-6">
+    <div className="min-h-screen pt-16 pb-6">
       <SEOHead
         title="Cửa Hàng Tài Khoản Game Giá Rẻ"
         description="Mua tài khoản game giá rẻ, chất lượng cao. Liên Quân, PUBG, Free Fire, Genshin Impact với giá tốt nhất thị trường."

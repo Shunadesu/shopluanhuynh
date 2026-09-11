@@ -129,7 +129,7 @@ const AccountDetail = ({ onOpenAuth }) => {
 
   if (!account) {
     return (
-      <div className="min-h-screen pt-20 pb-4 flex items-center justify-center">
+      <div className="min-h-screen pt-16 pb-4 flex items-center justify-center">
         <p className="text-slate-500 dark:text-slate-400 text-sm">Không tìm thấy tài khoản</p>
       </div>
     );
@@ -145,7 +145,7 @@ const AccountDetail = ({ onOpenAuth }) => {
     : null;
 
   return (
-    <div className="min-h-screen pt-20 pb-4">
+    <div className="min-h-screen pt-16 pb-4">
       <SEOHead
         title={account?.title || 'Chi Tiết Tài Khoản'}
         description={`Mua tài khoản ${account?.title} - Rank ${account?.rank} với giá chỉ ${account?.price?.toLocaleString('vi-VN')}đ. Tài khoản game chất lượng cao, bảo mật.`}

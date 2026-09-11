@@ -4,7 +4,7 @@ import api from '../utils/api';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { FiSearch, FiEye, FiCheck, FiX } from 'react-icons/fi';
+import { FiSearch, FiEye, FiCheck, FiX, FiRefreshCw } from 'react-icons/fi';
 import { TableSkeleton, FilterSkeleton } from '../components/SkeletonLoader';
 
 export default function Deposits() {
@@ -13,7 +13,7 @@ export default function Deposits() {
   const [statusFilter, setStatusFilter] = useState('');
   const [selectedDeposit, setSelectedDeposit] = useState(null);
 
-  const { data: depositsData, isLoading } = useQuery({
+  const { data: depositsData, isLoading, refetch } = useQuery({
     queryKey: ['admin-deposits', statusFilter, searchTerm],
     queryFn: async () => {
       let url = '/admin/deposits?';
@@ -25,7 +25,12 @@ export default function Deposits() {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }) => api.put(`/admin/deposits/${id}`, { status }),
+    mutationFn: ({ id, status }) => {
+      if (status === 'approved') {
+        return api.put(`/admin/deposits/${id}/approve`);
+      }
+      return api.put(`/admin/deposits/${id}/reject`);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-deposits']);
       toast.success('Cập nhật trạng thái thành công');
@@ -92,13 +97,20 @@ export default function Deposits() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="input-field w-64"
+          className="input-field w-48"
         >
           <option value="">Tất cả trạng thái</option>
           <option value="pending">Chờ duyệt</option>
           <option value="approved">Đã duyệt</option>
           <option value="rejected">Từ chối</option>
         </select>
+        <button
+          onClick={() => refetch()}
+          className="btn-secondary flex items-center gap-2 px-4"
+          title="Làm mới"
+        >
+          <FiRefreshCw className="w-4 h-4" />
+        </button>
       </div>
 
       {/* Deposits Table */}
@@ -124,16 +136,16 @@ export default function Deposits() {
                   </td>
                   <td>
                     <div>
-                      <p className="font-medium">{deposit.user?.username}</p>
-                      <p className="text-xs text-slate-400">{deposit.user?.email}</p>
+                      <p className="font-medium">{deposit.userId?.username}</p>
+                      <p className="text-xs text-slate-400">{deposit.userId?.email || deposit.userId?.fullName}</p>
                     </div>
                   </td>
                   <td className="font-semibold text-cyan-400">
                     {deposit.amount?.toLocaleString('vi-VN')}đ
                   </td>
                   <td>
-                    <p className="font-medium">{deposit.bankAccount?.bankName}</p>
-                    <p className="text-xs text-slate-400">{deposit.bankAccount?.accountNumber}</p>
+                    <p className="font-medium">{deposit.bankAccountId?.bankName}</p>
+                    <p className="text-xs text-slate-400">{deposit.bankAccountId?.accountNumber}</p>
                   </td>
                   <td>
                     <span className={`badge ${getStatusBadge(deposit.status).class}`}>
@@ -210,9 +222,9 @@ export default function Deposits() {
               <div className="border-t border-slate-700 pt-4">
                 <h3 className="font-semibold text-slate-100 mb-3">Thông tin người dùng</h3>
                 <div className="space-y-2 text-sm">
-                  <p><span className="text-slate-400">Tên:</span> {selectedDeposit.user?.username}</p>
-                  <p><span className="text-slate-400">Email:</span> {selectedDeposit.user?.email}</p>
-                  <p><span className="text-slate-400">SĐT:</span> {selectedDeposit.user?.phone || 'N/A'}</p>
+                  <p><span className="text-slate-400">Tên:</span> {selectedDeposit.userId?.fullName || selectedDeposit.userId?.username}</p>
+                  <p><span className="text-slate-400">Email:</span> {selectedDeposit.userId?.email || 'N/A'}</p>
+                  <p><span className="text-slate-400">SĐT:</span> {selectedDeposit.userId?.phone || 'N/A'}</p>
                 </div>
               </div>
 
@@ -220,9 +232,10 @@ export default function Deposits() {
                 <h3 className="font-semibold text-slate-100 mb-3">Thông tin giao dịch</h3>
                 <div className="space-y-2 text-sm">
                   <p><span className="text-slate-400">Số tiền:</span> <span className="text-cyan-400 font-semibold">{selectedDeposit.amount?.toLocaleString('vi-VN')}đ</span></p>
-                  <p><span className="text-slate-400">Ngân hàng:</span> {selectedDeposit.bankAccount?.bankName}</p>
-                  <p><span className="text-slate-400">Chủ TK:</span> {selectedDeposit.bankAccount?.accountName}</p>
-                  <p><span className="text-slate-400">Số TK:</span> {selectedDeposit.bankAccount?.accountNumber}</p>
+                  <p><span className="text-slate-400">Ngân hàng:</span> {selectedDeposit.bankAccountId?.bankName}</p>
+                  <p><span className="text-slate-400">Chủ TK:</span> {selectedDeposit.bankAccountId?.accountName}</p>
+                  <p><span className="text-slate-400">Số TK:</span> {selectedDeposit.bankAccountId?.accountNumber}</p>
+                  <p><span className="text-slate-400">Nội dung CK:</span> {selectedDeposit.transferNote || 'N/A'}</p>
                   {selectedDeposit.transactionCode && (
                     <p><span className="text-slate-400">Mã GD:</span> {selectedDeposit.transactionCode}</p>
                   )}

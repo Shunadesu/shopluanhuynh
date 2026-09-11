@@ -215,7 +215,7 @@ const SpinWheel = () => {
             <div className="flex flex-col items-center">
               {/* Wheel */}
               <div className="mb-4 relative">
-                {/* Pointer */}
+                {/* Custom Pointer */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
                   <div className="w-0 h-0 border-l-[14px] border-l-transparent border-r-[14px] border-r-transparent border-t-[28px] border-t-red-500 drop-shadow-lg"></div>
                 </div>
@@ -236,6 +236,11 @@ const SpinWheel = () => {
                   fontSize={14}
                   perpendicularText={false}
                   textDistance={55}
+                  pointerProps={{
+                    style: {
+                      display: 'none'
+                    }
+                  }}
                 />
               </div>
 

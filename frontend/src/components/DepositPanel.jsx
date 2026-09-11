@@ -6,9 +6,7 @@ import { useAuthStore } from '../store/authStore';
 import { useDepositStore } from '../store/data/depositStore';
 import {
   FiCopy,
-  FiCheck,
   FiCreditCard,
-  FiPhone,
   FiArrowLeft,
   FiAlertTriangle,
   FiRefreshCw,
@@ -101,13 +99,6 @@ const DepositPanel = ({ user }) => {
     }
   };
 
-  const handleConfirm = () => {
-    toast.success(
-      `Đã ghi nhận yêu cầu nạp ${parseFloat(amount).toLocaleString('vi-VN')}đ. Vui lòng chờ admin duyệt.`
-    );
-    handleReset();
-  };
-
   const handleReset = () => {
     setAmount('');
     setBankInfo(null);
@@ -155,7 +146,7 @@ const DepositPanel = ({ user }) => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.2 }}
-                className="card p-5 sm:p-6 space-y-5"
+                className="card p-2 space-y-5"
               >
                 {/* Số tiền input */}
                 <div>
@@ -201,7 +192,7 @@ const DepositPanel = ({ user }) => {
                   <p className="text-slate-700 dark:text-slate-300 text-sm font-semibold mb-2">
                     Hoặc chọn nhanh
                   </p>
-                  <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
+                  <div className="grid grid-cols-3 gap-2">
                     {PRESET_AMOUNTS.map((preset) => (
                       <AmountChip
                         key={preset.value}
@@ -239,16 +230,16 @@ const DepositPanel = ({ user }) => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.2 }}
-                className="card p-5 sm:p-6 space-y-4"
+                className="card p-2 sm:p-6 space-y-4"
               >
                 {/* Số tiền + ID yêu cầu */}
-                <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-xl p-4">
+                <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-xl p-2">
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <div>
                       <p className="text-slate-500 dark:text-slate-400 text-xs mb-1">
                         Số tiền cần chuyển
                       </p>
-                      <p className="text-primary font-black text-3xl">
+                      <p className="text-primary font-black text-2xl">
                         {numericAmount.toLocaleString('vi-VN')}đ
                       </p>
                     </div>
@@ -262,31 +253,12 @@ const DepositPanel = ({ user }) => {
                     </button>
                   </div>
                   {depositInfo?._id && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       Mã yêu cầu: <span className="font-mono">{depositInfo._id.slice(-8).toUpperCase()}</span>
                     </p>
                   )}
                 </div>
 
-                {/* Nội dung CK */}
-                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4">
-                  <p className="text-slate-500 dark:text-slate-400 text-xs mb-1">
-                    Nội dung chuyển khoản (bắt buộc)
-                  </p>
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-slate-900 dark:text-white font-bold text-base break-all">
-                      {transferContent}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard(transferContent, 'nội dung')}
-                      className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors shrink-0"
-                      title="Copy nội dung"
-                    >
-                      <FiCopy className="w-5 h-5 text-slate-500 dark:text-slate-400" />
-                    </button>
-                  </div>
-                </div>
 
                 {/* Bank info */}
                 {bankInfo && (
@@ -308,11 +280,16 @@ const DepositPanel = ({ user }) => {
                       copyable
                       onCopy={() => copyToClipboard(bankInfo.accountName, 'tên chủ tài khoản')}
                     />
-                    {bankInfo.identifier && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400 pt-1">
-                        Mã định danh: <span className="font-mono text-primary">{bankInfo.identifier}</span>
-                      </p>
-                    )}
+
+                    <InfoRow
+                      label="Nội dung chuyển khoản"
+                      value={transferContent}
+                      copyable
+                      onCopy={() => copyToClipboard(transferContent, 'nội dung chuyển khoản')}
+                    />
+                    
+                    
+                   
                   </div>
                 )}
 
@@ -325,20 +302,11 @@ const DepositPanel = ({ user }) => {
                       <ul className="space-y-0.5 list-disc list-inside">
                         <li>Chuyển đúng số tiền và nội dung</li>
                         <li>Không làm tròn số tiền</li>
-                        <li>Admin sẽ tự check ngân hàng và duyệt thủ công</li>
+                        {/* <li>Admin sẽ tự check ngân hàng và duyệt thủ công</li> */}
                       </ul>
                     </div>
                   </div>
                 </div>
-
-                {/* Confirm */}
-                <button
-                  type="button"
-                  onClick={handleConfirm}
-                  className="btn-primary w-full py-3 text-base font-bold flex items-center justify-center gap-2"
-                >
-                  <FiCheck className="w-5 h-5" /> Đã chuyển xong - Tạo yêu cầu
-                </button>
               </motion.div>
             )}
           </AnimatePresence>
@@ -372,9 +340,7 @@ const DepositPanel = ({ user }) => {
                     <FiCreditCard className="w-12 h-12 text-slate-400" />
                   </div>
                 )}
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-3">
-                  Mở app ngân hàng → Quét QR → Xác nhận
-                </p>
+               
                 <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 text-left space-y-1.5">
                   <p className="text-xs text-slate-500 dark:text-slate-400">Ngân hàng</p>
                   <p className="text-sm font-bold text-slate-900 dark:text-white">{bankInfo.bankName}</p>

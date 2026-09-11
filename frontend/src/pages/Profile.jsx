@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { useOrders, useOrderDetail, usePurchasedAccounts } from '../hooks/useOrders';
 import { useMyDepositRequests } from '../hooks/useDeposits';
+import { useDepositStore } from '../store/data/depositStore';
 import Skeleton from '../components/SkeletonLoader';
 import SEOHead from '../components/SEOHead';
 import AccountSidebar from '../components/AccountSidebar';
@@ -35,6 +36,7 @@ import {
   FiLock,
   FiInfo,
   FiCalendar,
+  FiTrash2,
 } from 'react-icons/fi';
 
 // ── Tabs for main profile view ───────────────────────────────
@@ -126,7 +128,7 @@ const Profile = () => {
     : 'Tài Khoản Của Tôi';
 
   return (
-    <div className="min-h-screen pt-20 pb-6">
+    <div className="min-h-screen pt-16 pb-6">
       <SEOHead
         title={seoTitle}
         description="Quản lý thông tin tài khoản, đơn hàng, nạp tiền và các cài đặt khác."
@@ -1022,6 +1024,17 @@ const PurchasedAccountItem = ({ item, showPasswords, setShowPasswords }) => {
 // ════════════════════════════════════════════════════════════════
 const DepositsSection = ({ onDeposit }) => {
   const { data: deposits, loading: isLoading, refresh } = useMyDepositRequests();
+  const cancelRequest = useDepositStore((s) => s.cancelMyRequest);
+
+  const handleCancel = async (depositId) => {
+    if (!window.confirm('Bạn có chắc muốn hủy yêu cầu nạp tiền này?')) return;
+    try {
+      await cancelRequest(depositId);
+      toast.success('Đã hủy yêu cầu nạp');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Không thể hủy yêu cầu');
+    }
+  };
 
   if (isLoading) return <DepositsSectionSkeleton />;
 
@@ -1056,7 +1069,11 @@ const DepositsSection = ({ onDeposit }) => {
       ) : (
         <div className="space-y-3">
           {deposits.map((deposit) => (
-            <DepositCard key={deposit._id} deposit={deposit} />
+            <DepositCard
+              key={deposit._id}
+              deposit={deposit}
+              onCancel={handleCancel}
+            />
           ))}
         </div>
       )}
@@ -1064,57 +1081,69 @@ const DepositsSection = ({ onDeposit }) => {
   );
 };
 
-const DepositCard = ({ deposit }) => (
-  <div className="card">
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-3">
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          <p className="text-primary font-bold text-2xl">+{deposit.amount.toLocaleString('vi-VN')}đ</p>
-          <DepositStatusBadge status={deposit.status} />
+const DepositCard = ({ deposit, onCancel }) => {
+  const isPending = deposit.status === 'pending';
+  return (
+    <div className="card">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-3">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <p className="text-primary font-bold text-2xl">+{deposit.amount.toLocaleString('vi-VN')}đ</p>
+            <DepositStatusBadge status={deposit.status} />
+          </div>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">{new Date(deposit.createdAt).toLocaleString('vi-VN')}</p>
         </div>
-        <p className="text-slate-500 dark:text-slate-400 text-sm">{new Date(deposit.createdAt).toLocaleString('vi-VN')}</p>
+        {isPending && (
+          <button
+            type="button"
+            onClick={() => onCancel?.(deposit._id)}
+            className="inline-flex items-center gap-1.5 text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 text-sm font-semibold border border-red-200 dark:border-red-500/40 hover:border-red-400 px-3 py-1.5 rounded-lg transition-colors shrink-0"
+          >
+            <FiTrash2 className="w-4 h-4" /> Hủy yêu cầu
+          </button>
+        )}
       </div>
+
+      {deposit.bankAccountId && (
+        <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-4 mb-3">
+          <p className="text-slate-500 dark:text-slate-400 text-xs mb-1">Ngân hàng</p>
+          <p className="text-slate-900 dark:text-white font-semibold text-sm">
+            {deposit.bankAccountId.bankName} - {deposit.bankAccountId.accountNumber}
+          </p>
+          <p className="text-slate-500 dark:text-slate-400 text-xs">{deposit.bankAccountId.accountName}</p>
+        </div>
+      )}
+
+      {deposit.transferNote && (
+        <div className="mb-3">
+          <p className="text-slate-500 dark:text-slate-400 text-xs mb-1">Nội dung chuyển khoản:</p>
+          <p className="text-slate-700 dark:text-slate-300 text-sm">{deposit.transferNote}</p>
+        </div>
+      )}
+
+      {deposit.adminNote && (
+        <div
+          className={`p-3 rounded-lg ${
+            deposit.status === 'rejected' ? 'bg-red-500/20 border border-red-500' : 'bg-slate-100 dark:bg-slate-800'
+          }`}
+        >
+          <p className="text-slate-500 dark:text-slate-400 text-xs mb-1">Ghi chú từ admin:</p>
+          <p className={deposit.status === 'rejected' ? 'text-red-400' : 'text-slate-700 dark:text-slate-300'}>
+            {deposit.adminNote}
+          </p>
+        </div>
+      )}
+
+      {deposit.processedAt && (
+        <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+          <p className="text-slate-500 dark:text-slate-400 text-xs">
+            {deposit.status === 'approved' ? 'Đã duyệt' : 'Đã xử lý'} lúc: {new Date(deposit.processedAt).toLocaleString('vi-VN')}
+          </p>
+        </div>
+      )}
     </div>
-
-    {deposit.bankAccountId && (
-      <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-4 mb-3">
-        <p className="text-slate-500 dark:text-slate-400 text-xs mb-1">Ngân hàng</p>
-        <p className="text-slate-900 dark:text-white font-semibold text-sm">
-          {deposit.bankAccountId.bankName} - {deposit.bankAccountId.accountNumber}
-        </p>
-        <p className="text-slate-500 dark:text-slate-400 text-xs">{deposit.bankAccountId.accountName}</p>
-      </div>
-    )}
-
-    {deposit.transferNote && (
-      <div className="mb-3">
-        <p className="text-slate-500 dark:text-slate-400 text-xs mb-1">Nội dung chuyển khoản:</p>
-        <p className="text-slate-700 dark:text-slate-300 text-sm">{deposit.transferNote}</p>
-      </div>
-    )}
-
-    {deposit.adminNote && (
-      <div
-        className={`p-3 rounded-lg ${
-          deposit.status === 'rejected' ? 'bg-red-500/20 border border-red-500' : 'bg-slate-100 dark:bg-slate-800'
-        }`}
-      >
-        <p className="text-slate-500 dark:text-slate-400 text-xs mb-1">Ghi chú từ admin:</p>
-        <p className={deposit.status === 'rejected' ? 'text-red-400' : 'text-slate-700 dark:text-slate-300'}>
-          {deposit.adminNote}
-        </p>
-      </div>
-    )}
-
-    {deposit.processedAt && (
-      <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
-        <p className="text-slate-500 dark:text-slate-400 text-xs">
-          {deposit.status === 'approved' ? 'Đã duyệt' : 'Đã xử lý'} lúc: {new Date(deposit.processedAt).toLocaleString('vi-VN')}
-        </p>
-      </div>
-    )}
-  </div>
-);
+  );
+};
 
 // ════════════════════════════════════════════════════════════════
 // Shared Empty State

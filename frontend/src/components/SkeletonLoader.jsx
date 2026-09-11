@@ -4,7 +4,7 @@ const Skeleton = ({ className = '' }) => (
 
 // Skeleton cho toàn bộ trang AccountDetail
 export const AccountDetailSkeleton = () => (
-  <div className="min-h-screen pt-20 pb-4">
+  <div className="min-h-screen pt-16 pb-4">
     <div className="container-custom">
       {/* Breadcrumb */}
       <div className="flex gap-2 mb-2 text-xs">
@@ -182,7 +182,7 @@ export const RelatedAccountsSkeleton = () => (
 );
 
 export const ProfileSkeleton = () => (
-  <div className="min-h-screen pt-20 pb-6">
+  <div className="min-h-screen pt-16 pb-6">
     <div className="container-custom space-y-4">
       {/* Hero */}
       <div className="bg-white dark:bg-dark-light border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
@@ -247,7 +247,7 @@ export const ProfileSkeleton = () => (
 );
 
 export const OrdersSkeleton = () => (
-  <div className="min-h-screen pt-20 pb-6">
+  <div className="min-h-screen pt-16 pb-6">
     <div className="container-custom space-y-4">
       {/* Hero */}
       <div className="bg-white dark:bg-dark-light border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
@@ -307,7 +307,7 @@ export const OrdersSkeleton = () => (
 );
 
 export const OrderDetailSkeleton = () => (
-  <div className="min-h-screen pt-20 pb-6">
+  <div className="min-h-screen pt-16 pb-6">
     <div className="container-custom">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 mb-6">
@@ -387,7 +387,7 @@ export const OrderDetailSkeleton = () => (
 
 // Skeleton cho Deposit Page
 export const DepositSkeleton = () => (
-  <div className="min-h-screen pt-20 pb-6">
+  <div className="min-h-screen pt-16 pb-6">
     <div className="container-custom">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
@@ -495,7 +495,7 @@ export const AccountGridSkeleton = ({ count = 8 }) => (
 
 // Skeleton cho toàn bộ trang Shop
 export const ShopSkeleton = () => (
-  <div className="min-h-screen pt-20 pb-6">
+  <div className="min-h-screen pt-16 pb-6">
     {/* Page Title */}
     <div className="container-custom mb-6 space-y-2">
       <Skeleton className="h-9 w-64" />

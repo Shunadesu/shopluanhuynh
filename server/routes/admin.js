@@ -547,8 +547,8 @@ router.get('/deposits', adminAuth, async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const deposits = await DepositRequest.find(query)
-      .populate('userId', 'fullName username')
-      .populate('bankAccountId', 'bankName accountNumber identifier')
+      .populate('userId', 'fullName username email phone')
+      .populate('bankAccountId', 'bankName accountNumber accountName identifier')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));

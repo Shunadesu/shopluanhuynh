@@ -129,7 +129,7 @@ function App() {
         authInitialView={authInitialView}
       />
 
-      <main className="flex-grow">
+      <main className="flex-grow my-4">
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Home />} />

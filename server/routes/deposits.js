@@ -127,6 +127,30 @@ router.get('/my-requests', auth, async (req, res) => {
   }
 });
 
+// Cancel a pending deposit request (by owner only)
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const deposit = await DepositRequest.findOne({
+      _id: req.params.id,
+      userId: req.user._id,
+    });
+    if (!deposit) {
+      return res.status(404).json({ message: 'Không tìm thấy yêu cầu nạp' });
+    }
+    if (deposit.status !== 'pending') {
+      return res.status(400).json({ message: 'Chỉ có thể hủy yêu cầu đang chờ duyệt' });
+    }
+    deposit.status = 'rejected';
+    deposit.adminNote = 'Người dùng đã hủy yêu cầu';
+    deposit.processedAt = new Date();
+    await deposit.save();
+    res.json({ message: 'Đã hủy yêu cầu nạp', deposit });
+  } catch (error) {
+    console.error('Cancel deposit error:', error);
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
 // Get top depositors of the current month (public)
 router.get('/top-depositors', async (req, res) => {
   try {
