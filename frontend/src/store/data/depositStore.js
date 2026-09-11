@@ -98,6 +98,23 @@ export const useDepositStore = create(
         }
       },
 
+      // Check trạng thái 1 đơn nạp (polling cho UI QR + countdown)
+      checkOneRequest: async (id) => {
+        try {
+          const res = await api.get(`/deposits/${id}`);
+          const updated = res.data;
+          if (updated && updated._id) {
+            set((s) => ({
+              myRequests: s.myRequests.map((r) => (r._id === id ? { ...r, ...updated } : r)),
+            }));
+          }
+          return updated;
+        } catch (err) {
+          set({ error: err });
+          throw err;
+        }
+      },
+
       reset: () => set({
         bankAccounts: [],
         lastFetchedBanks: 0,

@@ -20,8 +20,13 @@ const Checkout = () => {
     try {
       const data = await checkout();
       toast.success('Thanh toán thành công!');
+
+      // Force refresh profile (bypass TTL) → Header.balance update ngay
+      await useUserStore.getState().fetchProfile(true);
+
+      // Invalidate orders/purchased cache
       useOrderStore.getState().invalidateOrders();
-      refreshUser();
+
       navigate(`/profile/orders/${data.order._id}`);
     } catch (error) {
       if (error?.__skipped || error.response?.status === 401) {

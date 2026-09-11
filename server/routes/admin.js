@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import Category from '../models/Category.js';
 import GameAccount from '../models/GameAccount.js';
 import Order from '../models/Order.js';
@@ -503,13 +504,13 @@ router.get('/orders', adminAuth, async (req, res) => {
   try {
     const { status, page = 1, limit = 20 } = req.query;
     const query = {};
-    
+
     if (status) query.status = status;
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const orders = await Order.find(query)
-      .populate('userId', 'fullName username')
+      .populate('userId', 'fullName username email phone')
       .populate({
         path: 'items.accountId',
         populate: { path: 'categoryId', select: 'name' }
@@ -517,6 +518,23 @@ router.get('/orders', adminAuth, async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
+
+    // Decrypt credentials cho admin xem
+    orders.forEach(order => {
+      if (order.items && order.items.length) {
+        order.items.forEach(item => {
+          if (item.accountId && typeof item.accountId === 'object' && item.accountId.username) {
+            try {
+              item.accountId.username = item.accountId.username ? decrypt(item.accountId.username) : '';
+              item.accountId.password = item.accountId.password ? decrypt(item.accountId.password) : '';
+              item.accountId.password2 = item.accountId.password2 ? decrypt(item.accountId.password2) : '';
+            } catch (e) {
+              // keep encrypted if decrypt fails
+            }
+          }
+        });
+      }
+    });
 
     const total = await Order.countDocuments(query);
 
@@ -529,6 +547,39 @@ router.get('/orders', adminAuth, async (req, res) => {
         pages: Math.ceil(total / parseInt(limit))
       }
     });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
+// Update order status (admin)
+router.put('/orders/:id/status', adminAuth, async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!['pending', 'completed', 'cancelled'].includes(status)) {
+      return res.status(400).json({ message: 'Trạng thái không hợp lệ' });
+    }
+
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ message: 'Đơn hàng không tồn tại' });
+    }
+
+    // Nếu hủy đơn → trả lại account về trạng thái available
+    if (status === 'cancelled' && order.status !== 'cancelled') {
+      for (const item of order.items) {
+        await GameAccount.findByIdAndUpdate(item.accountId, {
+          status: 'available',
+          soldTo: null,
+          soldAt: null
+        });
+      }
+    }
+
+    order.status = status;
+    await order.save();
+
+    res.json({ message: 'Cập nhật trạng thái thành công', order });
   } catch (error) {
     res.status(500).json({ message: 'Lỗi server', error: error.message });
   }
@@ -571,34 +622,55 @@ router.get('/deposits', adminAuth, async (req, res) => {
 
 // Approve deposit
 router.put('/deposits/:id/approve', adminAuth, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
-    const deposit = await DepositRequest.findById(req.params.id);
-    
+    const deposit = await DepositRequest.findById(req.params.id).session(session);
+
     if (!deposit) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(404).json({ message: 'Yêu cầu không tồn tại' });
     }
 
     if (deposit.status !== 'pending') {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(400).json({ message: 'Yêu cầu đã được xử lý' });
+    }
+
+    // Lấy user trước khi update deposit
+    const user = await User.findById(deposit.userId).session(session);
+    if (!user) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ message: 'Không tìm thấy người dùng liên quan đến yêu cầu nạp tiền này' });
     }
 
     // Update deposit
     deposit.status = 'approved';
     deposit.processedAt = new Date();
     deposit.processedBy = req.user._id;
-    await deposit.save();
+    await deposit.save({ session });
 
     // Update user balance
-    const user = await User.findById(deposit.userId);
     user.balance += deposit.amount;
-    await user.save();
+    await user.save({ session });
 
-    res.json({ 
+    // Commit transaction — cả 2 thay đổi đều được apply hoặc không có gì được apply
+    await session.commitTransaction();
+    session.endSession();
+
+    res.json({
       message: 'Đã duyệt yêu cầu nạp tiền',
-      deposit 
+      deposit,
+      userBalance: user.balance
     });
   } catch (error) {
-    res.status(500).json({ message: 'Lỗi server', error: error.message });
+    await session.abortTransaction();
+    session.endSession();
+    console.error('Approve deposit error:', error);
+    res.status(500).json({ message: 'Lỗi server khi duyệt nạp tiền', error: error.message });
   }
 });
 

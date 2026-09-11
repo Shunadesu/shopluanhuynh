@@ -4,8 +4,14 @@ import api from '../utils/api';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { FiSearch, FiEye, FiCheck, FiX } from 'react-icons/fi';
+import { FiSearch, FiEye, FiCheck, FiX, FiCopy } from 'react-icons/fi';
 import { TableSkeleton, FilterSkeleton } from '../components/SkeletonLoader';
+
+const copyToClipboard = (text) => {
+  if (!text) return;
+  navigator.clipboard.writeText(text);
+  toast.success('Đã sao chép');
+};
 
 export default function Orders() {
   const queryClient = useQueryClient();
@@ -120,20 +126,28 @@ export default function Orders() {
               ordersData.orders.map((order) => (
                 <tr key={order._id}>
                   <td className="font-mono text-cyan-400">
-                    #{order._id.slice(-8).toUpperCase()}
+                    #{order.orderNumber || order._id.slice(-8).toUpperCase()}
                   </td>
                   <td>
                     <div>
-                      <p className="font-medium">{order.user?.username}</p>
-                      <p className="text-xs text-slate-400">{order.user?.email}</p>
+                      <p className="font-medium">{order.userId?.username || order.userId?.fullName || 'N/A'}</p>
+                      <p className="text-xs text-slate-400">{order.userId?.email || '—'}</p>
                     </div>
                   </td>
                   <td className="max-w-xs">
-                    <p className="font-medium truncate">{order.account?.title}</p>
-                    <p className="text-xs text-slate-400">{order.account?.category?.name}</p>
+                    {order.items?.length ? (
+                      order.items.map((item, idx) => (
+                        <div key={idx} className={idx > 0 ? 'mt-1 pt-1 border-t border-slate-700/60' : ''}>
+                          <p className="font-medium truncate">{item.accountId?.title || 'Tài khoản đã xoá'}</p>
+                          <p className="text-xs text-slate-400">{item.accountId?.categoryId?.name || '—'}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <span className="text-slate-500 text-xs">Không có</span>
+                    )}
                   </td>
                   <td className="font-semibold text-cyan-400">
-                    {order.price?.toLocaleString('vi-VN')}đ
+                    {order.totalAmount?.toLocaleString('vi-VN')}đ
                   </td>
                   <td>
                     <span className={`badge ${getStatusBadge(order.status).class}`}>
@@ -210,26 +224,83 @@ export default function Orders() {
               <div className="border-t border-slate-700 pt-4">
                 <h3 className="font-semibold text-slate-100 mb-3">Thông tin khách hàng</h3>
                 <div className="space-y-2 text-sm">
-                  <p><span className="text-slate-400">Tên:</span> {selectedOrder.user?.username}</p>
-                  <p><span className="text-slate-400">Email:</span> {selectedOrder.user?.email}</p>
-                  <p><span className="text-slate-400">SĐT:</span> {selectedOrder.user?.phone || 'N/A'}</p>
+                  <p><span className="text-slate-400">Tên:</span> {selectedOrder.userId?.username || selectedOrder.userId?.fullName || 'N/A'}</p>
+                  <p><span className="text-slate-400">Email:</span> {selectedOrder.userId?.email || 'N/A'}</p>
+                  <p><span className="text-slate-400">SĐT:</span> {selectedOrder.userId?.phone || 'N/A'}</p>
                 </div>
               </div>
 
               <div className="border-t border-slate-700 pt-4">
-                <h3 className="font-semibold text-slate-100 mb-3">Thông tin sản phẩm</h3>
-                <div className="space-y-2 text-sm">
-                  <p><span className="text-slate-400">Tên:</span> {selectedOrder.account?.title}</p>
-                  <p><span className="text-slate-400">Danh mục:</span> {selectedOrder.account?.category?.name}</p>
-                  <p><span className="text-slate-400">Giá:</span> {selectedOrder.price?.toLocaleString('vi-VN')}đ</p>
-                  {selectedOrder.account?.loginInfo && (
-                    <div className="mt-3 p-3 bg-slate-900 rounded-lg">
-                      <p className="text-slate-400 mb-1">Thông tin đăng nhập:</p>
-                      <p className="text-cyan-400 font-mono text-xs">
-                        {selectedOrder.account.loginInfo}
+                <h3 className="font-semibold text-slate-100 mb-3">
+                  Sản phẩm ({selectedOrder.items?.length || 0})
+                </h3>
+                <div className="space-y-3">
+                  {selectedOrder.items?.map((item, idx) => (
+                    <div key={idx} className="p-3 bg-slate-900 rounded-lg">
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <p className="font-medium text-slate-100 text-sm">{item.accountId?.title || 'Tài khoản đã xoá'}</p>
+                        <span className="text-xs text-cyan-400 whitespace-nowrap">
+                          {item.price?.toLocaleString('vi-VN')}đ
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-400 mb-2">
+                        Danh mục: {item.accountId?.categoryId?.name || 'N/A'}
                       </p>
+                      {item.accountId?.username ? (
+                        <div className="space-y-1 text-xs">
+                          <div className="flex items-center gap-2">
+                            <span className="text-slate-400 w-24 shrink-0">Username:</span>
+                            <span className="font-mono text-cyan-400 flex-1 break-all">
+                              {item.accountId.username}
+                            </span>
+                            <button
+                              onClick={() => copyToClipboard(item.accountId.username)}
+                              className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-cyan-400 shrink-0"
+                              title="Sao chép"
+                            >
+                              <FiCopy size={12} />
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-slate-400 w-24 shrink-0">Password:</span>
+                            <span className="font-mono text-cyan-400 flex-1 break-all">
+                              {item.accountId.password}
+                            </span>
+                            <button
+                              onClick={() => copyToClipboard(item.accountId.password)}
+                              className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-cyan-400 shrink-0"
+                              title="Sao chép"
+                            >
+                              <FiCopy size={12} />
+                            </button>
+                          </div>
+                          {item.accountId.password2 && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-slate-400 w-24 shrink-0">Password 2:</span>
+                              <span className="font-mono text-cyan-400 flex-1 break-all">
+                                {item.accountId.password2}
+                              </span>
+                              <button
+                                onClick={() => copyToClipboard(item.accountId.password2)}
+                                className="p-1 hover:bg-slate-700 rounded text-slate-400 hover:text-cyan-400 shrink-0"
+                                title="Sao chép"
+                              >
+                                <FiCopy size={12} />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-500 italic">Tài khoản không tồn tại hoặc đã bị xoá</p>
+                      )}
                     </div>
-                  )}
+                  ))}
+                </div>
+                <div className="mt-3 pt-3 border-t border-slate-700 flex justify-between items-center">
+                  <span className="text-sm text-slate-400">Tổng cộng:</span>
+                  <span className="text-lg font-bold text-cyan-400">
+                    {selectedOrder.totalAmount?.toLocaleString('vi-VN')}đ
+                  </span>
                 </div>
               </div>
 

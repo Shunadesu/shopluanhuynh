@@ -1,6 +1,8 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/authStore';
+import { useUserStore } from '../store/data/userStore';
+import { useOrderStore } from '../store/data/orderStore';
 import { useCartStore } from '../store/cartStore';
 import { useAccountDetail, useAccountList } from '../hooks';
 import { FiShoppingCart, FiImage, FiChevronDown, FiChevronUp, FiZoomIn, FiX } from 'react-icons/fi';
@@ -109,15 +111,26 @@ const AccountDetail = ({ onOpenAuth }) => {
       const { data } = await api.post('/orders/buy-now', {
         accountId: account._id
       });
-      
-      // Cập nhật balance trong store
-      useAuthStore.getState().updateBalance(data.balance);
-      
+
+      // Backend trả { order: {_id, orderNumber}, newBalance, spinsAwarded, message }
+      const orderId = data.order?._id || data.orderId;
+
+      // Cập nhật authStore
+
+      // Cập nhật authStore (snapshot hiển thị ở 1 số chỗ cũ)
+      useAuthStore.getState().updateBalance(data.newBalance);
+
+      // Force refresh useUserStore.profile → Header.balance auto-update
+      await useUserStore.getState().fetchProfile(true);
+
+      // Invalidate orders cache → list/orders/purchased-accounts fetch lại
+      useOrderStore.getState().invalidateOrders();
+
       toast.success(data.message);
       setShowBuyNowModal(false);
-      
-      // Redirect đến trang chi tiết đơn hàng
-      navigate(`/orders/${data.orderId}`);
+
+      // Điều hướng tới danh sách tài khoản đã mua (tab purchased-accounts)
+      navigate('/profile?view=purchased-accounts');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
     } finally {

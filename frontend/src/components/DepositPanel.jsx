@@ -1,15 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../utils/api';
 import { useAuthStore } from '../store/authStore';
 import { useDepositStore } from '../store/data/depositStore';
+import { useUserProfile } from '../hooks/useUserProfile';
 import {
   FiCopy,
   FiCreditCard,
   FiArrowLeft,
   FiAlertTriangle,
   FiRefreshCw,
+  FiClock,
+  FiCheckCircle,
 } from 'react-icons/fi';
 
 const PRESET_AMOUNTS = [
@@ -23,6 +27,10 @@ const PRESET_AMOUNTS = [
   { value: 2000000, label: '2M' },
   { value: 5000000, label: '5M' },
 ];
+
+// Thời gian user có thể chuyển khoản trước khi yêu cầu hết hạn
+const DEPOSIT_TTL_MS = 5 * 60 * 1000; // 5 phút
+const POLL_INTERVAL_MS = 10 * 1000; // 10 giây
 
 const AmountChip = ({ amount, label, isSelected, onClick }) => (
   <motion.button
@@ -51,12 +59,18 @@ const AmountChip = ({ amount, label, isSelected, onClick }) => (
 );
 
 const DepositPanel = ({ user }) => {
+  const navigate = useNavigate();
   const { user: authUser } = useAuthStore();
+  const { refresh: refreshProfile } = useUserProfile({ enabled: false });
   const [amount, setAmount] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [phase, setPhase] = useState('input'); // 'input' | 'show-info'
+  const [phase, setPhase] = useState('input'); // 'input' | 'show-info' | 'success'
   const [bankInfo, setBankInfo] = useState(null);
   const [depositInfo, setDepositInfo] = useState(null);
+  const [now, setNow] = useState(() => Date.now());
+  const [autoRedirectIn, setAutoRedirectIn] = useState(3);
+  const tickRef = useRef(null);
+  const pollRef = useRef(null);
 
   const handleAmountSelect = (value) => {
     setAmount(value.toString());
@@ -88,6 +102,7 @@ const DepositPanel = ({ user }) => {
       setBankInfo(res.data.bank);
       setDepositInfo(res.data.deposit);
       setPhase('show-info');
+      setNow(Date.now());
       // Cập nhật lịch sử nạp của user (request mới đã được tạo pending)
       try {
         await useDepositStore.getState().fetchMyRequests(true);
@@ -104,11 +119,102 @@ const DepositPanel = ({ user }) => {
     setBankInfo(null);
     setDepositInfo(null);
     setPhase('input');
+    setNow(Date.now());
+    setAutoRedirectIn(3);
   };
+
+  // === Countdown 5 phút — hết giờ thì redirect về home ===
+  // Đồng thời polling im lặng để catch khi admin duyệt → chuyển sang success
+  useEffect(() => {
+    if (phase !== 'show-info' || !depositInfo?._id || !depositInfo?.createdAt) return;
+
+    // Tick mỗi giây để render countdown
+    tickRef.current = setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    // Poll im lặng mỗi 10s — KHÔNG hiện trạng thái pending cho user,
+    // chỉ lắng nghe admin duyệt để chuyển sang màn success.
+    const pollOnce = async () => {
+      if (document.hidden) return;
+      try {
+        const updated = await useDepositStore.getState().checkOneRequest(depositInfo._id);
+        if (updated?.status === 'approved') {
+          try { await refreshProfile(); } catch {}
+          setPhase('success');
+          setNow(Date.now());
+        } else if (updated?.status === 'rejected') {
+          // Không hiện "bị từ chối" — đã hết giờ thì về home, còn nếu admin từ chối
+          // giữa lúc countdown thì vẫn redirect về home để giữ UX tự động.
+          setDepositInfo((prev) => ({ ...prev, ...updated }));
+          navigate('/');
+        }
+      } catch {
+        // im lặng
+      }
+    };
+
+    pollRef.current = setInterval(pollOnce, POLL_INTERVAL_MS);
+
+    return () => {
+      if (tickRef.current) clearInterval(tickRef.current);
+      if (pollRef.current) clearInterval(pollRef.current);
+      tickRef.current = null;
+      pollRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, depositInfo?._id]);
+
+  // === Hết giờ -> redirect về home ===
+  useEffect(() => {
+    if (phase !== 'show-info' || !depositInfo?.createdAt) return;
+    const expiresAt = new Date(depositInfo.createdAt).getTime() + DEPOSIT_TTL_MS;
+    const delay = expiresAt - Date.now();
+    if (delay <= 0) return; // đã hết giờ rồi
+    const t = setTimeout(() => navigate('/'), delay);
+    return () => clearTimeout(t);
+  }, [phase, depositInfo?.createdAt]);
+
+  // === Auto redirect 3s sau khi success ===
+  useEffect(() => {
+    if (phase !== 'success') return;
+    setAutoRedirectIn(3);
+    const t = setInterval(() => {
+      setAutoRedirectIn((v) => {
+        if (v <= 1) {
+          clearInterval(t);
+          navigate('/');
+          return 0;
+        }
+        return v - 1;
+      });
+    }, 1000);
+    return () => clearInterval(t);
+  }, [phase, navigate]);
 
   const numericAmount = parseFloat(amount) || 0;
   const currentUsername = authUser?.username || user?.username || '';
   const transferContent = `${currentUsername} ${amount}`;
+
+  // Tính thời gian còn lại (ms) khi show-info
+  let remainingMs = 0;
+  if (phase === 'show-info' && depositInfo?.createdAt) {
+    const expiresAt = new Date(depositInfo.createdAt).getTime() + DEPOSIT_TTL_MS;
+    remainingMs = Math.max(0, expiresAt - now);
+  }
+  const remainingSec = Math.ceil(remainingMs / 1000);
+  const mm = String(Math.floor(remainingSec / 60)).padStart(2, '0');
+  const ss = String(remainingSec % 60).padStart(2, '0');
+  const isExpiringSoon = phase === 'show-info' && remainingMs > 0 && remainingMs <= 60_000;
+  const isExpired = phase === 'show-info' && remainingMs === 0;
+
+  // Countdown chỉ dừng tick khi hết giờ; polling vẫn chạy để admin vẫn có thể duyệt
+  useEffect(() => {
+    if (phase === 'show-info' && remainingMs === 0 && tickRef.current) {
+      clearInterval(tickRef.current);
+      tickRef.current = null;
+    }
+  }, [phase, remainingMs]);
 
   return (
     <div className="space-y-4">
@@ -122,7 +228,7 @@ const DepositPanel = ({ user }) => {
             </h1>
             
           </div>
-          {phase === 'show-info' && (
+          {phase !== 'input' && (
             <button
               type="button"
               onClick={handleReset}
@@ -302,17 +408,17 @@ const DepositPanel = ({ user }) => {
                       <ul className="space-y-0.5 list-disc list-inside">
                         <li>Chuyển đúng số tiền và nội dung</li>
                         <li>Không làm tròn số tiền</li>
-                        {/* <li>Admin sẽ tự check ngân hàng và duyệt thủ công</li> */}
                       </ul>
                     </div>
                   </div>
                 </div>
+
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
-        {/* Cột phải - Hướng dẫn hoặc QR */}
+        {/* Cột phải - Hướng dẫn hoặc QR / Success / Expired / Rejected */}
         <div className="space-y-4">
           <AnimatePresence mode="wait">
             {phase === 'show-info' && bankInfo && (
@@ -340,7 +446,44 @@ const DepositPanel = ({ user }) => {
                     <FiCreditCard className="w-12 h-12 text-slate-400" />
                   </div>
                 )}
-               
+
+                {/* Countdown 5 phút */}
+                <div
+                  className={`mt-4 rounded-xl border p-3 flex items-center justify-center gap-2 ${
+                    isExpired
+                      ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600'
+                      : isExpiringSoon
+                      ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 animate-pulse'
+                      : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
+                  }`}
+                >
+                  <FiClock
+                    className={`w-4 h-4 shrink-0 ${
+                      isExpired
+                        ? 'text-slate-500 dark:text-slate-400'
+                        : isExpiringSoon
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-amber-600 dark:text-amber-400'
+                    }`}
+                  />
+                  <div className="text-left">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
+                      {isExpired ? 'Đã hết thời gian — về trang chủ' : 'Thời gian chuyển khoản còn lại'}
+                    </p>
+                    <p
+                      className={`font-mono font-black text-lg leading-tight ${
+                        isExpired
+                          ? 'text-slate-500 dark:text-slate-400'
+                          : isExpiringSoon
+                          ? 'text-red-600 dark:text-red-400'
+                          : 'text-amber-600 dark:text-amber-400'
+                      }`}
+                    >
+                      {mm}:{ss}
+                    </p>
+                  </div>
+                </div>
+
                 <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 text-left space-y-1.5">
                   <p className="text-xs text-slate-500 dark:text-slate-400">Ngân hàng</p>
                   <p className="text-sm font-bold text-slate-900 dark:text-white">{bankInfo.bankName}</p>
@@ -351,6 +494,45 @@ const DepositPanel = ({ user }) => {
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">Chủ tài khoản</p>
                   <p className="text-sm font-bold text-slate-900 dark:text-white">{bankInfo.accountName}</p>
                 </div>
+              </motion.div>
+            )}
+
+            {phase === 'success' && (
+              <motion.div
+                key="success"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.25 }}
+                className="card p-5 sm:p-6 text-center lg:sticky lg:top-20"
+              >
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.1 }}
+                  className="w-20 h-20 mx-auto rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4"
+                >
+                  <FiCheckCircle className="w-12 h-12 text-green-600 dark:text-green-400" />
+                </motion.div>
+                <h2 className="text-xl font-black text-slate-900 dark:text-white mb-1">
+                  Nạp tiền thành công
+                </h2>
+                <p className="text-slate-600 dark:text-slate-300 text-sm mb-4">
+                  Số dư của bạn đã được cộng{' '}
+                  <span className="font-bold text-primary">
+                    +{numericAmount.toLocaleString('vi-VN')}đ
+                  </span>
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                  Tự động về trang chủ sau {autoRedirectIn}s
+                </p>
+                <button
+                  type="button"
+                  onClick={() => navigate('/')}
+                  className="btn-primary w-full py-2.5 text-sm font-bold"
+                >
+                  Về trang chủ ngay
+                </button>
               </motion.div>
             )}
           </AnimatePresence>

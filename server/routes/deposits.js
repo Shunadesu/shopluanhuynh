@@ -105,6 +105,7 @@ router.post('/random-request', auth, async (req, res) => {
         amount: depositRequest.amount,
         transferNote: depositRequest.transferNote,
         status: depositRequest.status,
+        createdAt: depositRequest.createdAt,
       },
     });
   } catch (error) {
@@ -123,6 +124,25 @@ router.get('/my-requests', auth, async (req, res) => {
     res.json(deposits);
   } catch (error) {
     console.error('Get my deposits error:', error);
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
+// Get a single deposit request (owner only) — dùng cho frontend polling
+router.get('/:id', auth, async (req, res) => {
+  try {
+    const deposit = await DepositRequest.findOne({
+      _id: req.params.id,
+      userId: req.user._id,
+    }).populate('bankAccountId', 'bankName accountNumber accountName qrCodeImage identifier');
+
+    if (!deposit) {
+      return res.status(404).json({ message: 'Không tìm thấy yêu cầu nạp' });
+    }
+
+    res.json(deposit);
+  } catch (error) {
+    console.error('Get deposit error:', error);
     res.status(500).json({ message: 'Lỗi server', error: error.message });
   }
 });

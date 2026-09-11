@@ -306,6 +306,53 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
+// Get purchased accounts (completed orders with decrypted credentials)
+router.get('/purchased-accounts', auth, async (req, res) => {
+  try {
+    const orders = await Order.find({
+      userId: req.user._id,
+      status: 'completed'
+    })
+      .populate({
+        path: 'items.accountId',
+        populate: { path: 'categoryId', select: 'name' }
+      })
+      .sort({ createdAt: -1 });
+
+    // Flatten items: each account is a row with order metadata + account object
+    const purchasedAccounts = [];
+    for (const order of orders) {
+      for (const item of order.items) {
+        if (!item.accountId) continue;
+        const acc = item.accountId;
+        purchasedAccounts.push({
+          orderId: order._id.toString(),
+          orderNumber: order.orderNumber,
+          orderDate: order.createdAt,
+          price: item.price,
+          account: {
+            _id: acc._id,
+            title: acc.title,
+            images: acc.images || [],
+            categoryId: acc.categoryId ? { name: acc.categoryId.name } : {},
+            username: acc.username ? decrypt(acc.username) : '',
+            password: acc.password ? decrypt(acc.password) : '',
+            password2: acc.password2 ? decrypt(acc.password2) : '',
+            bp: acc.bp || '',
+            teamValue: acc.teamValue || '',
+            additionalInfo: acc.additionalInfo || '',
+          },
+        });
+      }
+    }
+
+    res.json(purchasedAccounts);
+  } catch (error) {
+    console.error('Get purchased accounts error:', error);
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
 // Get order by ID
 router.get('/:id', auth, async (req, res) => {
   try {

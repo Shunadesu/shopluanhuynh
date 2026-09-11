@@ -4,6 +4,8 @@ import { useAuthStore } from '../store/authStore';
 import { useCartStore } from '../store/cartStore';
 import { useThemeStore } from '../store/themeStore';
 import { useSettings } from '../hooks/useSettings';
+import { useUserProfile } from '../hooks/useUserProfile';
+import { useUserStore } from '../store/data/userStore';
 import AuthDrawer from './AuthDrawer';
 import CartDrawer from './CartDrawer';
 import { FiShoppingCart, FiUser, FiLogOut, FiMenu, FiSun, FiMoon, FiPlus } from 'react-icons/fi';
@@ -16,6 +18,12 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
   const cartCount = useCartStore((s) => s.cartCount);
   const theme = useThemeStore((s) => s.theme);
   const toggleTheme = useThemeStore((s) => s.toggleTheme);
+
+  // Balance luôn đọc từ useUserStore (single source of truth, có TTL cache).
+  // Không đọc từ authStore.user vì balance đó là snapshot từ lúc login và không được refresh.
+  const { data: profile, refresh: refreshProfile } = useUserProfile({ enabled: isAuthenticated });
+  const balance = typeof profile?.balance === 'number' ? profile.balance : user?.balance;
+  const spinCount = typeof profile?.spins === 'number' ? profile.spins : user?.spins;
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
@@ -92,7 +100,7 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
                   <div className="flex flex-col items-end mr-2">
                     <span className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">Số dư</span>
                     <span className="text-sm font-bold text-primary leading-tight">
-                      {user?.balance?.toLocaleString('vi-VN') || '0'}đ
+                      {(balance ?? 0).toLocaleString('vi-VN')}đ
                     </span>
                   </div>
                   <Link
@@ -112,9 +120,9 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
                 title="Vòng quay may mắn"
               >
                 <GiSpinningBlades className={`w-6 h-6 ${iconColor()} group-hover:animate-spin`} />
-                {isAuthenticated && (user?.spins || 0) > 0 && (
+                {isAuthenticated && (spinCount || 0) > 0 && (
                   <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">
-                    {user.spins}
+                    {spinCount}
                   </span>
                 )}
               </Link>
@@ -179,12 +187,12 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
                           onClick={() => setShowUserMenu(false)}
                         >
                           <span className="flex items-center gap-2">
-                            <GiSpinningBlades />
+                            {/* <GiSpinningBlades /> */}
                             Vòng quay
                           </span>
-                          {(user?.spins || 0) > 0 && (
+                          {(spinCount || 0) > 0 && (
                             <span className="px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">
-                              {user.spins}
+                              {spinCount}
                             </span>
                           )}
                         </Link>
@@ -248,7 +256,7 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
                     <div>
                       <span className="text-xs text-slate-500 dark:text-slate-400 block">Số dư hiện tại</span>
                       <span className="text-lg font-bold text-primary">
-                        {user?.balance?.toLocaleString('vi-VN') || '0'}đ
+                        {(balance ?? 0).toLocaleString('vi-VN')}đ
                       </span>
                     </div>
                     <Link

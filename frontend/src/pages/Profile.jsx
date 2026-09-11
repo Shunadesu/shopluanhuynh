@@ -984,7 +984,7 @@ const PurchasedAccountItem = ({ item, showPasswords, setShowPasswords }) => {
                 )}
               </div>
             </div>
-            <span className="text-primary font-bold text-lg shrink-0">{acc.price?.toLocaleString('vi-VN')}đ</span>
+            {/* <span className="text-primary font-bold text-lg shrink-0">{acc.price?.toLocaleString('vi-VN')}đ</span> */}
           </div>
 
           <div className="bg-slate-50 dark:bg-dark-lighter rounded-lg p-4 space-y-3 border border-slate-200 dark:border-transparent">
@@ -1006,6 +1006,16 @@ const PurchasedAccountItem = ({ item, showPasswords, setShowPasswords }) => {
               onReveal={() => toggle(acc._id)}
               onCopy={() => copyToClipboard(acc.password, 'mật khẩu')}
             />
+            {acc.password2 && (
+              <CredentialRow
+                label="Mật khẩu 2"
+                value={acc.password2}
+                visible={showPasswords[`${acc._id}_2`]}
+                canReveal={true}
+                onReveal={() => toggle(`${acc._id}_2`)}
+                onCopy={() => copyToClipboard(acc.password2, 'mật khẩu 2')}
+              />
+            )}
             {acc.additionalInfo && (
               <div>
                 <p className="text-slate-500 dark:text-slate-400 text-xs mb-1">Thông tin thêm</p>
@@ -1067,81 +1077,51 @@ const DepositsSection = ({ onDeposit }) => {
           onClick={onDeposit}
         />
       ) : (
-        <div className="space-y-3">
-          {deposits.map((deposit) => (
-            <DepositCard
-              key={deposit._id}
-              deposit={deposit}
-              onCancel={handleCancel}
-            />
-          ))}
+        <div className="card overflow-hidden p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-slate-700">
+                  <th className="text-left px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold w-12">STT</th>
+                  <th className="text-left px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold">Ngày</th>
+                  <th className="text-right px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold">Số tiền</th>
+                  <th className="text-left px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold">Ngân hàng</th>
+                  <th className="text-left px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold">Nội dung CK</th>
+                  <th className="text-center px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold">Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody>
+                {deposits.map((deposit, i) => (
+                  <tr key={deposit._id} className="border-b border-slate-100 dark:border-slate-800 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <td className="px-4 py-3 text-slate-400 dark:text-slate-500">{i + 1}</td>
+                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                      {new Date(deposit.createdAt).toLocaleString('vi-VN')}
+                    </td>
+                    <td className="px-4 py-3 text-primary font-bold text-right whitespace-nowrap">
+                      +{deposit.amount.toLocaleString('vi-VN')}đ
+                    </td>
+                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300 max-w-[200px]">
+                      {deposit.bankAccountId ? (
+                        <div>
+                          <p className="font-semibold">{deposit.bankAccountId.bankName}</p>
+                          <p className="text-slate-500 dark:text-slate-400 text-xs">{deposit.bankAccountId.accountNumber}</p>
+                        </div>
+                      ) : <span className="text-slate-400">—</span>}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400 max-w-[160px] truncate">
+                      {deposit.transferNote || <span className="text-slate-400">—</span>}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <DepositStatusBadge status={deposit.status} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </>
-  );
-};
-
-const DepositCard = ({ deposit, onCancel }) => {
-  const isPending = deposit.status === 'pending';
-  return (
-    <div className="card">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-3">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <p className="text-primary font-bold text-2xl">+{deposit.amount.toLocaleString('vi-VN')}đ</p>
-            <DepositStatusBadge status={deposit.status} />
-          </div>
-          <p className="text-slate-500 dark:text-slate-400 text-sm">{new Date(deposit.createdAt).toLocaleString('vi-VN')}</p>
-        </div>
-        {isPending && (
-          <button
-            type="button"
-            onClick={() => onCancel?.(deposit._id)}
-            className="inline-flex items-center gap-1.5 text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 text-sm font-semibold border border-red-200 dark:border-red-500/40 hover:border-red-400 px-3 py-1.5 rounded-lg transition-colors shrink-0"
-          >
-            <FiTrash2 className="w-4 h-4" /> Hủy yêu cầu
-          </button>
-        )}
-      </div>
-
-      {deposit.bankAccountId && (
-        <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-4 mb-3">
-          <p className="text-slate-500 dark:text-slate-400 text-xs mb-1">Ngân hàng</p>
-          <p className="text-slate-900 dark:text-white font-semibold text-sm">
-            {deposit.bankAccountId.bankName} - {deposit.bankAccountId.accountNumber}
-          </p>
-          <p className="text-slate-500 dark:text-slate-400 text-xs">{deposit.bankAccountId.accountName}</p>
-        </div>
-      )}
-
-      {deposit.transferNote && (
-        <div className="mb-3">
-          <p className="text-slate-500 dark:text-slate-400 text-xs mb-1">Nội dung chuyển khoản:</p>
-          <p className="text-slate-700 dark:text-slate-300 text-sm">{deposit.transferNote}</p>
-        </div>
-      )}
-
-      {deposit.adminNote && (
-        <div
-          className={`p-3 rounded-lg ${
-            deposit.status === 'rejected' ? 'bg-red-500/20 border border-red-500' : 'bg-slate-100 dark:bg-slate-800'
-          }`}
-        >
-          <p className="text-slate-500 dark:text-slate-400 text-xs mb-1">Ghi chú từ admin:</p>
-          <p className={deposit.status === 'rejected' ? 'text-red-400' : 'text-slate-700 dark:text-slate-300'}>
-            {deposit.adminNote}
-          </p>
-        </div>
-      )}
-
-      {deposit.processedAt && (
-        <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
-          <p className="text-slate-500 dark:text-slate-400 text-xs">
-            {deposit.status === 'approved' ? 'Đã duyệt' : 'Đã xử lý'} lúc: {new Date(deposit.processedAt).toLocaleString('vi-VN')}
-          </p>
-        </div>
-      )}
-    </div>
   );
 };
 

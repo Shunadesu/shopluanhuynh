@@ -49,24 +49,7 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-slate-900 dark:text-white font-semibold mb-4">Liên kết</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link to="/" className="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
-                  Trang chủ
-                </Link>
-              </li>
-              <li>
-                <Link to="/shop" className="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
-                  Cửa hàng
-                </Link>
-              </li>
-              <li>
-                <Link to="/profile" className="text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
-                  Tài khoản
-                </Link>
-              </li>
-            </ul>
+            
           </div>
 
           {/* Support */}
