@@ -282,7 +282,7 @@
 
 /* Category Card Animated Border */
 .category-card {
-  @apply bg-white border border-slate-200 dark:bg-dark-light dark:border-slate-800 rounded-xl p-4 relative overflow-hidden transition-all duration-300;
+  @apply bg-white border border-slate-200 dark:bg-dark-light dark:border-slate-800 rounded-xl p-2 relative overflow-hidden transition-all duration-300;
 }
 
 .category-card::before {
@@ -336,17 +336,17 @@
   font-size: 0.85rem;
 }
 .category-count__num {
-  font-weight: 800;
-  color: #d84315;
+  font-weight: 500;
+  /* color: #d84315; */
   font-size: 1rem;
 }
 .category-count__label {
-  color: #64748b;
+  /* color: #64748b; */
   font-size: 0.8rem;
   font-weight: 500;
 }
 .dark .category-count__label {
-  color: #94a3b8;
+  /* color: #94a3b8; */
 }
 
 /* Category card: Xem ngay CTA */

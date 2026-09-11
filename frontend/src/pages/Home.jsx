@@ -20,7 +20,7 @@ const SkeletonCategoryCard = () => (
 );
 
 // Subcategory Grid Component
-const SubcategoryGrid = ({ parentCategory, subcategories, onSelectSubcategory }) => {
+const SubcategoryGrid = ({ parentCategory, subcategories, onSelectSubcategory, accountsByCategory }) => {
   return (
     <section className="py-2">
       <div className="container-custom">
@@ -40,7 +40,10 @@ const SubcategoryGrid = ({ parentCategory, subcategories, onSelectSubcategory })
 
         {/* Subcategories Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-          {subcategories.map((subcategory) => (
+          {subcategories.map((subcategory) => {
+            const accountCount = (accountsByCategory[subcategory._id] || []).length;
+            
+            return (
             <button
               key={subcategory._id}
               onClick={() => onSelectSubcategory(subcategory)}
@@ -59,7 +62,7 @@ const SubcategoryGrid = ({ parentCategory, subcategories, onSelectSubcategory })
                   </span>
                 </div>
               )}
-              <h3 className="text-slate-900 dark:text-white text-sm font-semibold text-center">
+              <h3 className="text-slate-900 bg-primary text-transparent p-2 dark:text-white text-sm font-semibold text-center">
                 {subcategory.name}
               </h3>
               {subcategory.description && (
@@ -67,11 +70,12 @@ const SubcategoryGrid = ({ parentCategory, subcategories, onSelectSubcategory })
                   {subcategory.description}
                 </p>
               )}
-              <span className="category-count__label text-center block mt-1">
-                Xem tài khoản
+              <span className="category-count__label text-center block mt-1 text-primary">
+                {accountCount > 0 ? `${accountCount} tài khoản` : 'Sắp có'}
               </span>
             </button>
-          ))}
+          );
+          })}
         </div>
       </div>
     </section>
@@ -557,6 +561,14 @@ const Home = () => {
                   const count = (accountsByCategory[category._id] || []).length;
                   const hasSubs = category.subcategories && category.subcategories.length > 0;
                   const isActive = selectedParent?._id === category._id;
+                  
+                  // Tính tổng số sản phẩm thuộc tất cả danh mục con
+                  const totalProductsInSubs = hasSubs 
+                    ? category.subcategories.reduce((total, sub) => {
+                        return total + (accountsByCategory[sub._id] || []).length;
+                      }, 0)
+                    : 0;
+                  
                   return (
                     <button
                       key={category._id}
@@ -576,18 +588,31 @@ const Home = () => {
                           </span>
                         </div>
                       )}
-                      <h3 className="text-slate-900 dark:text-white text-sm font-semibold text-center">{category.name}</h3>
+                      <h3 className="text-slate-900 bg-primary text-transparent p-2 dark:text-white text-sm font-semibold text-center">{category.name}</h3>
 
                       {/* Số tài khoản */}
                       <div className="category-count">
-                        {count > 0 ? (
+                        {hasSubs ? (
+                          // Danh mục cha có subcategories
+                          <div className="flex  items-center gap-1">
+                            <div className="flex items-center gap-1">
+                              <span className="category-count__num">{category.subcategories.length}</span>
+                              <span className="category-count__label">danh mục</span>
+                            </div>
+                            <div>-</div>
+                            <div className="flex items-center gap-1">
+                              <span className="category-count__num text-xs">{totalProductsInSubs}</span>
+                              <span className="category-count__label">sản phẩm</span>
+                            </div>
+                          </div>
+                        ) : count > 0 ? (
+                          // Danh mục không có sub nhưng có sản phẩm
                           <>
                             <span className="category-count__num">{count}</span>
                             <span className="category-count__label">tài khoản</span>
                           </>
-                        ) : hasSubs ? (
-                          <span className="category-count__label">{category.subcategories.length} danh mục con</span>
                         ) : (
+                          // Danh mục trống
                           <span className="category-count__label">Sắp có</span>
                         )}
                       </div>
@@ -738,6 +763,7 @@ const Home = () => {
           parentCategory={selectedParent}
           subcategories={selectedParent.subcategories}
           onSelectSubcategory={handleSubcategoryClick}
+          accountsByCategory={accountsByCategory}
         />
       )}
 
