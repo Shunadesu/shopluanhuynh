@@ -95,8 +95,7 @@ export async function sendDepositNotification(deposit) {
 👤 <b>Người dùng:</b>
    • Username: <b>${user?.username || 'N/A'}</b>
    • Họ tên: ${user?.fullName || 'N/A'}
-   • Email: ${user?.email || 'N/A'}
-   • SĐT: ${user?.phone || 'N/A'}
+
 
 💰 <b>Số tiền:</b> <b>${depositData.amount.toLocaleString('vi-VN')}đ</b>
 

@@ -185,7 +185,7 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
               )}
 
               {/* Theme Toggle */}
-              <button
+              {/* <button
                 onClick={toggleTheme}
                 className={`p-2 rounded-lg transition-colors ${hoverBg()}`}
                 aria-label="Toggle theme"
@@ -196,7 +196,7 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
                 ) : (
                   <FiMoon className={`w-5 h-5 ${iconColor()}`} />
                 )}
-              </button>
+              </button> */}
 
               {/* Cart - Always visible */}
               <button
