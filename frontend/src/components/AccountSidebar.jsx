@@ -27,6 +27,12 @@ const MENU_ITEMS = [
     highlight: true,
   },
   {
+    key: 'spin-history',
+    label: 'Lịch sử vòng quay',
+    path: '/spin/history',
+    icon: FiClock,
+  },
+  {
     key: 'policies',
     label: 'Dashboard',
     path: '/profile?view=policies',
@@ -71,7 +77,8 @@ export default function AccountSidebar() {
   const [searchParams] = useSearchParams();
   const viewParam = searchParams.get('view');
   const isOnProfile = location.pathname === '/profile';
-  const isOnSpin = location.pathname === '/spin' || location.pathname.startsWith('/spin');
+  const isOnSpin = location.pathname === '/spin';
+  const isOnSpinHistory = location.pathname === '/spin/history';
   const isDepositView = isOnProfile && viewParam === 'deposit';
   const isCardDepositView = isOnProfile && viewParam === 'card-deposit';
   const isOrdersView = isOnProfile && viewParam === 'orders';
@@ -86,6 +93,9 @@ export default function AccountSidebar() {
     }
     if (item.key === 'spin') {
       return isOnSpin;
+    }
+    if (item.key === 'spin-history') {
+      return isOnSpinHistory;
     }
     if (item.key === 'deposit-bank') {
       return isDepositView;

@@ -4,6 +4,7 @@ import { run } from 'node-telegram-bot-api/node';
 import DepositRequest from '../models/DepositRequest.js';
 import User from '../models/User.js';
 import BankAccount from '../models/BankAccount.js';
+import { calculateSpinsAwarded } from '../utils/spinLogic.js';
 
 let bot = null;
 let adminChatId = null;
@@ -205,14 +206,23 @@ async function handleCallbackQuery(ctx) {
       
       const user = await User.findById(deposit.userId);
       if (user) {
+        // Award spins based on cumulative deposit (mỗi 200k = 1 lượt, cộng dồn)
+        const prevTotalDeposited = user.totalDeposited || 0;
+        const newTotalDeposited = prevTotalDeposited + deposit.amount;
+        const spinsAwarded = calculateSpinsAwarded(prevTotalDeposited, newTotalDeposited);
+        
         user.balance += deposit.amount;
+        user.totalDeposited = newTotalDeposited;
+        user.spins = (user.spins || 0) + spinsAwarded;
         await user.save();
+        
+        console.log(`✅ Deposit ${depositId} approved via Telegram - User received ${spinsAwarded} spins`);
       }
 
       await deposit.save();
 
-      // Update message
-      const updatedMessage = ctx.callbackQuery.message.text + `\n\n✅ <b>ĐÃ DUYỆT</b>\n⏰ ${new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}\n👤 Xử lý từ Telegram`;
+      // Update message with spin info
+      const updatedMessage = ctx.callbackQuery.message.text + `\n\n✅ <b>ĐÃ DUYỆT</b>\n⏰ ${new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}\n👤 Xử lý từ Telegram${user ? `\n🎡 Nhận thêm: <b>${calculateSpinsAwarded((user.totalDeposited || 0) - deposit.amount, user.totalDeposited || 0)} lượt quay</b>` : ''}`;
       
       await bot.api.editMessageText({
         chat_id: chatId,
@@ -224,8 +234,6 @@ async function handleCallbackQuery(ctx) {
       await ctx.answerCallbackQuery({
         text: '✅ Đã duyệt yêu cầu nạp tiền'
       });
-
-      console.log(`✅ Deposit ${depositId} approved via Telegram`);
 
     } else if (action === 'reject') {
       // Reject deposit
