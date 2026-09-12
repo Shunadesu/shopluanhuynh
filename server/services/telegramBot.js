@@ -205,24 +205,27 @@ async function handleCallbackQuery(ctx) {
       deposit.processedAt = new Date();
       
       const user = await User.findById(deposit.userId);
+      let spinsAwarded = 0;
+      
       if (user) {
         // Award spins based on cumulative deposit (mỗi 200k = 1 lượt, cộng dồn)
         const prevTotalDeposited = user.totalDeposited || 0;
         const newTotalDeposited = prevTotalDeposited + deposit.amount;
-        const spinsAwarded = calculateSpinsAwarded(prevTotalDeposited, newTotalDeposited);
+        spinsAwarded = calculateSpinsAwarded(prevTotalDeposited, newTotalDeposited);
         
+        // Update user (same way as admin panel)
         user.balance += deposit.amount;
         user.totalDeposited = newTotalDeposited;
         user.spins = (user.spins || 0) + spinsAwarded;
         await user.save();
         
-        console.log(`✅ Deposit ${depositId} approved via Telegram - User received ${spinsAwarded} spins`);
+        console.log(`✅ Deposit ${depositId} approved via Telegram - User received ${spinsAwarded} spins (balance: ${user.balance}, totalDeposited: ${user.totalDeposited}, spins: ${user.spins})`);
       }
 
       await deposit.save();
 
       // Update message with spin info
-      const updatedMessage = ctx.callbackQuery.message.text + `\n\n✅ <b>ĐÃ DUYỆT</b>\n⏰ ${new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}\n👤 Xử lý từ Telegram${user ? `\n🎡 Nhận thêm: <b>${calculateSpinsAwarded((user.totalDeposited || 0) - deposit.amount, user.totalDeposited || 0)} lượt quay</b>` : ''}`;
+      const updatedMessage = ctx.callbackQuery.message.text + `\n\n✅ <b>ĐÃ DUYỆT</b>\n⏰ ${new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}\n👤 Xử lý từ Telegram${spinsAwarded > 0 ? `\n🎡 Nhận thêm: <b>${spinsAwarded} lượt quay</b>` : ''}`;
       
       await bot.api.editMessageText({
         chat_id: chatId,
