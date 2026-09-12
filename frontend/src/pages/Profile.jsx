@@ -8,6 +8,8 @@ import Skeleton from '../components/SkeletonLoader';
 import SEOHead from '../components/SEOHead';
 import AccountSidebar from '../components/AccountSidebar';
 import DepositPanel from '../components/DepositPanel';
+import CardDepositPanel from '../components/CardDepositPanel';
+import PoliciesSection from '../components/PoliciesSection';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -98,18 +100,20 @@ const Profile = () => {
   const viewParam = searchParams.get('view');
   const orderIdParam = searchParams.get('orderId');
   const isDepositView = viewParam === 'deposit';
+  const isCardDepositView = viewParam === 'card-deposit';
   const isOrdersView = viewParam === 'orders';
   const isOrderDetailView = viewParam === 'order-detail';
   const isPurchasedView = viewParam === 'purchased-accounts';
   const isDepositsView = viewParam === 'deposits';
+  const isPoliciesView = viewParam === 'policies';
 
   const [activeTab, setActiveTab] = useState('info');
   const { data: user, loading: isLoading } = useUserProfile();
 
-  // Reset activeTab when entering deposit view
+  // Reset activeTab when entering deposit or card deposit view
   useEffect(() => {
-    if (isDepositView) setActiveTab('info');
-  }, [isDepositView]);
+    if (isDepositView || isCardDepositView) setActiveTab('info');
+  }, [isDepositView, isCardDepositView]);
 
   const navigateTo = (params) => {
     const next = new URLSearchParams(searchParams);
@@ -125,7 +129,9 @@ const Profile = () => {
     : isOrdersView ? 'Đơn Hàng Của Tôi'
     : isPurchasedView ? 'Tài khoản đã mua'
     : isDepositsView ? 'Lịch sử nạp tiền'
-    : isDepositView ? 'Nạp tiền'
+    : isDepositView ? 'Nạp tiền ngân hàng'
+    : isCardDepositView ? 'Nạp thẻ cào'
+    : isPoliciesView ? 'Dashboard & Thống kê'
     : 'Tài Khoản Của Tôi';
 
   return (
@@ -142,6 +148,10 @@ const Profile = () => {
           <div className="space-y-4 min-w-0">
             {isDepositView ? (
               isLoading ? <ContentSkeleton /> : <DepositPanel user={user} />
+            ) : isCardDepositView ? (
+              isLoading ? <ContentSkeleton /> : <CardDepositPanel />
+            ) : isPoliciesView ? (
+              isLoading ? <ContentSkeleton /> : <PoliciesSection user={user} />
             ) : isOrderDetailView && orderIdParam ? (
               <OrderDetailSection
                 orderId={orderIdParam}
@@ -1086,8 +1096,8 @@ const DepositsSection = ({ onDeposit }) => {
                   <th className="text-left px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold w-12">STT</th>
                   <th className="text-left px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold">Ngày</th>
                   <th className="text-right px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold">Số tiền</th>
-                  <th className="text-left px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold">Ngân hàng</th>
-                  <th className="text-left px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold">Nội dung CK</th>
+                  <th className="text-left px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold">Phương thức</th>
+                  <th className="text-left px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold">Thông tin</th>
                   <th className="text-center px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold">Trạng thái</th>
                 </tr>
               </thead>
@@ -1101,16 +1111,37 @@ const DepositsSection = ({ onDeposit }) => {
                     <td className="px-4 py-3 text-primary font-bold text-right whitespace-nowrap">
                       +{deposit.amount.toLocaleString('vi-VN')}đ
                     </td>
+                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
+                      {deposit.depositMethod === 'card' ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-full text-xs font-semibold">
+                          <FiPhone className="w-3.5 h-3.5" />
+                          Thẻ cào
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full text-xs font-semibold">
+                          <FiCreditCard className="w-3.5 h-3.5" />
+                          Ngân hàng
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-slate-700 dark:text-slate-300 max-w-[200px]">
-                      {deposit.bankAccountId ? (
+                      {deposit.depositMethod === 'card' ? (
+                        <div>
+                          <p className="font-semibold capitalize">
+                            {deposit.cardType === 'viettel' && <span className="text-red-500">Viettel</span>}
+                            {deposit.cardType === 'mobifone' && <span className="text-blue-500">Mobifone</span>}
+                            {deposit.cardType === 'vinaphone' && <span className="text-purple-500">Vinaphone</span>}
+                          </p>
+                          <p className="text-slate-500 dark:text-slate-400 text-xs font-mono">
+                            {deposit.cardSerial?.substring(0, 8)}***
+                          </p>
+                        </div>
+                      ) : deposit.bankAccountId ? (
                         <div>
                           <p className="font-semibold">{deposit.bankAccountId.bankName}</p>
                           <p className="text-slate-500 dark:text-slate-400 text-xs">{deposit.bankAccountId.accountNumber}</p>
                         </div>
                       ) : <span className="text-slate-400">—</span>}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400 max-w-[160px] truncate">
-                      {deposit.transferNote || <span className="text-slate-400">—</span>}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <DepositStatusBadge status={deposit.status} />

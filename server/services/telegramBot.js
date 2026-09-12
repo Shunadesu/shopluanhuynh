@@ -1,6 +1,5 @@
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const { Bot } = require('node-telegram-bot-api');
+import { Bot } from 'node-telegram-bot-api';
+import { run } from 'node-telegram-bot-api/node';
 
 import DepositRequest from '../models/DepositRequest.js';
 import User from '../models/User.js';
@@ -12,7 +11,7 @@ let adminChatId = null;
 /**
  * Khởi tạo Telegram bot
  */
-export function initTelegramBot() {
+export async function initTelegramBot() {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   adminChatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
 
@@ -24,10 +23,40 @@ export function initTelegramBot() {
   try {
     bot = new Bot(token);
     
+    // Handle /start command
+    bot.command('start', async (ctx) => {
+      const chatId = ctx.chat.id;
+      const username = ctx.from?.username || ctx.from?.first_name || 'User';
+      
+      const welcomeMessage = `
+👋 Xin chào <b>${username}</b>!
+
+🤖 Đây là bot thông báo nạp tiền của <b>Shop Luân Huỳnh</b>
+
+${chatId.toString() === adminChatId ? '✅ Bạn là Admin - Bạn sẽ nhận được thông báo khi có yêu cầu nạp tiền mới!' : '⚠️ Bot này chỉ dành cho Admin.'}
+
+📌 <b>Chat ID của bạn:</b> <code>${chatId}</code>
+
+${chatId.toString() !== adminChatId ? '\n💡 Nếu bạn là Admin, hãy cập nhật TELEGRAM_ADMIN_CHAT_ID trong file .env với Chat ID trên.' : ''}
+      `.trim();
+
+      await ctx.reply(welcomeMessage, { parse_mode: 'HTML' });
+      
+      console.log(`📱 User ${username} (${chatId}) started bot`);
+    });
+    
     // Handle callback queries from inline buttons
     bot.on('callback_query', handleCallbackQuery);
 
-    console.log('✅ Telegram bot initialized');
+    // Error handler
+    bot.catch((err) => {
+      console.error('❌ Telegram bot error:', err);
+    });
+
+    // Start polling in background (non-blocking)
+    bot.startPolling();
+    
+    console.log('✅ Telegram bot initialized and polling started');
   } catch (error) {
     console.error('❌ Failed to initialize Telegram bot:', error.message);
   }
@@ -105,7 +134,9 @@ export async function sendDepositNotification(deposit) {
       ]
     };
 
-    await bot.sendMessage(adminChatId, message, {
+    await bot.api.sendMessage({
+      chat_id: adminChatId,
+      text: message,
       parse_mode: 'HTML',
       reply_markup: keyboard
     });
@@ -119,14 +150,14 @@ export async function sendDepositNotification(deposit) {
 /**
  * Xử lý callback query từ inline buttons
  */
-async function handleCallbackQuery(query) {
-  const chatId = query.message.chat.id;
-  const messageId = query.message.message_id;
-  const callbackData = query.data;
+async function handleCallbackQuery(ctx) {
+  const chatId = ctx.chat.id;
+  const messageId = ctx.callbackQuery.message.message_id;
+  const callbackData = ctx.callbackQuery.data;
 
   // Verify it's from admin chat
   if (chatId.toString() !== adminChatId) {
-    await bot.answerCallbackQuery(query.id, {
+    await ctx.answerCallbackQuery({
       text: '❌ Unauthorized',
       show_alert: true
     });
@@ -138,7 +169,7 @@ async function handleCallbackQuery(query) {
     const [action, depositId] = callbackData.split('_');
 
     if (!['approve', 'reject'].includes(action) || !depositId) {
-      await bot.answerCallbackQuery(query.id, {
+      await ctx.answerCallbackQuery({
         text: '❌ Invalid action',
         show_alert: true
       });
@@ -150,7 +181,7 @@ async function handleCallbackQuery(query) {
       .populate('userId', 'username balance');
 
     if (!deposit) {
-      await bot.answerCallbackQuery(query.id, {
+      await ctx.answerCallbackQuery({
         text: '❌ Không tìm thấy yêu cầu nạp tiền',
         show_alert: true
       });
@@ -159,7 +190,7 @@ async function handleCallbackQuery(query) {
 
     // Check if already processed
     if (deposit.status !== 'pending') {
-      await bot.answerCallbackQuery(query.id, {
+      await ctx.answerCallbackQuery({
         text: `⚠️ Yêu cầu này đã được xử lý (${deposit.status})`,
         show_alert: true
       });
@@ -181,17 +212,17 @@ async function handleCallbackQuery(query) {
       await deposit.save();
 
       // Update message
-      const updatedMessage = query.message.text + `\n\n✅ <b>ĐÃ DUYỆT</b>\n⏰ ${new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}\n👤 Xử lý từ Telegram`;
+      const updatedMessage = ctx.callbackQuery.message.text + `\n\n✅ <b>ĐÃ DUYỆT</b>\n⏰ ${new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}\n👤 Xử lý từ Telegram`;
       
-      await bot.editMessageText(updatedMessage, {
+      await bot.api.editMessageText({
         chat_id: chatId,
         message_id: messageId,
+        text: updatedMessage,
         parse_mode: 'HTML'
       });
 
-      await bot.answerCallbackQuery(query.id, {
-        text: '✅ Đã duyệt yêu cầu nạp tiền',
-        show_alert: false
+      await ctx.answerCallbackQuery({
+        text: '✅ Đã duyệt yêu cầu nạp tiền'
       });
 
       console.log(`✅ Deposit ${depositId} approved via Telegram`);
@@ -204,17 +235,17 @@ async function handleCallbackQuery(query) {
       await deposit.save();
 
       // Update message
-      const updatedMessage = query.message.text + `\n\n❌ <b>ĐÃ TỪ CHỐI</b>\n⏰ ${new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}\n👤 Xử lý từ Telegram`;
+      const updatedMessage = ctx.callbackQuery.message.text + `\n\n❌ <b>ĐÃ TỪ CHỐI</b>\n⏰ ${new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}\n👤 Xử lý từ Telegram`;
       
-      await bot.editMessageText(updatedMessage, {
+      await bot.api.editMessageText({
         chat_id: chatId,
         message_id: messageId,
+        text: updatedMessage,
         parse_mode: 'HTML'
       });
 
-      await bot.answerCallbackQuery(query.id, {
-        text: '❌ Đã từ chối yêu cầu nạp tiền',
-        show_alert: false
+      await ctx.answerCallbackQuery({
+        text: '❌ Đã từ chối yêu cầu nạp tiền'
       });
 
       console.log(`❌ Deposit ${depositId} rejected via Telegram`);
@@ -222,7 +253,7 @@ async function handleCallbackQuery(query) {
 
   } catch (error) {
     console.error('❌ Error handling callback query:', error);
-    await bot.answerCallbackQuery(query.id, {
+    await ctx.answerCallbackQuery({
       text: `❌ Lỗi: ${error.message}`,
       show_alert: true
     });

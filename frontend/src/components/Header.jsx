@@ -89,8 +89,70 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
                   <span className="text-white font-bold text-xl">LH</span>
                 </div>
               )}
-
             </Link>
+
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center space-x-1">
+              <Link
+                to="/"
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${navLinkColor(location.pathname === '/')}`}
+              >
+                ShopGame
+              </Link>
+              
+              <Link
+                to="/profile?view=deposit"
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${navLinkColor(location.pathname === '/profile' && location.search.includes('view=deposit'))}`}
+              >
+                Nạp ATM
+              </Link>
+              
+              <Link
+                to="/profile?view=card-deposit"
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${navLinkColor(location.pathname === '/profile' && location.search.includes('view=card-deposit'))}`}
+              >
+                Nạp thẻ cào
+              </Link>
+              
+              {/* Dropdown Hướng dẫn */}
+              <div className="relative group">
+                <button className={`px-4 py-2 rounded-lg font-medium transition-colors ${iconColor()} flex items-center gap-1`}>
+                  Hướng dẫn
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                <div className="absolute left-0 top-full mt-1 w-56 bg-white dark:bg-dark-light border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <Link
+                    to="/guide"
+                    className="block px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors rounded-t-lg"
+                  >
+                    Hướng dẫn mua hàng
+                  </Link>
+                  <Link
+                    to="/account-security"
+                    className="block px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors"
+                  >
+                    Bảo mật tài khoản
+                  </Link>
+                  <Link
+                    to="/faq"
+                    className="block px-4 py-3 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors rounded-b-lg"
+                  >
+                    Câu hỏi thường gặp
+                  </Link>
+                </div>
+              </div>
+
+              {/* Vòng quay - Text Link */}
+              <Link
+                to="/spin"
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${navLinkColor(location.pathname === '/spin' || location.pathname.startsWith('/spin'))}`}
+              >
+                Vòng quay
+              </Link>
+            </nav>
 
             {/* Right Actions */}
             <div className="flex items-center space-x-2">
@@ -113,19 +175,14 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
                 </div>
               )}
 
-              {/* Spin Wheel Button - Always visible */}
-              <Link
-                to="/spin"
-                className={`relative p-2 rounded-lg transition-colors ${hoverBg()} group`}
-                title="Vòng quay may mắn"
-              >
-                <GiSpinningBlades className={`w-6 h-6 ${iconColor()} group-hover:animate-spin`} />
-                {isAuthenticated && (spinCount || 0) > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">
-                    {spinCount}
+              {/* Spin Count Badge - Only show if user has spins */}
+              {isAuthenticated && (spinCount || 0) > 0 && (
+                <div className="hidden sm:flex items-center bg-red-500/10 dark:bg-red-500/20 rounded-lg px-3 py-1.5 border border-red-500/30">
+                  <span className="text-xs text-red-600 dark:text-red-400 font-semibold">
+                    {spinCount} lượt quay
                   </span>
-                )}
-              </Link>
+                </div>
+              )}
 
               {/* Theme Toggle */}
               <button
@@ -273,12 +330,11 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
 
               <nav className="flex flex-col space-y-2">
                 <Link
-                  to="/spin"
-                  className={`px-4 py-2 rounded-lg transition-colors ${mobileLinkColor()} flex items-center gap-2`}
+                  to="/"
+                  className={`px-4 py-2 rounded-lg transition-colors ${mobileLinkColor()}`}
                   onClick={() => setShowMobileMenu(false)}
                 >
-                  <GiSpinningBlades className="w-5 h-5" />
-                  Vòng quay may mắn
+                  ShopGame
                 </Link>
 
                 <Link
@@ -286,9 +342,54 @@ const Header = ({ onOpenAuth, onOpenCart, isAuthOpen, isCartOpen, onCloseAuth, o
                   className={`px-4 py-2 rounded-lg transition-colors ${mobileLinkColor()}`}
                   onClick={() => setShowMobileMenu(false)}
                 >
-                  Nạp thẻ
+                  Nạp ATM
                 </Link>
 
+                <Link
+                  to="/profile?view=card-deposit"
+                  className={`px-4 py-2 rounded-lg transition-colors ${mobileLinkColor()}`}
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  Nạp thẻ cào
+                </Link>
+
+                {/* Hướng dẫn Section - Mobile */}
+                <div className="px-4 py-2">
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                    Hướng dẫn
+                  </p>
+                  <div className="flex flex-col space-y-2 pl-2">
+                    <Link
+                      to="/guide"
+                      className={`px-3 py-2 rounded-lg transition-colors ${mobileLinkColor()}`}
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      Hướng dẫn mua hàng
+                    </Link>
+                    <Link
+                      to="/account-security"
+                      className={`px-3 py-2 rounded-lg transition-colors ${mobileLinkColor()}`}
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      Bảo mật tài khoản
+                    </Link>
+                    <Link
+                      to="/faq"
+                      className={`px-3 py-2 rounded-lg transition-colors ${mobileLinkColor()}`}
+                      onClick={() => setShowMobileMenu(false)}
+                    >
+                      Câu hỏi thường gặp
+                    </Link>
+                  </div>
+                </div>
+
+                <Link
+                  to="/spin"
+                  className={`px-4 py-2 rounded-lg transition-colors ${mobileLinkColor()}`}
+                  onClick={() => setShowMobileMenu(false)}
+                >
+                  Vòng quay may mắn
+                </Link>
               </nav>
             </div>
           )}

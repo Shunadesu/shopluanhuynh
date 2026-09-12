@@ -588,11 +588,25 @@ router.put('/orders/:id/status', adminAuth, async (req, res) => {
 
 // ==================== DEPOSITS ====================
 
-// Get pending deposits count
+// Get pending deposits count by method
 router.get('/deposits/pending-count', adminAuth, async (req, res) => {
   try {
-    const count = await DepositRequest.countDocuments({ status: 'pending' });
-    res.json({ count });
+    const [bankCount, cardCount] = await Promise.all([
+      DepositRequest.countDocuments({
+        depositMethod: { $in: ['bank', null] },
+        status: 'pending'
+      }),
+      DepositRequest.countDocuments({
+        depositMethod: 'card',
+        status: 'pending'
+      })
+    ]);
+
+    res.json({ 
+      bank: bankCount, 
+      card: cardCount,
+      total: bankCount + cardCount
+    });
   } catch (error) {
     console.error('Get pending count error:', error);
     res.status(500).json({ message: 'Lỗi server', error: error.message });
@@ -602,10 +616,37 @@ router.get('/deposits/pending-count', adminAuth, async (req, res) => {
 // Get all deposit requests
 router.get('/deposits', adminAuth, async (req, res) => {
   try {
-    const { status, page = 1, limit = 20 } = req.query;
+    const { status, search, depositMethod, page = 1, limit = 100 } = req.query;
     const query = {};
     
     if (status) query.status = status;
+    
+    // Filter by deposit method
+    if (depositMethod) {
+      if (depositMethod === 'bank') {
+        query.depositMethod = { $in: ['bank', null] };
+      } else {
+        query.depositMethod = depositMethod;
+      }
+    }
+    
+    // Search functionality
+    if (search) {
+      const users = await User.find({
+        $or: [
+          { username: new RegExp(search, 'i') },
+          { email: new RegExp(search, 'i') },
+          { fullName: new RegExp(search, 'i') }
+        ]
+      }).select('_id');
+      
+      query.$or = [
+        { userId: { $in: users.map(u => u._id) } },
+        { transferNote: new RegExp(search, 'i') },
+        { cardSerial: new RegExp(search, 'i') },
+        { transactionCode: new RegExp(search, 'i') }
+      ];
+    }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
@@ -628,6 +669,7 @@ router.get('/deposits', adminAuth, async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Get deposits error:', error);
     res.status(500).json({ message: 'Lỗi server', error: error.message });
   }
 });

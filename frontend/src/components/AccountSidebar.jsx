@@ -28,10 +28,9 @@ const MENU_ITEMS = [
   },
   {
     key: 'policies',
-    label: 'Thống kê chính sách',
+    label: 'Dashboard',
     path: '/profile?view=policies',
     icon: FiTrendingUp,
-    disabled: true,
   },
   {
     key: 'orders',
@@ -61,10 +60,9 @@ const MENU_ITEMS = [
   {
     key: 'deposit-card',
     label: 'Nạp bằng thẻ cào',
-    path: '/deposit/card',
+    path: '/profile?view=card-deposit',
     icon: FiPhone,
-    disabled: true,
-    badge: 'Cập nhật sau',
+    highlight: true,
   },
 ];
 
@@ -75,6 +73,7 @@ export default function AccountSidebar() {
   const isOnProfile = location.pathname === '/profile';
   const isOnSpin = location.pathname === '/spin' || location.pathname.startsWith('/spin');
   const isDepositView = isOnProfile && viewParam === 'deposit';
+  const isCardDepositView = isOnProfile && viewParam === 'card-deposit';
   const isOrdersView = isOnProfile && viewParam === 'orders';
   const isOrderDetailView = isOnProfile && viewParam === 'order-detail';
   const isPurchasedView = isOnProfile && viewParam === 'purchased-accounts';
@@ -90,6 +89,9 @@ export default function AccountSidebar() {
     }
     if (item.key === 'deposit-bank') {
       return isDepositView;
+    }
+    if (item.key === 'deposit-card') {
+      return isCardDepositView;
     }
     if (item.key === 'orders' || item.key === 'order-detail') {
       return isOrdersView || isOrderDetailView;

@@ -25,6 +25,7 @@ import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
 import FAQ from './pages/FAQ';
 import AccountSecurity from './pages/AccountSecurity';
+import CardDeposit from './pages/CardDeposit';
 
 // Scroll to top on route change
 function ScrollToTop() {
@@ -185,6 +186,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <SpinHistory />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/deposit/card"
+            element={
+              <ProtectedRoute>
+                <CardDeposit />
               </ProtectedRoute>
             }
           />

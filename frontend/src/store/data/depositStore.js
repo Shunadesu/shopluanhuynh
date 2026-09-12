@@ -115,6 +115,26 @@ export const useDepositStore = create(
         }
       },
 
+      // Tạo yêu cầu nạp bằng thẻ cào
+      createCardDeposit: async ({ amount, cardType, cardSerial, cardCode }) => {
+        try {
+          const res = await api.post('/deposits/card-request', {
+            amount,
+            cardType,
+            cardSerial,
+            cardCode,
+          });
+          const newDeposit = res.data?.deposit;
+          if (newDeposit) {
+            set((s) => ({ myRequests: [newDeposit, ...s.myRequests] }));
+          }
+          return res.data;
+        } catch (err) {
+          set({ error: err });
+          throw err;
+        }
+      },
+
       reset: () => set({
         bankAccounts: [],
         lastFetchedBanks: 0,

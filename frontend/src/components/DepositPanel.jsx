@@ -428,7 +428,7 @@ const DepositPanel = ({ user }) => {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
-                className="card p-5 sm:p-6 text-center lg:sticky lg:top-20"
+                className="card p-2 text-center lg:sticky lg:top-20"
               >
                 <p className="text-slate-700 dark:text-slate-300 text-sm font-semibold mb-3">
                   Quét mã QR để chuyển khoản
@@ -438,7 +438,7 @@ const DepositPanel = ({ user }) => {
                     <img
                       src={bankInfo.qrCodeImage}
                       alt={`QR ${bankInfo.bankName}`}
-                      className="w-48 h-48 sm:w-56 sm:h-56 mx-auto object-contain"
+                      className="w-56 h-56 sm:w-64 sm:h-64 mx-auto object-contain"
                     />
                   </div>
                 ) : (
@@ -504,7 +504,7 @@ const DepositPanel = ({ user }) => {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.25 }}
-                className="card p-5 sm:p-6 text-center lg:sticky lg:top-20"
+                className="card p-2 text-center lg:sticky lg:top-20"
               >
                 <motion.div
                   initial={{ scale: 0 }}

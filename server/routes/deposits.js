@@ -64,6 +64,69 @@ router.post('/request', auth, depositLimiter, async (req, res) => {
   }
 });
 
+// Card deposit request - nạp bằng thẻ cào điện thoại
+router.post('/card-request', auth, async (req, res) => {
+  try {
+    const { amount, cardType, cardSerial, cardCode } = req.body;
+
+    // Validation
+    if (!amount || amount < 10000) {
+      return res.status(400).json({ message: 'Số tiền nạp tối thiểu là 10,000đ' });
+    }
+
+    if (!cardType || !['viettel', 'mobifone', 'vinaphone'].includes(cardType)) {
+      return res.status(400).json({ message: 'Loại thẻ không hợp lệ' });
+    }
+
+    if (!cardSerial || cardSerial.trim().length < 10) {
+      return res.status(400).json({ message: 'Số serial không hợp lệ' });
+    }
+
+    if (!cardCode || cardCode.trim().length < 10) {
+      return res.status(400).json({ message: 'Mã thẻ không hợp lệ' });
+    }
+
+    // Check duplicate trong 24h
+    const yesterday = new Date();
+    yesterday.setHours(yesterday.getHours() - 24);
+
+    const existingCard = await DepositRequest.findOne({
+      depositMethod: 'card',
+      cardSerial: cardSerial.trim(),
+      cardCode: cardCode.trim(),
+      createdAt: { $gte: yesterday }
+    });
+
+    if (existingCard) {
+      return res.status(400).json({ 
+        message: 'Thẻ cào này đã được sử dụng trong 24h qua. Vui lòng kiểm tra lại hoặc liên hệ admin.' 
+      });
+    }
+
+    // Tạo DepositRequest với depositMethod = 'card'
+    const depositRequest = new DepositRequest({
+      userId: req.user._id,
+      amount,
+      depositMethod: 'card',
+      cardType,
+      cardSerial: cardSerial.trim(),
+      cardCode: cardCode.trim(),
+    });
+
+    await depositRequest.save();
+
+    // KHÔNG gửi Telegram notification cho card deposits
+
+    res.status(201).json({
+      message: 'Yêu cầu nạp thẻ đã được gửi. Vui lòng chờ admin kiểm tra và xác nhận.',
+      deposit: depositRequest
+    });
+  } catch (error) {
+    console.error('Card deposit request error:', error);
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
 // Random bank deposit request - user chỉ nhập số tiền, server random 1 ngân hàng active
 // và tạo DepositRequest pending ngay. Admin sẽ duyệt tay.
 router.post('/random-request', auth, async (req, res) => {
@@ -145,50 +208,7 @@ router.get('/my-requests', auth, async (req, res) => {
   }
 });
 
-// Get a single deposit request (owner only) — dùng cho frontend polling
-router.get('/:id', auth, async (req, res) => {
-  try {
-    const deposit = await DepositRequest.findOne({
-      _id: req.params.id,
-      userId: req.user._id,
-    }).populate('bankAccountId', 'bankName accountNumber accountName qrCodeImage identifier');
-
-    if (!deposit) {
-      return res.status(404).json({ message: 'Không tìm thấy yêu cầu nạp' });
-    }
-
-    res.json(deposit);
-  } catch (error) {
-    console.error('Get deposit error:', error);
-    res.status(500).json({ message: 'Lỗi server', error: error.message });
-  }
-});
-
-// Cancel a pending deposit request (by owner only)
-router.delete('/:id', auth, async (req, res) => {
-  try {
-    const deposit = await DepositRequest.findOne({
-      _id: req.params.id,
-      userId: req.user._id,
-    });
-    if (!deposit) {
-      return res.status(404).json({ message: 'Không tìm thấy yêu cầu nạp' });
-    }
-    if (deposit.status !== 'pending') {
-      return res.status(400).json({ message: 'Chỉ có thể hủy yêu cầu đang chờ duyệt' });
-    }
-    deposit.status = 'rejected';
-    deposit.adminNote = 'Người dùng đã hủy yêu cầu';
-    deposit.processedAt = new Date();
-    await deposit.save();
-    res.json({ message: 'Đã hủy yêu cầu nạp', deposit });
-  } catch (error) {
-    console.error('Cancel deposit error:', error);
-    res.status(500).json({ message: 'Lỗi server', error: error.message });
-  }
-});
-
-// Get top depositors of the current month (public)
+// Get top depositors of the current month (public) — MUST BE BEFORE /:id route
 router.get('/top-depositors', async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit, 10) || 10, 50);
@@ -238,6 +258,49 @@ router.get('/top-depositors', async (req, res) => {
     res.json(topDepositors);
   } catch (error) {
     console.error('Get top depositors error:', error);
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
+// Get a single deposit request (owner only) — dùng cho frontend polling
+router.get('/:id', auth, async (req, res) => {
+  try {
+    const deposit = await DepositRequest.findOne({
+      _id: req.params.id,
+      userId: req.user._id,
+    }).populate('bankAccountId', 'bankName accountNumber accountName qrCodeImage identifier');
+
+    if (!deposit) {
+      return res.status(404).json({ message: 'Không tìm thấy yêu cầu nạp' });
+    }
+
+    res.json(deposit);
+  } catch (error) {
+    console.error('Get deposit error:', error);
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+});
+
+// Cancel a pending deposit request (by owner only)
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const deposit = await DepositRequest.findOne({
+      _id: req.params.id,
+      userId: req.user._id,
+    });
+    if (!deposit) {
+      return res.status(404).json({ message: 'Không tìm thấy yêu cầu nạp' });
+    }
+    if (deposit.status !== 'pending') {
+      return res.status(400).json({ message: 'Chỉ có thể hủy yêu cầu đang chờ duyệt' });
+    }
+    deposit.status = 'rejected';
+    deposit.adminNote = 'Người dùng đã hủy yêu cầu';
+    deposit.processedAt = new Date();
+    await deposit.save();
+    res.json({ message: 'Đã hủy yêu cầu nạp', deposit });
+  } catch (error) {
+    console.error('Cancel deposit error:', error);
     res.status(500).json({ message: 'Lỗi server', error: error.message });
   }
 });
