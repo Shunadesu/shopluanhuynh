@@ -227,7 +227,9 @@ export default function Accounts() {
               <th>Danh mục</th>
               <th>Danh mục con</th>
               <th>Tài khoản / Mật khẩu</th>
-              <th>Giá</th>
+              <th>Giá gốc</th>
+              <th>% Giảm</th>
+              <th>Giá bán</th>
               <th className="w-16">Hot</th>
               <th>Hàng đợi</th>
               <th className="max-w-48">Mô tả</th>
@@ -326,28 +328,41 @@ export default function Accounts() {
                     )}
                   </td>
 
-                  {/* Giá */}
+                  {/* Giá gốc */}
                   <td>
-                    <div className="flex flex-col">
-                      {account.originalPrice > 0 && (
-                        <span className="text-xs text-slate-500 line-through">
-                          {account.originalPrice.toLocaleString('vi-VN')}đ
+                    {account.originalPrice > 0 ? (
+                      <span className="text-sm text-slate-300">
+                        {account.originalPrice.toLocaleString('vi-VN')}đ
+                      </span>
+                    ) : (
+                      <span className="text-slate-600">-</span>
+                    )}
+                  </td>
+
+                  {/* % Giảm giá */}
+                  <td>
+                    <div className="flex flex-col gap-1">
+                      {account.adminDiscountPercent > 0 && (
+                        <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded inline-block w-fit">
+                          Admin: {account.adminDiscountPercent}%
                         </span>
                       )}
-                      <span className="font-semibold text-cyan-400 text-sm">
-                        {account.price?.toLocaleString('vi-VN')}đ
-                      </span>
                       {account.promotionName && (
-                        <span className="text-[10px] bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded mt-1 inline-block w-fit">
+                        <span className="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded inline-block w-fit" title={account.promotionName}>
                           KM: {account.discountPercent || 0}%
                         </span>
                       )}
-                      {!account.promotionName && account.adminDiscountPercent > 0 && (
-                        <span className="text-[10px] text-slate-500 mt-0.5">
-                          Giảm {account.adminDiscountPercent}%
-                        </span>
+                      {!account.adminDiscountPercent && !account.promotionName && (
+                        <span className="text-slate-600">-</span>
                       )}
                     </div>
+                  </td>
+
+                  {/* Giá bán */}
+                  <td>
+                    <span className="font-semibold text-cyan-400 text-sm">
+                      {account.price?.toLocaleString('vi-VN')}đ
+                    </span>
                   </td>
 
                   {/* Hot */}
@@ -424,7 +439,7 @@ export default function Accounts() {
               ))
             ) : (
               <tr>
-                <td colSpan="11" className="text-center text-slate-400 py-8">
+                <td colSpan="13" className="text-center text-slate-400 py-8">
                   Chưa có tài khoản nào
                 </td>
               </tr>

@@ -112,11 +112,11 @@ export default function Promotions() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-3">
+      <div className="flex gap-3 bg">
         <select
           value={filters.status}
           onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-          className="input w-44"
+          className="input w-44 text-black"
         >
           <option value="all">Tất cả trạng thái</option>
           <option value="active">Đang kích hoạt</option>
@@ -126,7 +126,7 @@ export default function Promotions() {
         <select
           value={filters.applyType}
           onChange={(e) => setFilters({ ...filters, applyType: e.target.value })}
-          className="input w-48"
+          className="input w-48 text-black"
         >
           <option value="all">Tất cả loại áp dụng</option>
           <option value="accounts">Tài khoản cụ thể</option>

@@ -5,6 +5,7 @@ import User from '../models/User.js';
 import { auth } from '../middleware/auth.js';
 import { depositLimiter } from '../middleware/rateLimiter.js';
 import { sendDepositNotification } from '../services/telegramBot.js';
+import emailChecker from '../services/emailChecker.js';
 
 const router = express.Router();
 
@@ -53,6 +54,14 @@ router.post('/request', auth, depositLimiter, async (req, res) => {
       console.error('Telegram notification error:', telegramError);
       // Don't throw error, allow request to continue
     }
+
+    // Trigger email checker to resume if paused
+    console.log('🔔 New deposit created - triggering email checker...');
+    emailChecker.checkAndSchedule().then(() => {
+      console.log('✅ Email checker schedule completed');
+    }).catch(err => {
+      console.error('❌ Email checker schedule error:', err);
+    });
 
     res.status(201).json({
       message: 'Yêu cầu nạp tiền đã được gửi. Vui lòng chuyển khoản và chờ admin duyệt.',
@@ -169,6 +178,14 @@ router.post('/random-request', auth, async (req, res) => {
       console.error('Telegram notification error:', telegramError);
       // Don't throw error, allow request to continue
     }
+
+    // Trigger email checker to resume if paused
+    console.log('🔔 New deposit created - triggering email checker...');
+    emailChecker.checkAndSchedule().then(() => {
+      console.log('✅ Email checker schedule completed');
+    }).catch(err => {
+      console.error('❌ Email checker schedule error:', err);
+    });
 
     res.status(201).json({
       message: 'Đã tạo yêu cầu nạp tiền',

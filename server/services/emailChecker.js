@@ -11,20 +11,120 @@ class EmailChecker {
     this.isChecking = false;
     this.checkInterval = 30000; // 30 giây
     this.intervalId = null;
+    this.isEnabled = false;
   }
 
   async start() {
-    console.log('📧 Email checker started - checking every 30s');
+    console.log('📧 Email checker service initialized');
     
-    // Check ngay khi start
-    await this.checkEmails();
+    // Check và schedule dựa trên pending deposits
+    await this.checkAndSchedule();
+  }
+
+  async hasActivePendingDeposits() {
+    try {
+      const count = await DepositRequest.countDocuments({ 
+        status: 'pending',
+        depositMethod: 'bank'
+      });
+      return count > 0;
+    } catch (error) {
+      console.error('❌ Error checking pending deposits:', error.message);
+      return false;
+    }
+  }
+
+  async checkAndSchedule() {
+    const hasPending = await this.hasActivePendingDeposits();
+    const pendingCount = await DepositRequest.countDocuments({ 
+      status: 'pending',
+      depositMethod: 'bank'
+    });
+
+    console.log(`📊 Pending bank deposits: ${pendingCount}`);
+
+    if (hasPending && !this.isEnabled) {
+      // Có pending deposits và checker đang tắt → bật lên
+      console.log('✅ Active deposits found - Email checker enabled');
+      this.enable();
+    } else if (!hasPending && this.isEnabled) {
+      // Không còn pending và checker đang bật → tắt đi
+      console.log('⏸️  No active deposits - Email checker paused');
+      this.disable();
+    } else if (hasPending && this.isEnabled) {
+      console.log('🔄 Email checker already running');
+    } else {
+      console.log('⏸️  Email checker paused - waiting for deposits');
+    }
+  }
+
+  enable() {
+    if (this.isEnabled) return;
     
-    // Check định kỳ
+    this.isEnabled = true;
+    
+    // Check ngay lập tức
+    this.checkEmailsAndExpired();
+    
+    // Check định kỳ mỗi 30s
     this.intervalId = setInterval(() => {
       if (!this.isChecking) {
-        this.checkEmails();
+        this.checkEmailsAndExpired();
       }
     }, this.checkInterval);
+  }
+
+  disable() {
+    if (!this.isEnabled) return;
+    
+    this.isEnabled = false;
+    
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+    }
+  }
+
+  async checkEmailsAndExpired() {
+    // Check expired deposits trước
+    await this.autoRejectExpiredDeposits();
+    
+    // Sau đó check emails
+    await this.checkEmails();
+    
+    // Kiểm tra xem còn pending deposits không
+    await this.checkAndSchedule();
+  }
+
+  async autoRejectExpiredDeposits() {
+    try {
+      const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+      
+      const expiredDeposits = await DepositRequest.find({
+        status: 'pending',
+        depositMethod: 'bank',
+        createdAt: { $lt: tenMinutesAgo }
+      }).populate('userId', 'username');
+
+      if (expiredDeposits.length === 0) {
+        return;
+      }
+
+      console.log(`⏱️  Found ${expiredDeposits.length} expired deposit(s) - auto rejecting...`);
+
+      for (const deposit of expiredDeposits) {
+        deposit.status = 'rejected';
+        deposit.adminNote = 'Auto rejected - Expired after 10 minutes';
+        deposit.processedAt = new Date();
+        await deposit.save();
+
+        console.log(`   ❌ Rejected: ${deposit.transferNote} - User: ${deposit.userId?.username || 'Unknown'}`);
+      }
+
+      console.log(`✅ Auto rejected ${expiredDeposits.length} expired deposit(s)`);
+    } catch (error) {
+      console.error('❌ Error auto-rejecting expired deposits:', error.message);
+    }
   }
 
   createImapConnection() {
@@ -39,6 +139,12 @@ class EmailChecker {
   }
 
   async checkEmails() {
+    const pendingCount = await DepositRequest.countDocuments({ 
+      status: 'pending',
+      depositMethod: 'bank'
+    });
+    console.log(`📬 Checking emails... (${pendingCount} pending deposit${pendingCount !== 1 ? 's' : ''})`);
+    
     return new Promise((resolve) => {
       this.isChecking = true;
       this.imap = this.createImapConnection();
@@ -68,6 +174,7 @@ class EmailChecker {
 
             if (!results || results.length === 0) {
               // Không có email mới
+              console.log('   📭 No new emails from bank');
               this.imap.end();
               this.isChecking = false;
               return resolve();
@@ -133,23 +240,27 @@ class EmailChecker {
       console.log('   From:', from);
 
       // Parse thông tin từ email ACB
-      // Format ACB thường là:
-      // "Tai khoan: 123456789"
-      // "Giao dich: +500,000 VND" hoặc "+500.000 VND"
-      // "Noi dung: NAP123456"
+      // Format ACB thực tế:
+      // "Ghi có +10,000.00 VND"
+      // "Nội dung giao dịch: PNHN1234 10000 GD 6256IBT1AJQYKLVM 130926-13:37:09."
       
       // Try multiple amount patterns
-      let amountMatch = text.match(/\+\s*([0-9,\.]+)\s*(VND|đ|d)/i);
+      let amountMatch = text.match(/Ghi c[oóôồốổỗộ]\s*\+\s*([0-9,\.]+)\s*VND/i);
       if (!amountMatch) {
-        // Try: "So tien: +500,000"
-        amountMatch = text.match(/(?:So tien|Sotien|Amount):\s*\+?\s*([0-9,\.]+)/i);
+        amountMatch = text.match(/\+\s*([0-9,\.]+)\s*(VND|đ|d)/i);
+      }
+      if (!amountMatch) {
+        amountMatch = text.match(/(?:So tien|Sotien|Amount|Credit):\s*\+?\s*([0-9,\.]+)/i);
       }
 
-      // Try multiple code patterns
-      let codeMatch = text.match(/(?:Noi dung|ND|Ma GD|Dien giai|Content):\s*([A-Z0-9]+)/i);
+      // Try multiple code patterns - ACB format: "Nội dung giao dịch: CODE AMOUNT GD ..."
+      let codeMatch = text.match(/N[oôộốồổỗ]i dung giao d[iịíìỉĩ]ch:\s*([A-Z0-9]+(?:\s+[0-9]+)?)\s*(?:GD|$)/i);
       if (!codeMatch) {
-        // Try finding NAP pattern directly
-        codeMatch = text.match(/(NAP[0-9]+)/i);
+        codeMatch = text.match(/(?:Noi dung|ND|Ma GD|Dien giai|Content):\s*([A-Z0-9]+(?:\s+[0-9]+)?)/i);
+      }
+      if (!codeMatch) {
+        // Try finding NAP/PNHN pattern directly
+        codeMatch = text.match(/([A-Z]+[0-9]+(?:\s+[0-9]+)?)/i);
       }
 
       if (!amountMatch) {
@@ -164,8 +275,24 @@ class EmailChecker {
         return;
       }
 
-      // Parse số tiền (bỏ dấu phẩy/chấm)
-      const amountStr = amountMatch[1].replace(/[,\.]/g, '');
+      // Parse số tiền - ACB format: "10,000.00" (comma = thousands, dot = decimal)
+      // Cần phân biệt: 10,000.00 = 10 nghìn vs 10.000,00 = 10 nghìn (European)
+      let amountStr = amountMatch[1];
+      
+      // ACB dùng format US: comma for thousands, dot for decimal
+      // Ví dụ: "10,000.00" = 10000, "500,000.50" = 500000.5
+      if (amountStr.includes(',') && amountStr.includes('.')) {
+        // Has both: remove comma (thousands), keep dot (decimal)
+        amountStr = amountStr.replace(/,/g, '');
+      } else if (amountStr.includes(',')) {
+        // Only comma: treat as thousands separator, remove it
+        amountStr = amountStr.replace(/,/g, '');
+      } else if (amountStr.includes('.')) {
+        // Only dot: could be decimal or thousands
+        // ACB usually shows decimal: "10000.00"
+        // Keep it as is
+      }
+      
       const amount = parseFloat(amountStr);
       const transferNote = codeMatch[1].trim().toUpperCase();
 
@@ -255,10 +382,8 @@ class EmailChecker {
   }
 
   stop() {
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
-    }
+    console.log('📧 Email checker service stopping...');
+    this.disable();
     if (this.imap) {
       this.imap.end();
     }
