@@ -98,12 +98,12 @@ class EmailChecker {
 
   async autoRejectExpiredDeposits() {
     try {
-      const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+      const twentyMinutesAgo = new Date(Date.now() - 20 * 60 * 1000);
       
       const expiredDeposits = await DepositRequest.find({
         status: 'pending',
         depositMethod: 'bank',
-        createdAt: { $lt: tenMinutesAgo }
+        createdAt: { $lt: twentyMinutesAgo }
       }).populate('userId', 'username');
 
       if (expiredDeposits.length === 0) {
@@ -114,7 +114,7 @@ class EmailChecker {
 
       for (const deposit of expiredDeposits) {
         deposit.status = 'rejected';
-        deposit.adminNote = 'Auto rejected - Expired after 10 minutes';
+        deposit.adminNote = 'Auto rejected - Expired after 20 minutes';
         deposit.processedAt = new Date();
         await deposit.save();
 

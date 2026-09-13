@@ -29,7 +29,7 @@ const PRESET_AMOUNTS = [
 ];
 
 // Thời gian user có thể chuyển khoản trước khi yêu cầu hết hạn
-const DEPOSIT_TTL_MS = 10 * 60 * 1000; // 10 phút
+const DEPOSIT_TTL_MS = 20 * 60 * 1000; // 20 phút
 const POLL_INTERVAL_MS = 10 * 1000; // 10 giây
 
 const AmountChip = ({ amount, label, isSelected, onClick }) => (
@@ -123,7 +123,7 @@ const DepositPanel = ({ user }) => {
     setAutoRedirectIn(3);
   };
 
-  // === Countdown 10 phút — hết giờ thì redirect về home ===
+  // === Countdown 20 phút — hết giờ thì redirect về home ===
   // Đồng thời polling im lặng để catch khi admin duyệt → chuyển sang success
   useEffect(() => {
     if (phase !== 'show-info' || !depositInfo?._id || !depositInfo?.createdAt) return;
@@ -286,7 +286,7 @@ const DepositPanel = ({ user }) => {
                   <p className="guide-title">Làm thế nào để nạp số dư vào tài khoản</p>
                   <p className="guide-steps">
                     <span>1. Nhập số tiền cần nạp</span>
-                    <span>2. Chọn nạp tiền và quét mã QR thanh toán (tiền sẽ vào tài khoản trong tối đa 10 phút)</span>
+                    <span>2. Chọn nạp tiền và quét mã QR thanh toán (tiền sẽ vào tài khoản trong tối đa 20 phút)</span>
                   </p>
                   <p className="guide-note">
                     <strong>Lưu ý:</strong> Hệ thống nạp tiền tự động theo nội dung chuyển khoản nên khách hàng vui lòng chuyển đúng số tiền đã nhập và đúng nội dung chuyển khoản.
@@ -447,7 +447,7 @@ const DepositPanel = ({ user }) => {
                   </div>
                 )}
 
-                {/* Countdown 10 phút */}
+                {/* Countdown 20 phút */}
                 <div
                   className={`mt-4 rounded-xl border p-3 flex items-center justify-center gap-2 ${
                     isExpired
