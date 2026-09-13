@@ -17,7 +17,9 @@ import uploadRoutes from './routes/upload.js';
 import sitemapRoutes from './routes/sitemap.js';
 import socialLinksRoutes from './routes/socialLinks.js';
 import spinRoutes from './routes/spin.js';
+import promotionRoutes from './routes/promotions.js';
 import { initTelegramBot } from './services/telegramBot.js';
+import emailChecker from './services/emailChecker.js';
 
 dotenv.config();
 
@@ -58,6 +60,8 @@ mongoose.connect(process.env.MONGODB_URI)
     console.log('✅ Connected to MongoDB');
     // Initialize Telegram bot after MongoDB connection
     initTelegramBot();
+    // Start email checker for auto deposit approval
+    emailChecker.start();
   })
   .catch((err) => console.error('❌ MongoDB connection error:', err));
 
@@ -68,6 +72,7 @@ app.use('/api/accounts', accountRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/deposits', depositRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/admin/promotions', promotionRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/spin', spinRoutes);

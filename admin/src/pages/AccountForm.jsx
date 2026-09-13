@@ -31,6 +31,8 @@ export default function AccountForm() {
     category: '',
     subcategory: '',
     price: '',
+    originalPrice: '',
+    adminDiscountPercent: '',
     description: '',
     username: '',
     password: '',
@@ -71,6 +73,8 @@ export default function AccountForm() {
         category: account.category?._id || account.categoryId?._id || account.categoryId || '',
         subcategory: account.subcategory?._id || account.subcategoryId?._id || account.subcategoryId || '',
         price: account.price || '',
+        originalPrice: account.originalPrice || '',
+        adminDiscountPercent: account.adminDiscountPercent || '',
         description: account.description || '',
         username: account.username || '',
         password: account.password || '',
@@ -134,8 +138,8 @@ export default function AccountForm() {
       return;
     }
 
-    if (!formData.price || formData.price <= 0) {
-      toast.error('Vui lòng nhập giá hợp lệ');
+    if (!formData.originalPrice || formData.originalPrice <= 0) {
+      toast.error('Vui lòng nhập giá gốc hợp lệ');
       return;
     }
 
@@ -157,6 +161,8 @@ export default function AccountForm() {
       title: formData.title,
       categoryId: formData.category,
       subcategoryId: formData.subcategory || null,
+      originalPrice: Number(formData.originalPrice),
+      adminDiscountPercent: Number(formData.adminDiscountPercent) || 0,
       price: Number(formData.price),
       description: formData.description,
       loginInfo,
@@ -286,16 +292,58 @@ export default function AccountForm() {
                 </select>
               </FormGroup>
 
-              <FormGroup label="Giá (VNĐ)" required>
+              <FormGroup label="Giá gốc (VNĐ)" required>
                 <input
                   type="number"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                  value={formData.originalPrice}
+                  onChange={(e) => {
+                    const originalPrice = Number(e.target.value);
+                    const discount = formData.adminDiscountPercent || 0;
+                    const price = Math.round(originalPrice * (1 - discount / 100));
+                    setFormData({
+                      ...formData,
+                      originalPrice,
+                      price
+                    });
+                  }}
                   className="input-field"
                   placeholder="VD: 150000"
                   min="0"
                   required
                 />
+              </FormGroup>
+
+              <FormGroup label="Giảm giá admin (%)">
+                <input
+                  type="number"
+                  value={formData.adminDiscountPercent}
+                  onChange={(e) => {
+                    const discount = Number(e.target.value);
+                    const price = Math.round(formData.originalPrice * (1 - discount / 100));
+                    setFormData({
+                      ...formData,
+                      adminDiscountPercent: discount,
+                      price
+                    });
+                  }}
+                  className="input-field"
+                  placeholder="VD: 20"
+                  min="0"
+                  max="100"
+                />
+              </FormGroup>
+
+              <FormGroup label="Giá bán (tự động tính)">
+                <input
+                  type="number"
+                  value={formData.price}
+                  className="input-field bg-slate-800 text-slate-400 cursor-not-allowed"
+                  disabled
+                  readOnly
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  Giá này được tính tự động từ giá gốc và % giảm giá
+                </p>
               </FormGroup>
 
               <FormGroup label="Trạng thái">

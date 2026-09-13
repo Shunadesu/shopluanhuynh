@@ -19,6 +19,8 @@ import NotificationForm from './pages/NotificationForm';
 import Settings from './pages/Settings';
 import SpinRewards from './pages/SpinRewards';
 import SpinHistory from './pages/SpinHistory';
+import Promotions from './pages/Promotions';
+import PromotionForm from './pages/PromotionForm';
 import { useAuthStore } from './store/authStore';
 import SEOHead from './components/SEOHead';
 import api from './utils/api';
@@ -86,6 +88,9 @@ function App() {
             <Route path="accounts/edit/:id" element={<AccountForm />} />
             <Route path="orders" element={<Orders />} />
             <Route path="deposits" element={<Deposits />} />
+            <Route path="promotions" element={<Promotions />} />
+            <Route path="promotions/new" element={<PromotionForm />} />
+            <Route path="promotions/edit/:id" element={<PromotionForm />} />
             <Route path="users" element={<Users />} />
             <Route path="sliders" element={<Sliders />} />
             <Route path="spin-rewards" element={<SpinRewards />} />

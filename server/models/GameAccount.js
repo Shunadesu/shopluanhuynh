@@ -47,6 +47,12 @@ const gameAccountSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  adminDiscountPercent: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 100
+  },
   images: [{
     type: String
   }],

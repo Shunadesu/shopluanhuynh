@@ -177,6 +177,72 @@ export const SliderCardSkeleton = ({ count = 4 }) => (
   </div>
 );
 
+// Promotions Table Skeleton
+export const PromotionsTableSkeleton = ({ rows = 5 }) => (
+  <div className="space-y-4">
+    {/* Header */}
+    <div className="flex justify-between items-center">
+      <div className="space-y-2">
+        <div className="h-8 bg-slate-700 rounded w-48 animate-pulse" />
+        <div className="h-4 bg-slate-800 rounded w-64 animate-pulse" />
+      </div>
+      <div className="h-10 w-40 bg-slate-700 rounded-lg animate-pulse" />
+    </div>
+
+    {/* Filters */}
+    <div className="flex gap-3">
+      <div className="h-10 w-44 bg-slate-800 rounded-lg animate-pulse" />
+      <div className="h-10 w-48 bg-slate-800 rounded-lg animate-pulse" />
+    </div>
+
+    {/* Table */}
+    <div className="table-container">
+      <table className="table">
+        <thead>
+          <tr>
+            <th><div className="h-4 bg-slate-700 rounded w-32" /></th>
+            <th><div className="h-4 bg-slate-700 rounded w-20" /></th>
+            <th><div className="h-4 bg-slate-700 rounded w-24" /></th>
+            <th><div className="h-4 bg-slate-700 rounded w-20" /></th>
+            <th><div className="h-4 bg-slate-700 rounded w-24" /></th>
+            <th><div className="h-4 bg-slate-700 rounded w-24" /></th>
+            <th><div className="h-4 bg-slate-700 rounded w-20" /></th>
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: rows }).map((_, i) => (
+            <tr key={i}>
+              <td>
+                <div className="space-y-1">
+                  <div className="h-4 bg-slate-800 rounded w-40 animate-pulse" />
+                  <div className="h-3 bg-slate-800 rounded w-24 animate-pulse" />
+                </div>
+              </td>
+              <td><div className="h-6 w-16 bg-slate-800 rounded mx-auto animate-pulse" /></td>
+              <td><div className="h-4 bg-slate-800 rounded w-32 animate-pulse" /></td>
+              <td><div className="h-4 bg-slate-800 rounded w-12 mx-auto animate-pulse" /></td>
+              <td>
+                <div className="space-y-1">
+                  <div className="h-3 bg-slate-800 rounded w-24 animate-pulse" />
+                  <div className="h-3 bg-slate-800 rounded w-24 animate-pulse" />
+                </div>
+              </td>
+              <td><div className="h-6 w-20 bg-slate-800 rounded-full mx-auto animate-pulse" /></td>
+              <td>
+                <div className="flex gap-1.5 justify-center">
+                  <div className="h-8 w-8 bg-slate-800 rounded-lg animate-pulse" />
+                  <div className="h-8 w-8 bg-slate-800 rounded-lg animate-pulse" />
+                  <div className="h-8 w-8 bg-slate-800 rounded-lg animate-pulse" />
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+);
+
 // AccountForm Skeleton - cho trang tạo/sửa tài khoản game
 export const AccountFormSkeleton = () => (
   <div className="space-y-2">

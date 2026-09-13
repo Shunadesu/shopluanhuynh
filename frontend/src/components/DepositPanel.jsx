@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
-import api from '../utils/api';
+import api, { getImageUrl } from '../utils/api';
 import { useAuthStore } from '../store/authStore';
 import { useDepositStore } from '../store/data/depositStore';
 import { useUserProfile } from '../hooks/useUserProfile';
@@ -436,7 +436,7 @@ const DepositPanel = ({ user }) => {
                 {bankInfo.qrCodeImage ? (
                   <div className="bg-white dark:bg-white p-3 rounded-xl border-2 border-primary/20 inline-block">
                     <img
-                      src={bankInfo.qrCodeImage}
+                      src={getImageUrl(bankInfo.qrCodeImage)}
                       alt={`QR ${bankInfo.bankName}`}
                       className="w-56 h-56 sm:w-64 sm:h-64 mx-auto object-contain"
                     />

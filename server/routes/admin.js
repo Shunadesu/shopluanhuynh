@@ -311,7 +311,7 @@ router.get('/accounts', adminAuth, async (req, res) => {
 // Create account
 router.post('/accounts', adminAuth, async (req, res) => {
   try {
-    const { loginInfo, ...restData } = req.body;
+    const { loginInfo, originalPrice, adminDiscountPercent, ...restData } = req.body;
     
     // Parse loginInfo to extract username, password, and password2
     let username = '';
@@ -344,15 +344,40 @@ router.post('/accounts', adminAuth, async (req, res) => {
         }
       }
     }
+
+    // Tính giá bán từ giá gốc và % giảm giá
+    let finalPrice = restData.price;
+    let finalOriginalPrice = originalPrice || 0;
+    let finalDiscountPercent = adminDiscountPercent || 0;
+
+    if (originalPrice && adminDiscountPercent !== undefined) {
+      // Có giá gốc và % giảm → tính giá bán tự động
+      finalPrice = Math.round(originalPrice * (1 - adminDiscountPercent / 100));
+      finalOriginalPrice = originalPrice;
+      finalDiscountPercent = adminDiscountPercent;
+    } else if (originalPrice && !restData.price) {
+      // Chỉ có giá gốc, không có discount → giá bán = giá gốc
+      finalPrice = originalPrice;
+      finalOriginalPrice = originalPrice;
+      finalDiscountPercent = 0;
+    } else if (restData.price && !originalPrice) {
+      // Chỉ có giá bán, không có giá gốc → giá gốc = giá bán
+      finalPrice = restData.price;
+      finalOriginalPrice = restData.price;
+      finalDiscountPercent = 0;
+    }
     
     const accountData = {
       ...restData,
-      categoryId: restData.category || restData.categoryId, // Map category to categoryId
+      categoryId: restData.category || restData.categoryId,
       username: encrypt(username || 'N/A'),
       password: encrypt(password || 'N/A'),
-      password2: password2 ? encrypt(password2) : ''
+      password2: password2 ? encrypt(password2) : '',
+      price: finalPrice,
+      originalPrice: finalOriginalPrice,
+      adminDiscountPercent: finalDiscountPercent
     };
-    delete accountData.category; // Remove category if exists
+    delete accountData.category;
 
     const account = new GameAccount(accountData);
     await account.save();
@@ -378,7 +403,7 @@ router.post('/accounts', adminAuth, async (req, res) => {
 // Update account
 router.put('/accounts/:id', adminAuth, async (req, res) => {
   try {
-    const { loginInfo, ...restData } = req.body;
+    const { loginInfo, originalPrice, adminDiscountPercent, ...restData } = req.body;
     
     const updateData = { ...restData };
     
@@ -408,6 +433,30 @@ router.put('/accounts/:id', adminAuth, async (req, res) => {
       if (username) updateData.username = encrypt(username);
       if (password) updateData.password = encrypt(password);
       if (password2) updateData.password2 = encrypt(password2);
+    }
+
+    // Tính giá bán từ giá gốc và % giảm giá
+    if (originalPrice !== undefined) {
+      updateData.originalPrice = originalPrice;
+    }
+    
+    if (adminDiscountPercent !== undefined) {
+      updateData.adminDiscountPercent = adminDiscountPercent;
+    }
+
+    // Nếu có cả originalPrice và adminDiscountPercent, tính lại price
+    if (originalPrice !== undefined && adminDiscountPercent !== undefined) {
+      updateData.price = Math.round(originalPrice * (1 - adminDiscountPercent / 100));
+    } else if (originalPrice !== undefined && updateData.adminDiscountPercent !== undefined) {
+      // Có originalPrice mới, dùng discount cũ
+      const account = await GameAccount.findById(req.params.id);
+      const discount = account?.adminDiscountPercent || 0;
+      updateData.price = Math.round(originalPrice * (1 - discount / 100));
+    } else if (adminDiscountPercent !== undefined && updateData.originalPrice !== undefined) {
+      // Có discount mới, dùng originalPrice cũ
+      const account = await GameAccount.findById(req.params.id);
+      const origPrice = account?.originalPrice || account?.price || 0;
+      updateData.price = Math.round(origPrice * (1 - adminDiscountPercent / 100));
     }
     
     // Map category to categoryId for database compatibility

@@ -337,6 +337,16 @@ export default function Accounts() {
                       <span className="font-semibold text-cyan-400 text-sm">
                         {account.price?.toLocaleString('vi-VN')}đ
                       </span>
+                      {account.promotionName && (
+                        <span className="text-[10px] bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded mt-1 inline-block w-fit">
+                          KM: {account.discountPercent || 0}%
+                        </span>
+                      )}
+                      {!account.promotionName && account.adminDiscountPercent > 0 && (
+                        <span className="text-[10px] text-slate-500 mt-0.5">
+                          Giảm {account.adminDiscountPercent}%
+                        </span>
+                      )}
                     </div>
                   </td>
 

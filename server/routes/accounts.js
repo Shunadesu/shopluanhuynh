@@ -2,6 +2,7 @@ import express from 'express';
 import GameAccount from '../models/GameAccount.js';
 import { auth } from '../middleware/auth.js';
 import { decrypt } from '../utils/encryption.js';
+import { applyPromotionPricing, applyPromotionPricingSingle } from '../utils/priceCalculator.js';
 
 const router = express.Router();
 
@@ -70,10 +71,13 @@ router.get('/', async (req, res) => {
       .skip(skip)
       .limit(parseInt(limit));
 
+    // Áp dụng promotion pricing cho tất cả accounts
+    const accountsWithPromotion = await applyPromotionPricing(accounts);
+
     // Ưu tiên subcategory nếu có (tài khoản thuộc danh mục con),
     // fallback về category cha nếu tài khoản chỉ gắn với danh mục cha.
-    const mappedAccounts = accounts.map(acc => {
-      const accObj = acc.toObject();
+    const mappedAccounts = accountsWithPromotion.map(acc => {
+      const accObj = typeof acc.toObject === 'function' ? acc.toObject() : acc;
       accObj.category = accObj.subcategoryId || accObj.categoryId;
       return accObj;
     });
@@ -105,8 +109,11 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Tài khoản không tồn tại' });
     }
 
+    // Áp dụng promotion pricing
+    const accountWithPromotion = await applyPromotionPricingSingle(account);
+
     // Map categoryId to category for frontend compatibility
-    const accountObj = account.toObject();
+    const accountObj = accountWithPromotion;
     accountObj.category = accountObj.categoryId;
 
     // If account is sold and user owns it, decrypt credentials

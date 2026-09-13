@@ -57,6 +57,15 @@ const depositRequestSchema = new mongoose.Schema({
   processedAt: {
     type: Date,
     default: null
+  },
+  // Auto-approval tracking
+  autoApproved: {
+    type: Boolean,
+    default: false
+  },
+  emailProcessedAt: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true
