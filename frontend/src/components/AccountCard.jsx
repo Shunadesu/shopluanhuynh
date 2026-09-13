@@ -53,23 +53,35 @@ const AccountCard = ({ account, onBuyNow }) => {
           </div>
         )}
 
-        <p className="text-slate-400 text-xs mb-2 line-clamp-2 min-h-[1rem]">
+        <p className="text-slate-400 text-xs line-clamp-2 min-h-[1rem]">
           {account.description}
         </p>
 
         {/* Price section */}
-        <div className="space-y-1 mt-auto">
+        <div className="mt-auto">
           {/* Original price — struck through above */}
-          <div className="min-h-[1rem]">
+          <div className="min-h-[1rem] mt-2">
             {account.originalPrice > 0 && account.originalPrice > account.price && (
-              <span className="text-slate-400 text-xs line-through">
-                {account.originalPrice.toLocaleString('vi-VN')}đ
-              </span>
+              
+              <div className='text-slate-400 text-sm flex items-center gap-1'>
+                  <span className='hidden md:flex'>
+                    Giá gốc:
+                  </span>
+
+                  <span className="text-slate-400 line-through">
+                    {account.originalPrice.toLocaleString('vi-VN')}đ
+                  </span>
+              </div>
+              
+              
             )}
           </div>
 
           {/* Sale price — orange */}
-          <div>
+          <div className='flex items-center gap-1 mb-2'>
+            <span className='hidden md:flex text-sm text-slate-400'>
+              Giá bán:
+            </span>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-orange-400 to-amber-300 font-black text-xl">
               {account.price.toLocaleString('vi-VN')}đ
             </span>

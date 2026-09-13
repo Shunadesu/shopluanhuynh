@@ -183,17 +183,22 @@ class EmailChecker {
             console.log(`📬 Found ${results.length} unread email(s)`);
 
             const fetch = this.imap.fetch(results, { bodies: '' });
-            let processedCount = 0;
+            const emailPromises = [];
 
             fetch.on('message', (msg, seqno) => {
-              msg.on('body', async (stream) => {
-                try {
-                  const parsed = await simpleParser(stream);
-                  await this.processEmail(parsed);
-                } catch (error) {
-                  console.error('❌ Parse error:', error.message);
-                }
+              const emailPromise = new Promise((resolveEmail) => {
+                msg.on('body', async (stream) => {
+                  try {
+                    const parsed = await simpleParser(stream);
+                    await this.processEmail(parsed);
+                  } catch (error) {
+                    console.error('❌ Parse error:', error.message);
+                  }
+                  resolveEmail();
+                });
               });
+              
+              emailPromises.push(emailPromise);
 
               msg.once('attributes', (attrs) => {
                 // Đánh dấu đã đọc
@@ -207,7 +212,9 @@ class EmailChecker {
               console.error('❌ Fetch error:', err.message);
             });
 
-            fetch.once('end', () => {
+            fetch.once('end', async () => {
+              // Đợi tất cả email được process xong
+              await Promise.all(emailPromises);
               this.imap.end();
               this.isChecking = false;
               resolve();
@@ -294,18 +301,39 @@ class EmailChecker {
       }
       
       const amount = parseFloat(amountStr);
-      const transferNote = codeMatch[1].trim().toUpperCase();
+      
+      // Chuẩn hóa transferNote - loại bỏ số tiền nếu có
+      // "PNHN1234 10000" -> "PNHN1234"
+      let transferNote = codeMatch[1].trim().toUpperCase();
+      transferNote = transferNote.replace(/\s+\d+$/, ''); // Remove trailing numbers
 
       console.log(`💰 Found: ${transferNote} - ${amount.toLocaleString()} VND`);
 
-      // Tìm deposit request theo transferNote
-      const deposit = await DepositRequest.findOne({ 
-        transferNote: transferNote,
+      // Tìm deposit request theo transferNote (case-insensitive)
+      // Thử cả 2 format: "PNHN1234" và "PNHN1234 10000"
+      const transferNoteWithAmount = `${transferNote} ${Math.floor(amount)}`;
+      
+      let deposit = await DepositRequest.findOne({ 
+        transferNote: new RegExp(`^${transferNote}$`, 'i'),
         status: 'pending'
       }).populate('userId');
+      
+      // Nếu không tìm thấy, thử format có số tiền
+      if (!deposit) {
+        deposit = await DepositRequest.findOne({ 
+          transferNote: new RegExp(`^${transferNote}\\s+\\d+$`, 'i'),
+          status: 'pending'
+        }).populate('userId');
+      }
 
       if (!deposit) {
         console.log(`❌ Deposit not found or already processed: ${transferNote}`);
+        // Debug: Kiểm tra xem có deposit nào pending không
+        const allPending = await DepositRequest.find({ 
+          status: 'pending',
+          depositMethod: 'bank'
+        }).select('transferNote amount userId');
+        console.log(`   📋 Current pending deposits:`, allPending.map(d => `${d.transferNote} (${d.amount}đ)`).join(', ') || 'None');
         return;
       }
 

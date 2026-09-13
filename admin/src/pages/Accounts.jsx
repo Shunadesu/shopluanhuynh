@@ -14,6 +14,8 @@ export default function Accounts() {
   const [selectedSubcategory, setSelectedSubcategory] = useState('');
   const [subcategories, setSubcategories] = useState([]);
   const [statusFilter, setStatusFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
   const [gallery, setGallery] = useState({ urls: [], index: 0 }); // { urls: string[], index: number }
 
   // Collect all images from an account (thumbnail + images array)
@@ -31,9 +33,9 @@ export default function Accounts() {
 
   // Use admin endpoint to get full account data
   const { data: accountsData, isLoading } = useQuery({
-    queryKey: ['admin-accounts', selectedCategory, selectedSubcategory, statusFilter, searchTerm],
+    queryKey: ['admin-accounts', selectedCategory, selectedSubcategory, statusFilter, searchTerm, page, limit],
     queryFn: async () => {
-      let url = '/admin/accounts?';
+      let url = `/admin/accounts?page=${page}&limit=${limit}&`;
       if (selectedCategory) url += `category=${selectedCategory}&`;
       if (selectedSubcategory) url += `subcategory=${selectedSubcategory}&`;
       if (statusFilter) url += `status=${statusFilter}&`;
@@ -108,8 +110,20 @@ export default function Accounts() {
     setSelectedSubcategory('');
     setSubcategories([]);
     setStatusFilter('');
+    setPage(1);
     queryClient.invalidateQueries(['admin-accounts']);
     toast.success('Đã làm mới dữ liệu');
+  };
+
+  // Reset to page 1 when filters change
+  const handleFilterChange = (setter) => (value) => {
+    setter(value);
+    setPage(1);
+  };
+
+  const handleLimitChange = (newLimit) => {
+    setLimit(newLimit);
+    setPage(1);
   };
 
   const getStatusBadge = (status) => {
@@ -172,7 +186,7 @@ export default function Accounts() {
           <input
             type="text"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => handleFilterChange(setSearchTerm)(e.target.value)}
             placeholder="Tìm kiếm tài khoản..."
             className="input-field pl-11 w-full"
           />
@@ -180,7 +194,7 @@ export default function Accounts() {
         <select
           value={selectedCategory}
           onChange={(e) => {
-            setSelectedCategory(e.target.value);
+            handleFilterChange(setSelectedCategory)(e.target.value);
             fetchSubcategories(e.target.value);
           }}
           className="input-field w-52"
@@ -194,7 +208,7 @@ export default function Accounts() {
         </select>
         <select
           value={selectedSubcategory}
-          onChange={(e) => setSelectedSubcategory(e.target.value)}
+          onChange={(e) => handleFilterChange(setSelectedSubcategory)(e.target.value)}
           className="input-field w-44"
           disabled={!selectedCategory || subcategories.length === 0}
         >
@@ -207,13 +221,23 @@ export default function Accounts() {
         </select>
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={(e) => handleFilterChange(setStatusFilter)(e.target.value)}
           className="input-field w-44"
         >
           <option value="">Tất cả trạng thái</option>
           <option value="available">Còn hàng</option>
           <option value="sold">Đã bán</option>
           <option value="reserved">Đang giữ</option>
+        </select>
+        <select
+          value={limit}
+          onChange={(e) => handleLimitChange(Number(e.target.value))}
+          className="input-field w-36"
+        >
+          <option value={10}>10 / trang</option>
+          <option value={20}>20 / trang</option>
+          <option value={50}>50 / trang</option>
+          <option value={100}>100 / trang</option>
         </select>
       </div>
 
@@ -449,9 +473,94 @@ export default function Accounts() {
       </div>
 
       {/* Pagination info */}
-      {accountsData?.pagination && accountsData.pagination.pages > 1 && (
-        <div className="text-center text-slate-400 text-sm">
-          Trang {accountsData.pagination.page} / {accountsData.pagination.pages} — {accountsData.pagination.total} tài khoản
+      {accountsData?.pagination && accountsData.pagination.total > 0 && (
+        <div className="flex items-center justify-between gap-4 pt-2">
+          {/* Info */}
+          <div className="text-slate-400 text-sm">
+            Hiển thị {((page - 1) * limit) + 1} - {Math.min(page * limit, accountsData.pagination.total)} trong tổng số {accountsData.pagination.total} tài khoản
+          </div>
+
+          {/* Pagination Controls */}
+          {accountsData.pagination.pages > 1 && (
+            <div className="flex items-center gap-2">
+              {/* Previous */}
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="px-3 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all text-sm"
+              >
+                Trước
+              </button>
+
+              {/* Page Numbers */}
+              <div className="flex items-center gap-1">
+                {(() => {
+                  const totalPages = accountsData.pagination.pages;
+                  const current = page;
+                  const pages = [];
+
+                  // Always show first page
+                  pages.push(1);
+
+                  // Calculate range around current page
+                  let start = Math.max(2, current - 1);
+                  let end = Math.min(totalPages - 1, current + 1);
+
+                  // Add ellipsis after first page if needed
+                  if (start > 2) {
+                    pages.push('...');
+                  }
+
+                  // Add pages around current
+                  for (let i = start; i <= end; i++) {
+                    pages.push(i);
+                  }
+
+                  // Add ellipsis before last page if needed
+                  if (end < totalPages - 1) {
+                    pages.push('...');
+                  }
+
+                  // Always show last page if more than 1 page
+                  if (totalPages > 1) {
+                    pages.push(totalPages);
+                  }
+
+                  return pages.map((p, i) => {
+                    if (p === '...') {
+                      return (
+                        <span key={`ellipsis-${i}`} className="px-2 text-slate-500">
+                          ...
+                        </span>
+                      );
+                    }
+                    return (
+                      <button
+                        key={p}
+                        onClick={() => setPage(p)}
+                        className={`min-w-10 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                          p === current
+                            ? 'bg-cyan-500 text-white'
+                            : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    );
+                  });
+                })()}
+              </div>
+
+              {/* Next */}
+              <button
+                onClick={() => setPage(p => Math.min(accountsData.pagination.pages, p + 1))}
+                disabled={page === accountsData.pagination.pages}
+                className="px-3 py-2 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all text-sm"
+              >
+                Sau
+              </button>
+            </div>
+          )}
         </div>
       )}
 
