@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import mongoose from 'mongoose';
 import SpinReward from '../models/SpinReward.js';
+import GameAccount from '../models/GameAccount.js';
 
 async function checkSpinRewards() {
   try {

@@ -52,8 +52,19 @@ const SpinWheel = () => {
       const rewardId = response.data.reward._id;
       const prizeIdx = wheelData.findIndex(item => item._id === rewardId);
       
+      console.log('🎯 Spin Debug:');
+      console.log('Backend returned reward._id:', rewardId);
+      console.log('Backend returned reward.label:', response.data.reward.label);
+      console.log('Found at wheelData index:', prizeIdx);
+      console.log('WheelData array:', wheelData.map((w, i) => `${i}: ${w.option} (${w._id})`));
+      
       if (prizeIdx !== -1) {
-        setPrizeNumber(prizeIdx);
+        // FIX: Compensate for pointer position (TOP vs RIGHT default)
+        // Pointer at TOP requires offset adjustment
+        const adjustedIndex = (prizeIdx + 1) % wheelData.length;
+        console.log('Adjusted index for TOP pointer:', adjustedIndex);
+        
+        setPrizeNumber(adjustedIndex);
         setResult(response.data.reward);
         setMustSpin(true);
       } else {

@@ -111,14 +111,14 @@ router.post('/spin', auth, spinLimiter, async (req, res) => {
       return res.status(400).json({ message: 'Bạn không có lượt quay' });
     }
 
-    // Get active rewards with stock
+    // Get active rewards with stock (MUST match /config sort order)
     const rewards = await SpinReward.find({
       isActive: true,
       $or: [
         { stock: null },
         { stock: { $gt: 0 } }
       ]
-    }).populate('accountId').session(session);
+    }).populate('accountId').sort({ probability: -1 }).session(session);
 
     if (rewards.length === 0) {
       await session.abortTransaction();
