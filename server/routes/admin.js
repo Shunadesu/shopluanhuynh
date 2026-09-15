@@ -905,19 +905,44 @@ router.put('/bank-accounts/:id/toggle', adminAuth, async (req, res) => {
 // Get all users
 router.get('/users', adminAuth, async (req, res) => {
   try {
-    const { page = 1, limit = 20 } = req.query;
+    const { page = 1, limit = 20, search } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
-    const users = await User.find({ role: 'user' })
+    // Build search query
+    const query = { role: 'user' };
+    if (search) {
+      query.$or = [
+        { username: { $regex: search, $options: 'i' } },
+        { fullName: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const users = await User.find(query)
       .select('-password')
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(parseInt(limit));
+      .limit(parseInt(limit))
+      .lean();
 
-    const total = await User.countDocuments({ role: 'user' });
+    // Get purchased accounts count for each user
+    const usersWithStats = await Promise.all(
+      users.map(async (user) => {
+        const purchasedAccountsCount = await Order.countDocuments({
+          userId: user._id,
+          status: 'completed'
+        });
+        return {
+          ...user,
+          purchasedAccountsCount
+        };
+      })
+    );
+
+    const total = await User.countDocuments(query);
 
     res.json({
-      users,
+      users: usersWithStats,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -950,9 +975,19 @@ router.put('/users/:id/adjust-balance', adminAuth, async (req, res) => {
     const user = await User.findById(req.params.id);
     
     if (action === 'add') {
+      // Calculate spins before adding balance
+      const prevTotalDeposited = user.totalDeposited || 0;
+      const newTotalDeposited = prevTotalDeposited + amount;
+      const spinsAwarded = calculateSpinsAwarded(prevTotalDeposited, newTotalDeposited);
+      
       user.balance += amount;
+      user.totalDeposited = newTotalDeposited;
+      user.spins = (user.spins || 0) + spinsAwarded;
+      
+      console.log(`✅ Adjust balance for ${user.username}: +${amount}đ, totalDeposited: ${user.totalDeposited}, spins awarded: ${spinsAwarded}, total spins: ${user.spins}`);
     } else if (action === 'subtract') {
       user.balance = Math.max(0, user.balance - amount);
+      console.log(`✅ Adjust balance for ${user.username}: -${amount}đ, new balance: ${user.balance}`);
     }
     
     await user.save();

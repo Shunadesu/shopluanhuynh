@@ -59,7 +59,7 @@ router.get('/my-spins', async (req, res) => {
         const token = authHeader.slice(7);
         const jwt = (await import('jsonwebtoken')).default;
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        userId = decoded.userId;
+        userId = decoded.id; // FIX: Use 'id' not 'userId' to match JWT payload
       } catch (e) {
         // Token invalid/expired, treat as guest
         userId = null;
@@ -251,6 +251,7 @@ router.post('/spin', auth, spinLimiter, async (req, res) => {
     res.json({
       success: true,
       reward: {
+        _id: selectedReward._id,  // ADD: Return reward ID for accurate wheel positioning
         type: rewardData.rewardType,
         label: rewardData.rewardLabel,
         value: rewardData.rewardValue,

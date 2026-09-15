@@ -48,14 +48,18 @@ const SpinWheel = () => {
     const response = await spinWheel();
 
     if (response.success) {
-      // Find the prize index
-      const rewardLabel = response.data.reward.label;
-      const prizeIdx = wheelData.findIndex(item => item.option === rewardLabel);
+      // Find the prize index by reward _id (not label - fixes duplicate label bug)
+      const rewardId = response.data.reward._id;
+      const prizeIdx = wheelData.findIndex(item => item._id === rewardId);
       
       if (prizeIdx !== -1) {
         setPrizeNumber(prizeIdx);
         setResult(response.data.reward);
         setMustSpin(true);
+      } else {
+        console.error('Reward not found in wheel data:', rewardId);
+        alert('Lỗi: Không tìm thấy phần thưởng trên vòng quay');
+        setSpinning(false);
       }
     } else {
       alert(response.error);

@@ -86,6 +86,8 @@ export default function Users() {
               <th>Họ tên</th>
               <th>Số điện thoại</th>
               <th>Số dư</th>
+              <th>Tổng nạp</th>
+              <th>Lượt quay</th>
               <th>Số acc đã mua</th>
               <th>Quyền</th>
               <th>Ngày tạo</th>
@@ -101,6 +103,14 @@ export default function Users() {
                   <td className="text-slate-400">{user.phone || 'Chưa cập nhật'}</td>
                   <td className="font-semibold text-cyan-400">
                     {user.balance?.toLocaleString('vi-VN')}đ
+                  </td>
+                  <td className="font-semibold text-purple-400">
+                    {(user.totalDeposited || 0).toLocaleString('vi-VN')}đ
+                  </td>
+                  <td>
+                    <span className="px-3 py-1 bg-orange-500/20 text-orange-400 rounded-full font-semibold text-sm">
+                      🎡 {user.spins || 0}
+                    </span>
                   </td>
                   <td>
                     <span className="text-cyan-400 font-semibold">
@@ -143,7 +153,7 @@ export default function Users() {
               ))
             ) : (
               <tr>
-                <td colSpan="8" className="text-center text-slate-400 py-4">
+                <td colSpan="10" className="text-center text-slate-400 py-4">
                   Chưa có người dùng nào
                 </td>
               </tr>
@@ -177,14 +187,36 @@ export default function Users() {
                   </p>
                 </div>
                 <div className="card bg-purple-500/10 border-purple-500/30">
-                  <p className="text-sm text-slate-400 mb-1">Quyền</p>
+                  <p className="text-sm text-slate-400 mb-1">Tổng đã nạp</p>
                   <p className="text-2xl font-bold text-purple-400">
-                    {selectedUser.isAdmin ? 'Admin' : 'User'}
+                    {(selectedUser.totalDeposited || 0).toLocaleString('vi-VN')}đ
+                  </p>
+                </div>
+                <div className="card bg-orange-500/10 border-orange-500/30">
+                  <p className="text-sm text-slate-400 mb-1">Lượt quay còn lại</p>
+                  <p className="text-2xl font-bold text-orange-400">
+                    🎡 {selectedUser.spins || 0}
+                  </p>
+                </div>
+                <div className="card bg-green-500/10 border-green-500/30">
+                  <p className="text-sm text-slate-400 mb-1">Acc đã mua</p>
+                  <p className="text-2xl font-bold text-green-400">
+                    {selectedUser.purchasedAccountsCount || 0}
                   </p>
                 </div>
               </div>
 
               <div className="space-y-2 pt-2 border-t border-slate-700">
+                <div>
+                  <p className="text-sm text-slate-400">Quyền</p>
+                  <p className="text-slate-100">
+                    {selectedUser.isAdmin ? (
+                      <span className="badge badge-success">Admin</span>
+                    ) : (
+                      <span className="badge badge-info">User</span>
+                    )}
+                  </p>
+                </div>
                 <div>
                   <p className="text-sm text-slate-400">Số điện thoại</p>
                   <p className="text-slate-100">{selectedUser.phone || 'Chưa cập nhật'}</p>

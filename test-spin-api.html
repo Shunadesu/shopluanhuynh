@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Spin API</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #0F172A;
+      color: #F8FAFC;
+    }
+    .section {
+      background: #1E293B;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    button {
+      background: #38BDF8;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:hover { background: #0EA5E9; }
+    button:disabled { background: #475569; cursor: not-allowed; }
+    input {
+      background: #0F172A;
+      border: 1px solid #475569;
+      color: #F8FAFC;
+      padding: 8px 12px;
+      border-radius: 6px;
+      width: 100%;
+      margin: 8px 0;
+    }
+    pre {
+      background: #0F172A;
+      border: 1px solid #475569;
+      padding: 12px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 13px;
+    }
+    .success { color: #4FD1C5; }
+    .error { color: #F97316; }
+    label { display: block; margin-top: 12px; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <h1>🔍 Test Spin API</h1>
+  
+  <div class="section">
+    <h2>1. Login để lấy JWT Token</h2>
+    <label>Username:</label>
+    <input type="text" id="username" value="test9086156222" />
+    <label>Password:</label>
+    <input type="password" id="password" value="123456" />
+    <button onclick="login()">🔑 Login</button>
+    <pre id="loginResult">Chưa login...</pre>
+  </div>
+
+  <div class="section">
+    <h2>2. Test GET /api/spin/my-spins</h2>
+    <button onclick="getMySpins()">📊 Lấy số lượt quay</button>
+    <pre id="spinsResult">Chưa test...</pre>
+  </div>
+
+  <div class="section">
+    <h2>3. Test GET /api/spin/config</h2>
+    <button onclick="getSpinConfig()">🎰 Lấy cấu hình vòng quay</button>
+    <pre id="configResult">Chưa test...</pre>
+  </div>
+
+  <script>
+    let token = '';
+    const API_BASE = window.location.hostname === 'localhost' 
+      ? 'http://localhost:5000/api'
+      : 'https://luanhuynhfc.shop/api';
+
+    async function login() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      
+      try {
+        const res = await fetch(`${API_BASE}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+          token = data.token;
+          document.getElementById('loginResult').innerHTML = 
+            `<span class="success">✅ Login thành công!</span>\n` +
+            `Token: ${token.substring(0, 30)}...\n` +
+            `User: ${data.user.username}\n` +
+            JSON.stringify(data.user, null, 2);
+        } else {
+          document.getElementById('loginResult').innerHTML = 
+            `<span class="error">❌ Login thất bại!</span>\n${JSON.stringify(data, null, 2)}`;
+        }
+      } catch (error) {
+        document.getElementById('loginResult').innerHTML = 
+          `<span class="error">❌ Error: ${error.message}</span>`;
+      }
+    }
+
+    async function getMySpins() {
+      if (!token) {
+        alert('Vui lòng login trước!');
+        return;
+      }
+      
+      try {
+        const res = await fetch(`${API_BASE}/spin/my-spins`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+          document.getElementById('spinsResult').innerHTML = 
+            `<span class="success">✅ Success!</span>\n` +
+            `Spins: ${data.spins}\n` +
+            `Total Deposited: ${data.totalDeposited?.toLocaleString('vi-VN')}đ\n` +
+            `Authenticated: ${data.isAuthenticated}\n\n` +
+            JSON.stringify(data, null, 2);
+        } else {
+          document.getElementById('spinsResult').innerHTML = 
+            `<span class="error">❌ Error!</span>\n${JSON.stringify(data, null, 2)}`;
+        }
+      } catch (error) {
+        document.getElementById('spinsResult').innerHTML = 
+          `<span class="error">❌ Error: ${error.message}</span>`;
+      }
+    }
+
+    async function getSpinConfig() {
+      try {
+        const res = await fetch(`${API_BASE}/spin/config`);
+        const data = await res.json();
+        
+        if (res.ok) {
+          document.getElementById('configResult').innerHTML = 
+            `<span class="success">✅ Success! Found ${data.length} rewards</span>\n\n` +
+            JSON.stringify(data, null, 2);
+        } else {
+          document.getElementById('configResult').innerHTML = 
+            `<span class="error">❌ Error!</span>\n${JSON.stringify(data, null, 2)}`;
+        }
+      } catch (error) {
+        document.getElementById('configResult').innerHTML = 
+          `<span class="error">❌ Error: ${error.message}</span>`;
+      }
+    }
+  </script>
+</body>
+</html>
