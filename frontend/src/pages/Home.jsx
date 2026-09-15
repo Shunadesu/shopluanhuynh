@@ -7,7 +7,7 @@ import AccountCard from '../components/AccountCard';
 import { AccountCardSkeleton } from '../components/SkeletonLoader';
 import BuyNowModal from '../components/BuyNowModal';
 import { useAuthStore } from '../store/authStore';
-import api from '../utils/api';
+import api, { getImageUrl } from '../utils/api';
 import toast from 'react-hot-toast';
 
 // Skeleton loader components
@@ -29,7 +29,7 @@ const SubcategoryGrid = ({ parentCategory, subcategories, onSelectSubcategory, a
           <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
             {parentCategory.thumbnail && (
               <img
-                src={parentCategory.thumbnail}
+                src={getImageUrl(parentCategory.thumbnail)}
                 alt={parentCategory.name}
                 className="w-6 h-6 rounded object-cover"
               />
@@ -51,7 +51,7 @@ const SubcategoryGrid = ({ parentCategory, subcategories, onSelectSubcategory, a
             >
               {subcategory.thumbnail ? (
                 <img
-                  src={subcategory.thumbnail}
+                  src={getImageUrl(subcategory.thumbnail)}
                   alt={subcategory.name}
                   className="w-full h-auto object-cover rounded-lg mb-2"
                 />
@@ -127,7 +127,7 @@ const CategoryAccountSection = ({ category, accounts, isLoading, onSelectSubcate
           <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
             {category.thumbnail && (
               <img
-                src={category.thumbnail}
+                src={getImageUrl(category.thumbnail)}
                 alt={category.name}
                 className="w-6 h-6 rounded object-cover"
               />
@@ -577,7 +577,7 @@ const Home = () => {
                     >
                       {category.thumbnail ? (
                         <img
-                          src={category.thumbnail}
+                          src={getImageUrl(category.thumbnail)}
                           alt={category.name}
                           className="w-full h-40 object-cover rounded-lg mb-2"
                         />
@@ -778,7 +778,7 @@ const Home = () => {
                 <>
                   {selectedSubcategory.thumbnail && (
                     <img
-                      src={selectedSubcategory.thumbnail}
+                      src={getImageUrl(selectedSubcategory.thumbnail)}
                       alt={selectedSubcategory.name}
                       className="w-6 h-6 rounded object-cover"
                     />
@@ -799,7 +799,7 @@ const Home = () => {
                 <>
                   {selectedParent.thumbnail && (
                     <img
-                      src={selectedParent.thumbnail}
+                      src={getImageUrl(selectedParent.thumbnail)}
                       alt={selectedParent.name}
                       className="w-6 h-6 rounded object-cover"
                     />

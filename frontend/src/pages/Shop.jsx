@@ -113,7 +113,7 @@ const CategorySection = ({ category, accounts, onAddToCart, onBuyNow, addToCartP
           <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             {category.thumbnail && (
               <img
-                src={category.thumbnail}
+                src={getImageUrl(category.thumbnail)}
                 alt={category.name}
                 className="w-8 h-8 rounded-lg object-cover"
               />
@@ -165,7 +165,7 @@ const SubcategorySection = ({ parentCategory, subcategories, onSelectSubcategory
           <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             {parentCategory.thumbnail && (
               <img
-                src={parentCategory.thumbnail}
+                src={getImageUrl(parentCategory.thumbnail)}
                 alt={parentCategory.name}
                 className="w-8 h-8 rounded-lg object-cover"
               />
@@ -184,7 +184,7 @@ const SubcategorySection = ({ parentCategory, subcategories, onSelectSubcategory
             >
               {subcategory.thumbnail ? (
                 <img
-                  src={subcategory.thumbnail}
+                  src={getImageUrl(subcategory.thumbnail)}
                   alt={subcategory.name}
                   className="w-full h-24 object-cover rounded-lg mb-3"
                 />
@@ -556,7 +556,7 @@ const Shop = () => {
               >
                 {cat.thumbnail && (
                   <img
-                    src={cat.thumbnail}
+                    src={getImageUrl(cat.thumbnail)}
                     alt={cat.name}
                     className="w-5 h-5 rounded object-cover"
                   />

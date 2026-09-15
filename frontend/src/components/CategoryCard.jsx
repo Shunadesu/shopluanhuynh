@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { getImageUrl } from '../utils/api';
 
 const CategoryCard = ({ category }) => {
   return (
@@ -11,7 +12,7 @@ const CategoryCard = ({ category }) => {
         <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary-dark rounded-lg flex items-center justify-center flex-shrink-0">
           {category.thumbnail ? (
             <img
-              src={category.thumbnail}
+              src={getImageUrl(category.thumbnail)}
               alt={category.name}
               className="w-full h-full object-cover rounded-lg"
             />
