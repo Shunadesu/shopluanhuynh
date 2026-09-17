@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { FiSearch, FiEye, FiUserCheck, FiUserX } from 'react-icons/fi';
+import { FiSearch, FiEye, FiUserCheck, FiUserX, FiDollarSign, FiEdit } from 'react-icons/fi';
 import { TableSkeleton } from '../components/SkeletonLoader';
 
 export default function Users() {
@@ -32,6 +32,77 @@ export default function Users() {
       toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
     },
   });
+
+  // State for balance adjustment
+  const [adjustMode, setAdjustMode] = useState(false);
+  const [adjustAmount, setAdjustAmount] = useState('');
+
+  // State for inline balance editing
+  const [inlineEditUser, setInlineEditUser] = useState(null);
+  const [inlineEditAmount, setInlineEditAmount] = useState('');
+
+  const adjustBalanceMutation = useMutation({
+    mutationFn: ({ id, amount, action }) =>
+      api.put(`/admin/users/${id}/adjust-balance`, { amount, action }),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries(['admin-users']);
+      setSelectedUser(response.data.user);
+      setAdjustMode(false);
+      setAdjustAmount('');
+      toast.success('Đã điều chỉnh số dư thành công');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
+    },
+  });
+
+  const inlineAdjustMutation = useMutation({
+    mutationFn: ({ id, amount }) =>
+      api.put(`/admin/users/${id}/adjust-balance`, {
+        amount: parseInt(amount),
+        action: 'set'
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['admin-users']);
+      setInlineEditUser(null);
+      setInlineEditAmount('');
+      toast.success('Đã cập nhật số dư');
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
+    },
+  });
+
+  // Open inline edit for a user
+  const openInlineEdit = (user, e) => {
+    e.stopPropagation();
+    setInlineEditUser(user);
+    setInlineEditAmount('');
+  };
+
+  // Handle inline balance adjustment (set directly)
+  const handleInlineAdjust = (user) => {
+    const amount = parseInt(inlineEditAmount);
+    if (inlineEditAmount === '' || isNaN(amount) || amount < 0) {
+      toast.error('Nhập số dư hợp lệ (≥ 0)');
+      return;
+    }
+    inlineAdjustMutation.mutate({ id: user._id, amount });
+  };
+
+  // Close inline edit when clicking outside
+  const inlineEditRef = useRef(null);
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (inlineEditRef.current && !inlineEditRef.current.contains(event.target)) {
+        setInlineEditUser(null);
+      }
+    };
+    if (inlineEditUser) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [inlineEditUser]);
 
   const handleToggleAdmin = (userId, currentStatus) => {
     if (window.confirm(`Xác nhận ${currentStatus ? 'gỡ' : 'cấp'} quyền admin?`)) {
@@ -78,7 +149,7 @@ export default function Users() {
       </div>
 
       {/* Users Table */}
-      <div className="table-container">
+      <div className="table-container" ref={inlineEditRef}>
         <table className="table">
           <thead>
             <tr>
@@ -101,8 +172,81 @@ export default function Users() {
                   <td className="font-medium">{user.username}</td>
                   <td className="text-slate-400">{user.fullName || 'N/A'}</td>
                   <td className="text-slate-400">{user.phone || 'Chưa cập nhật'}</td>
-                  <td className="font-semibold text-cyan-400">
-                    {user.balance?.toLocaleString('vi-VN')}đ
+                  <td className="relative font-semibold text-cyan-400">
+                    <div className="flex items-center gap-2">
+                      <span>{user.balance?.toLocaleString('vi-VN')}đ</span>
+                      <button
+                        onClick={(e) => openInlineEdit(user, e)}
+                        className="p-1 hover:bg-cyan-500/30 text-cyan-400 rounded transition-all"
+                        title="Sửa số dư"
+                      >
+                        <FiEdit size={14} />
+                      </button>
+                    </div>
+                    {/* Inline Edit Popover */}
+                    {inlineEditUser?._id === user._id && (
+                      <div
+                        className="absolute z-50 mt-2 p-4 bg-slate-800 border border-cyan-500/50 rounded-xl shadow-2xl w-72"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="font-semibold text-cyan-400 flex items-center gap-2">
+                            <FiDollarSign /> Sửa số dư
+                          </span>
+                          <button
+                            onClick={() => setInlineEditUser(null)}
+                            className="text-slate-400 hover:text-white"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        <div className="text-sm text-slate-400 mb-2">
+                          Số dư hiện tại: <span className="text-cyan-400 font-semibold">{user.balance?.toLocaleString('vi-VN')}đ</span>
+                        </div>
+                        <div className="text-xs text-slate-500 mb-2">
+                          Nhập số dư mới → số dư sẽ thành đúng số đó
+                        </div>
+                        <input
+                          type="number"
+                          value={inlineEditAmount}
+                          onChange={(e) => setInlineEditAmount(e.target.value)}
+                          placeholder="Nhập số dư mới..."
+                          min="0"
+                          step="1000"
+                          className="input-field w-full mb-3 text-sm"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && inlineEditAmount !== '' && parseInt(inlineEditAmount) >= 0) {
+                              handleInlineAdjust(user);
+                            }
+                          }}
+                        />
+                        {inlineEditAmount !== '' && parseInt(inlineEditAmount) >= 0 && (
+                          <div className="text-sm text-slate-400 mb-3 p-2 bg-slate-700/50 rounded">
+                            Số dư mới: <span className="font-bold text-cyan-400">
+                              {parseInt(inlineEditAmount).toLocaleString('vi-VN')}đ
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setInlineEditUser(null)}
+                            className="flex-1 py-2 px-3 bg-slate-700 text-slate-300 rounded-lg text-sm hover:bg-slate-600 transition-all"
+                          >
+                            Hủy
+                          </button>
+                          <button
+                            onClick={() => handleInlineAdjust(user)}
+                            disabled={inlineAdjustMutation.isPending}
+                            className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all bg-cyan-500 hover:bg-cyan-600 text-white ${
+                              inlineAdjustMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
+                          >
+                            {inlineAdjustMutation.isPending ? '...' : 'Xác nhận'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </td>
                   <td className="font-semibold text-purple-400">
                     {(user.totalDeposited || 0).toLocaleString('vi-VN')}đ
@@ -237,6 +381,92 @@ export default function Users() {
                 )}
               </div>
 
+              {/* Balance Adjustment Section */}
+              {adjustMode ? (
+                <div className="card bg-slate-800/50 border border-cyan-500/30 mt-4">
+                  <h3 className="text-lg font-bold text-cyan-400 mb-4 flex items-center gap-2">
+                    <FiDollarSign />
+                    Đặt số dư
+                  </h3>
+
+                  {/* Current Balance */}
+                  <div className="mb-4">
+                    <p className="text-sm text-slate-400">Số dư hiện tại</p>
+                    <p className="text-2xl font-bold text-cyan-400">
+                      {(selectedUser.balance || 0).toLocaleString('vi-VN')}đ
+                    </p>
+                  </div>
+
+                  {/* Amount Input */}
+                  <div className="mb-4">
+                    <label className="text-sm text-slate-400 block mb-2">
+                      Số dư mới (VND)
+                    </label>
+                    <input
+                      type="number"
+                      value={adjustAmount}
+                      onChange={(e) => setAdjustAmount(e.target.value)}
+                      placeholder="Nhập số dư mới..."
+                      min="0"
+                      step="1000"
+                      className="input-field w-full"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">
+                      Nhập số dư mới → số dư sẽ được đặt thành đúng số đó
+                    </p>
+                  </div>
+
+                  {/* New Balance Preview */}
+                  {adjustAmount !== '' && parseInt(adjustAmount) >= 0 && (
+                    <div className="mb-4 p-3 bg-slate-700/50 rounded-lg">
+                      <p className="text-sm text-slate-400">Số dư sẽ thành</p>
+                      <p className="text-xl font-bold text-cyan-400">
+                        {parseInt(adjustAmount).toLocaleString('vi-VN')}đ
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setAdjustMode(false);
+                        setAdjustAmount('');
+                      }}
+                      className="flex-1 btn-secondary"
+                    >
+                      Hủy
+                    </button>
+                    <button
+                      onClick={() => {
+                        const amount = parseInt(adjustAmount);
+                        if (adjustAmount === '' || isNaN(amount) || amount < 0) {
+                          toast.error('Vui lòng nhập số dư hợp lệ (≥ 0)');
+                          return;
+                        }
+                        adjustBalanceMutation.mutate({
+                          id: selectedUser._id,
+                          amount,
+                          action: 'set'
+                        });
+                      }}
+                      disabled={adjustBalanceMutation.isPending}
+                      className="flex-1 btn-primary"
+                    >
+                      {adjustBalanceMutation.isPending ? 'Đang xử lý...' : 'Xác nhận'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setAdjustMode(true)}
+                  className="w-full mt-4 btn-primary flex items-center justify-center gap-2"
+                >
+                  <FiDollarSign />
+                  Đặt số dư
+                </button>
+              )}
+
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={() => handleToggleAdmin(selectedUser._id, selectedUser.isAdmin)}
@@ -245,7 +475,11 @@ export default function Users() {
                   {selectedUser.isAdmin ? 'Gỡ quyền admin' : 'Cấp quyền admin'}
                 </button>
                 <button
-                  onClick={() => setSelectedUser(null)}
+                  onClick={() => {
+                    setSelectedUser(null);
+                    setAdjustMode(false);
+                    setAdjustAmount('');
+                  }}
                   className="flex-1 btn-secondary"
                 >
                   Đóng

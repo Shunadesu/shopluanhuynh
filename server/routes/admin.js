@@ -970,7 +970,7 @@ router.put('/users/:id/toggle-status', adminAuth, async (req, res) => {
 // Adjust user balance
 router.put('/users/:id/adjust-balance', adminAuth, async (req, res) => {
   try {
-    const { amount, action } = req.body; // action: 'add' or 'subtract'
+    const { amount, action } = req.body; // action: 'add', 'subtract', or 'set'
     
     const user = await User.findById(req.params.id);
     
@@ -988,6 +988,11 @@ router.put('/users/:id/adjust-balance', adminAuth, async (req, res) => {
     } else if (action === 'subtract') {
       user.balance = Math.max(0, user.balance - amount);
       console.log(`✅ Adjust balance for ${user.username}: -${amount}đ, new balance: ${user.balance}`);
+    } else if (action === 'set') {
+      // Set balance directly to the specified amount
+      const oldBalance = user.balance;
+      user.balance = Math.max(0, parseInt(amount));
+      console.log(`✅ Set balance for ${user.username}: ${oldBalance}đ → ${user.balance}đ`);
     }
     
     await user.save();

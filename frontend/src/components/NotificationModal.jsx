@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FiX } from 'react-icons/fi';
 import { useNotifications } from '../hooks';
+import { getImageUrl } from '../utils/api';
 
 const STORAGE_KEY = 'notification_dismissed';
 const STORAGE_TIME_KEY = 'notification_dismissed_time';
@@ -86,7 +87,7 @@ export default function NotificationModal() {
           {currentNotification.image && (
             <div className="relative mb-4 overflow-hidden rounded-xl">
               <img
-                src={currentNotification.image}
+                src={getImageUrl(currentNotification.image)}
                 alt={currentNotification.title}
                 className="w-full h-auto object-cover"
               />
