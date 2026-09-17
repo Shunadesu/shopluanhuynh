@@ -62,10 +62,22 @@ export default function Deposits() {
       }
       return api.put(`/admin/deposits/${id}/reject`);
     },
-    onSuccess: () => {
+    onSuccess: (response, { status }) => {
       queryClient.invalidateQueries(['admin-deposits']);
       queryClient.invalidateQueries(['admin-deposits-pending-counts']);
-      toast.success('Cập nhật trạng thái thành công');
+      // Ghi event để frontend đang mở deposit page bắt được và bắn confetti
+      if (status === 'approved') {
+        const approved = response.data;
+        try {
+          localStorage.setItem('deposit-approved', JSON.stringify({
+            depositId: approved.deposit?._id,
+            amount: approved.deposit?.amount,
+            spinsAwarded: approved.spinsAwarded || 0,
+            ts: Date.now(),
+          }));
+        } catch {}
+      }
+      toast.success(status === 'approved' ? '✅ Đã duyệt yêu cầu nạp tiền' : 'Đã từ chối yêu cầu');
       setSelectedDeposit(null);
     },
     onError: (error) => {
