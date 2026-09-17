@@ -433,7 +433,16 @@ const DepositPanel = ({ user }) => {
                 <p className="text-slate-700 dark:text-slate-300 text-sm font-semibold mb-3">
                   Quét mã QR để chuyển khoản
                 </p>
-                {bankInfo.qrCodeImage ? (
+                {bankInfo.useVietQr ? (
+                  <div className="bg-white dark:bg-white p-3 rounded-xl border-2 border-primary/20 inline-block">
+                    <img
+                      src={`https://img.vietqr.io/image/ACB-${bankInfo.accountNumber}-${bankInfo.vietqrTemplate || 'compact2'}.png?amount=${amount}&addInfo=${encodeURIComponent(bankInfo.transferNote || '')}&accountName=${encodeURIComponent(bankInfo.accountName || '')}`}
+                      alt={`VietQR ${bankInfo.bankName}`}
+                      className="w-56 h-56 sm:w-64 sm:h-64 mx-auto object-contain"
+                      onError={(e) => { e.target.parentElement.innerHTML = '<p class="text-xs text-red-500 p-4">Không tải được VietQR</p>'; }}
+                    />
+                  </div>
+                ) : bankInfo.qrCodeImage ? (
                   <div className="bg-white dark:bg-white p-3 rounded-xl border-2 border-primary/20 inline-block">
                     <img
                       src={getImageUrl(bankInfo.qrCodeImage)}

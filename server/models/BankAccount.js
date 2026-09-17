@@ -17,6 +17,14 @@ const bankAccountSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  useVietQr: {
+    type: Boolean,
+    default: false
+  },
+  vietqrTemplate: {
+    type: String,
+    default: 'compact2'
+  },
   identifier: {
     type: String,
     required: true,

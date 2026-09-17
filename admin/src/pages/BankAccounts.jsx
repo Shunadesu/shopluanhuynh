@@ -4,7 +4,7 @@ import api, { getImageUrl } from '../utils/api';
 import toast from 'react-hot-toast';
 import {
   FiPlus, FiRefreshCw, FiEdit2, FiTrash2, FiX,
-  FiDollarSign, FiImage, FiUpload, FiCreditCard,
+  FiDollarSign, FiImage, FiUpload, FiCreditCard, FiGrid,
 } from 'react-icons/fi';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules';
@@ -56,6 +56,7 @@ export default function BankAccounts() {
   const [isUploadingQr, setIsUploadingQr] = useState(false);
   const [qrLightboxOpen, setQrLightboxOpen] = useState(false);
   const [qrLightboxImages, setQrLightboxImages] = useState([]);
+  const [qrTab, setQrTab] = useState('upload'); // 'upload' | 'vietqr'
 
   const [form, setForm] = useState({
     bankName: '',
@@ -63,6 +64,8 @@ export default function BankAccounts() {
     accountName: '',
     accountNumber: '',
     isActive: true,
+    useVietQr: false,
+    vietqrTemplate: 'compact2',
   });
 
   // ─── Fetch ─────────────────────────────────────────────────
@@ -158,10 +161,11 @@ export default function BankAccounts() {
 
   // ─── Modal helpers ──────────────────────────────────────────
   const openAddModal = () => {
-    setForm({ bankName: '', bankNameCustom: '', accountName: '', accountNumber: '', isActive: true });
+    setForm({ bankName: '', bankNameCustom: '', accountName: '', accountNumber: '', isActive: true, useVietQr: false, vietqrTemplate: 'compact2' });
     setQrPreview('');
     setQrFile(null);
     setEditingId(null);
+    setQrTab('upload');
     setModalOpen(true);
   };
 
@@ -175,10 +179,13 @@ export default function BankAccounts() {
       accountName: bank.accountName || '',
       accountNumber: bank.accountNumber || '',
       isActive: bank.isActive ?? true,
+      useVietQr: bank.useVietQr ?? false,
+      vietqrTemplate: bank.vietqrTemplate || 'compact2',
     });
     setQrPreview(bank.qrCodeImage || '');
     setQrFile(null);
     setEditingId(bank._id);
+    setQrTab(bank.useVietQr ? 'vietqr' : 'upload');
     setModalOpen(true);
   };
 
@@ -187,6 +194,7 @@ export default function BankAccounts() {
     setEditingId(null);
     setQrPreview('');
     setQrFile(null);
+    setQrTab('upload');
   };
 
   const handleSubmit = (e) => {
@@ -211,6 +219,7 @@ export default function BankAccounts() {
       ...form,
       bankName: finalBankName,
       qrCodeImage: qrPreview || '',
+      useVietQr: qrTab === 'vietqr',
     };
     delete payload.bankNameCustom;
 
@@ -305,7 +314,11 @@ export default function BankAccounts() {
                     <td className="px-4 py-3 text-slate-300">{bank.accountName}</td>
                     <td className="px-4 py-3 text-cyan-400 font-mono">{bank.accountNumber}</td>
                     <td className="px-4 py-3">
-                      {bank.qrCodeImage ? (
+                      {bank.useVietQr ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs font-medium rounded-full border border-emerald-500/30">
+                          Dùng QR
+                        </span>
+                      ) : bank.qrCodeImage ? (
                         <button
                           onClick={() => openQrLightbox(bank)}
                           className="relative group"
@@ -444,51 +457,120 @@ export default function BankAccounts() {
                 />
               </div>
 
-              {/* QR Image */}
+              {/* QR Image — 2 tabs: Upload & VietQR */}
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Ảnh QR Code
+                  QR Code
                 </label>
 
-                {qrPreview ? (
-                  <div className="relative inline-block">
-                    <img
-                      src={getImageUrl(qrPreview)}
-                      alt="QR Preview"
-                      className="max-h-40 rounded-lg border border-slate-600"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => { setQrPreview(''); setQrFile(null); }}
-                      className="absolute -top-2 -right-2 p-1 bg-red-500 hover:bg-red-400 text-white rounded-full transition-all"
-                    >
-                      <FiX size={12} />
-                    </button>
-                  </div>
-                ) : (
-                  <label className="flex items-center justify-center gap-2 border-2 border-dashed border-slate-600 hover:border-cyan-500/50 rounded-lg p-6 cursor-pointer transition-all text-center">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleQrFileChange}
-                      className="hidden"
-                      disabled={isUploadingQr}
-                    />
-                    {isUploadingQr ? (
-                      <div className="flex items-center gap-2 text-cyan-400">
-                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-cyan-500 border-t-transparent" />
-                        <span>Đang upload...</span>
+                {/* Tab switcher */}
+                <div className="flex gap-2 mb-3">
+                  <button
+                    type="button"
+                    onClick={() => setQrTab('upload')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      qrTab === 'upload'
+                        ? 'bg-cyan-600 text-white'
+                        : 'bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-slate-200'
+                    }`}
+                  >
+                    <FiUpload size={14} />
+                    Upload ảnh
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQrTab('vietqr')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      qrTab === 'vietqr'
+                        ? 'bg-cyan-600 text-white'
+                        : 'bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-slate-200'
+                    }`}
+                  >
+                    <FiGrid size={14} />
+                    VietQR
+                  </button>
+                </div>
+
+                {/* Tab: Upload */}
+                {qrTab === 'upload' && (
+                  <>
+                    {qrPreview ? (
+                      <div className="relative inline-block">
+                        <img
+                          src={getImageUrl(qrPreview)}
+                          alt="QR Preview"
+                          className="max-h-40 rounded-lg border border-slate-600"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => { setQrPreview(''); setQrFile(null); }}
+                          className="absolute -top-2 -right-2 p-1 bg-red-500 hover:bg-red-400 text-white rounded-full transition-all"
+                        >
+                          <FiX size={12} />
+                        </button>
                       </div>
                     ) : (
-                      <>
-                        <FiUpload className="text-3xl text-slate-500" />
-                        <div className="text-sm text-slate-400">
-                          <p>Nhấn để upload ảnh QR</p>
-                          <p className="text-xs text-slate-500">PNG, JPG, WEBP (tối đa 5MB)</p>
-                        </div>
-                      </>
+                      <label className="flex items-center justify-center gap-2 border-2 border-dashed border-slate-600 hover:border-cyan-500/50 rounded-lg p-6 cursor-pointer transition-all text-center">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleQrFileChange}
+                          className="hidden"
+                          disabled={isUploadingQr}
+                        />
+                        {isUploadingQr ? (
+                          <div className="flex items-center gap-2 text-cyan-400">
+                            <div className="animate-spin rounded-full h-5 w-5 border-2 border-cyan-500 border-t-transparent" />
+                            <span>Đang upload...</span>
+                          </div>
+                        ) : (
+                          <>
+                            <FiUpload className="text-3xl text-slate-500" />
+                            <div className="text-sm text-slate-400">
+                              <p>Nhấn để upload ảnh QR</p>
+                              <p className="text-xs text-slate-500">PNG, JPG, WEBP (tối đa 5MB)</p>
+                            </div>
+                          </>
+                        )}
+                      </label>
                     )}
-                  </label>
+                  </>
+                )}
+
+                {/* Tab: VietQR */}
+                {qrTab === 'vietqr' && (
+                  <div className="space-y-3">
+                    <p className="text-xs text-slate-500">
+                      Dùng VietQR.io để render mã QR động. Khi người dùng quét, số tiền và nội dung chuyển khoản sẽ được điền tự động. Chỉ hỗ trợ ACB.
+                    </p>
+
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Template</label>
+                      <select
+                        value={form.vietqrTemplate}
+                        onChange={(e) => setForm({ ...form, vietqrTemplate: e.target.value })}
+                        className="input-field text-sm"
+                      >
+                        <option value="compact2">Compact 2 (logo + thông tin)</option>
+                        <option value="compact">Compact</option>
+                        <option value="qr_only">QR Only</option>
+                      </select>
+                    </div>
+
+                    {form.accountNumber && form.accountName ? (
+                      <div className="border border-slate-600 rounded-lg p-3 bg-slate-800/50">
+                        <p className="text-xs text-slate-400 mb-2">Preview (mẫu 10,000 VND):</p>
+                        <img
+                          src={`https://img.vietqr.io/image/ACB-${form.accountNumber}-${form.vietqrTemplate}.png?amount=10000&addInfo=preview+10000&accountName=${encodeURIComponent(form.accountName)}`}
+                          alt="VietQR Preview"
+                          className="max-h-40 rounded-lg border border-slate-700 mx-auto"
+                          onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-500 italic">Nhập số tài khoản và chủ tài khoản để xem preview.</p>
+                    )}
+                  </div>
                 )}
               </div>
 

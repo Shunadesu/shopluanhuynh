@@ -31,6 +31,11 @@ const getDashboardStats = async (req, res) => {
     const totalUsers = await User.countDocuments({ role: 'user' });
     const availableAccounts = await GameAccount.countDocuments({ status: 'available' });
 
+    // Orders by status
+    const completedOrders = await Order.countDocuments({ status: 'completed' });
+    const pendingOrders = await Order.countDocuments({ status: 'pending' });
+    const cancelledOrders = await Order.countDocuments({ status: 'cancelled' });
+
     // Today's stats
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -56,7 +61,10 @@ const getDashboardStats = async (req, res) => {
       totalUsers,
       availableAccounts,
       todayRevenue: todayRevenue[0]?.total || 0,
-      todayOrders
+      todayOrders,
+      completedOrders,
+      pendingOrders,
+      cancelledOrders
     });
   } catch (error) {
     console.error('Get dashboard stats error:', error);
@@ -861,13 +869,15 @@ router.put('/bank-accounts/:id', adminAuth, async (req, res) => {
       return res.status(404).json({ message: 'Không tìm thấy tài khoản ngân hàng' });
     }
     // Cập nhật từng trường, giữ nguyên identifier
-    const { bankName, accountNumber, accountName, qrCodeImage, isActive, order } = req.body;
+    const { bankName, accountNumber, accountName, qrCodeImage, isActive, order, useVietQr, vietqrTemplate } = req.body;
     if (bankName !== undefined) bankAccount.bankName = bankName;
     if (accountNumber !== undefined) bankAccount.accountNumber = accountNumber;
     if (accountName !== undefined) bankAccount.accountName = accountName;
     if (qrCodeImage !== undefined) bankAccount.qrCodeImage = qrCodeImage;
     if (isActive !== undefined) bankAccount.isActive = isActive;
     if (order !== undefined) bankAccount.order = order;
+    if (useVietQr !== undefined) bankAccount.useVietQr = useVietQr;
+    if (vietqrTemplate !== undefined) bankAccount.vietqrTemplate = vietqrTemplate;
     await bankAccount.save();
     res.json(bankAccount);
   } catch (error) {

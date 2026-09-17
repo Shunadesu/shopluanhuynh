@@ -195,7 +195,10 @@ router.post('/random-request', auth, async (req, res) => {
         accountNumber: selectedBank.accountNumber,
         accountName: selectedBank.accountName,
         qrCodeImage: selectedBank.qrCodeImage,
+        useVietQr: selectedBank.useVietQr || false,
+        vietqrTemplate: selectedBank.vietqrTemplate || 'compact2',
         identifier: selectedBank.identifier,
+        transferNote: depositRequest.transferNote,
       },
       deposit: {
         _id: depositRequest._id,
