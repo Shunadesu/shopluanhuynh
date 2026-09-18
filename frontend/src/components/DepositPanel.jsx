@@ -2,11 +2,11 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
-import Confetti from 'react-confetti';
 import api, { getImageUrl } from '../utils/api';
 import { useAuthStore } from '../store/authStore';
 import { useDepositStore } from '../store/data/depositStore';
 import { useUserProfile } from '../hooks/useUserProfile';
+import { useDepositCelebrationStore } from '../store/depositCelebrationStore';
 import {
   FiCopy,
   FiCreditCard,
@@ -15,8 +15,6 @@ import {
   FiRefreshCw,
   FiClock,
   FiCheckCircle,
-  FiGift,
-  FiZap,
 } from 'react-icons/fi';
 
 const PRESET_AMOUNTS = [
@@ -63,7 +61,8 @@ const AmountChip = ({ amount, label, isSelected, onClick }) => (
 const DepositPanel = ({ user }) => {
   const navigate = useNavigate();
   const { user: authUser } = useAuthStore();
-  const { refresh: refreshProfile } = useUserProfile({ enabled: false });
+  const { refresh: refreshProfile, profile } = useUserProfile({ enabled: false });
+  const { showCelebration } = useDepositCelebrationStore();
 
   const [amount, setAmount] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -71,16 +70,6 @@ const DepositPanel = ({ user }) => {
   const [bankInfo, setBankInfo] = useState(null);
   const [depositInfo, setDepositInfo] = useState(null);
   const [now, setNow] = useState(() => Date.now());
-
-  // Confetti + modal state
-  const [confettiActive, setConfettiActive] = useState(false);
-  const [confettiPieces, setConfettiPieces] = useState(0);
-  const [windowSize, setWindowSize] = useState({
-    w: typeof window !== 'undefined' ? window.innerWidth : 1920,
-    h: typeof window !== 'undefined' ? window.innerHeight : 1080,
-  });
-  const [successModal, setSuccessModal] = useState(false);
-  const [successAmount, setSuccessAmount] = useState(0);
 
   const tickRef = useRef(null);
   const pollRef = useRef(null);
@@ -90,26 +79,19 @@ const DepositPanel = ({ user }) => {
   const currentUsername = authUser?.username || user?.username || '';
   const transferContent = `${currentUsername} ${amount}`;
 
-  // Window resize
-  useEffect(() => {
-    const handleResize = () => setWindowSize({ w: window.innerWidth, h: window.innerHeight });
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // === Kích hoạt confetti + popup ===
+  // === Kích hoạt success modal ===
   const triggerSuccessCelebration = useCallback((approvedAmount) => {
     if (hasShownCelebration.current) return;
     hasShownCelebration.current = true;
 
-    setSuccessAmount(approvedAmount || numericAmount);
-    setConfettiPieces(300);
-    setConfettiActive(true);
-    setSuccessModal(true);
-
-    // Tắt confetti sau 7s
-    setTimeout(() => setConfettiActive(false), 7000);
-  }, [numericAmount]);
+    const finalAmount = approvedAmount || numericAmount;
+    
+    showCelebration({
+      amount: finalAmount,
+      method: 'bank',
+      newBalance: profile?.balance
+    });
+  }, [numericAmount, profile?.balance, showCelebration]);
 
   // === Polling — kiểm tra admin duyệt ===
   useEffect(() => {
@@ -126,10 +108,17 @@ const DepositPanel = ({ user }) => {
       try {
         const updated = await useDepositStore.getState().checkOneRequest(depositInfo._id);
         if (updated?.status === 'approved') {
+          if (pollRef.current) {
+            clearInterval(pollRef.current);
+            pollRef.current = null;
+          }
+          if (tickRef.current) {
+            clearInterval(tickRef.current);
+            tickRef.current = null;
+          }
+          
           try { await refreshProfile(); } catch {}
-          // Kích hoạt confetti + popup ngay — KHÔNG cần chờ phase
           triggerSuccessCelebration(updated.amount || numericAmount);
-          setPhase('success');
         } else if (updated?.status === 'rejected') {
           setDepositInfo((prev) => ({ ...prev, ...updated }));
           navigate('/');
@@ -214,7 +203,6 @@ const DepositPanel = ({ user }) => {
     setNow(Date.now());
     hasShownCelebration.current = false;
     setSuccessModal(false);
-    setConfettiActive(false);
   };
 
   let remainingMs = 0;
@@ -230,99 +218,6 @@ const DepositPanel = ({ user }) => {
 
   return (
     <div className="space-y-4 relative">
-      {/* ── Confetti ── */}
-      {confettiActive && (
-        <Confetti
-          numberOfPieces={confettiPieces}
-          recycle={false}
-          width={windowSize.w}
-          height={windowSize.h}
-          colors={['#06b6d4', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6', '#ffffff', '#fbbf24']}
-          style={{ position: 'fixed', top: 0, left: 0, zIndex: 9999, pointerEvents: 'none' }}
-        />
-      )}
-
-      {/* ── Success Modal ── */}
-      {successModal && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="fixed inset-0 bg-black/60 z-[9998]"
-            onClick={() => {}}
-          />
-          {/* Modal card */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5, y: 60 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.5, y: 60 }}
-            transition={{ type: 'spring', stiffness: 280, damping: 22 }}
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-          >
-            <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center">
-              {/* Animated check circle */}
-              <motion.div
-                initial={{ scale: 0, rotate: -20 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: 'spring', stiffness: 350, damping: 18, delay: 0.1 }}
-                className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center mb-5 shadow-xl shadow-green-500/40"
-              >
-                <FiCheckCircle className="w-12 h-12 text-white" />
-              </motion.div>
-
-              {/* Title */}
-              <motion.h2
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.22 }}
-                className="text-2xl font-black text-slate-900 dark:text-white mb-1"
-              >
-                🎉 Nạp tiền thành công!
-              </motion.h2>
-
-              {/* Amount */}
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.32 }}
-                className="bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/30 dark:to-blue-900/30 rounded-2xl p-4 mb-5 border border-cyan-200 dark:border-cyan-700"
-              >
-                <p className="text-slate-500 dark:text-slate-400 text-sm mb-1">Số dư đã được cộng</p>
-                <p className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-blue-600">
-                  +{successAmount.toLocaleString('vi-VN')}đ
-                </p>
-              </motion.div>
-
-              {/* Spins hint */}
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.42 }}
-                className="flex items-center justify-center gap-2 text-sm text-slate-500 dark:text-slate-400 mb-6"
-              >
-                <FiZap className="w-4 h-4 text-amber-500" />
-                <span>Có thể nhận thêm lượt quay vòng may mắn!</span>
-                <FiGift className="w-4 h-4 text-pink-500" />
-              </motion.div>
-
-              {/* CTA */}
-              <motion.button
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.52 }}
-                onClick={() => { setSuccessModal(false); navigate('/'); }}
-                className="w-full py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-cyan-500/30 active:scale-95"
-              >
-                Về trang chủ
-              </motion.button>
-            </div>
-          </motion.div>
-        </>
-      )}
-
       {/* Hero */}
       <div className="bg-white dark:bg-dark-light border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
         <div className="flex items-center justify-between gap-3 flex-wrap">

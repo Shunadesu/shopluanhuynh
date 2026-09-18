@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { FiCreditCard, FiHash, FiKey, FiAlertCircle, FiCheck, FiPhone } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import { useDepositStore } from '../store/data/depositStore';
+import { useUserProfile } from '../hooks/useUserProfile';
+import DepositSuccessModal from './DepositSuccessModal';
 
 const CARD_TYPES = [
   { value: '', label: 'Chọn loại thẻ', disabled: true },
@@ -24,12 +26,17 @@ const AMOUNTS = [
 
 export default function CardDepositPanel() {
   const createCardDeposit = useDepositStore((s) => s.createCardDeposit);
+  const { refresh: refreshProfile, profile } = useUserProfile({ enabled: false });
   
   const [cardType, setCardType] = useState('');
   const [amount, setAmount] = useState(0);
   const [cardSerial, setCardSerial] = useState('');
   const [cardCode, setCardCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  
+  // Success modal state
+  const [successModal, setSuccessModal] = useState(false);
+  const [successAmount, setSuccessAmount] = useState(0);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -60,9 +67,18 @@ export default function CardDepositPanel() {
         cardCode: cardCode.trim(),
       });
       
-      toast.success('Đã gửi yêu cầu nạp thẻ cào!');
+      // Refresh balance để lấy số dư mới nhất
+      try {
+        await refreshProfile();
+      } catch (err) {
+        // Không chặn flow nếu refresh fail
+      }
       
-      // Reset form
+      // Hiển thị modal thành công
+      setSuccessAmount(amount);
+      setSuccessModal(true);
+      
+      // Reset form sau khi modal đóng
       setCardType('');
       setAmount(0);
       setCardSerial('');
@@ -78,6 +94,15 @@ export default function CardDepositPanel() {
 
   return (
     <>
+      {/* Success Modal */}
+      <DepositSuccessModal
+        isOpen={successModal}
+        onClose={() => setSuccessModal(false)}
+        amount={successAmount}
+        method="card"
+        newBalance={profile?.balance}
+      />
+
       {/* Hero Section - giống các tab khác */}
       <div className="bg-white dark:bg-dark-light border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
