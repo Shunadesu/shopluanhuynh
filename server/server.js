@@ -18,6 +18,7 @@ import sitemapRoutes from './routes/sitemap.js';
 import socialLinksRoutes from './routes/socialLinks.js';
 import spinRoutes from './routes/spin.js';
 import promotionRoutes from './routes/promotions.js';
+import telegramRoutes from './routes/telegram.js';
 import { initTelegramBot } from './services/telegramBot.js';
 import emailChecker from './services/emailChecker.js';
 
@@ -78,6 +79,7 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/spin', spinRoutes);
 app.use('/api/social-links', socialLinksRoutes);
 app.use('/api/admin/social-links', socialLinksRoutes);
+app.use('/api/telegram', telegramRoutes);
 
 // Admin spin routes
 import adminSpinRoutes from './routes/adminSpin.js';
