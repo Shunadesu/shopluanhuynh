@@ -12,6 +12,8 @@ import { FiCheckCircle, FiZap, FiGift, FiHome, FiShoppingBag } from 'react-icons
  * @param {number} newBalance - Số dư mới (optional)
  */
 const DepositSuccessModal = ({ isOpen, onClose, amount = 0, method = 'bank', newBalance }) => {
+  console.log('🔍 [DepositSuccessModal] Render:', { isOpen, amount, method, newBalance });
+  
   const [confettiActive, setConfettiActive] = useState(false);
   const [windowSize, setWindowSize] = useState({
     width: typeof window !== 'undefined' ? window.innerWidth : 1920,
@@ -20,6 +22,7 @@ const DepositSuccessModal = ({ isOpen, onClose, amount = 0, method = 'bank', new
 
   // Kích hoạt confetti khi modal mở - kéo dài 10 giây
   useEffect(() => {
+    console.log('🎊 [DepositSuccessModal] useEffect triggered, isOpen:', isOpen);
     if (isOpen) {
       setConfettiActive(true);
       const timer = setTimeout(() => {

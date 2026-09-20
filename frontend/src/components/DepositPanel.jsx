@@ -86,6 +86,12 @@ const DepositPanel = ({ user }) => {
 
     const finalAmount = approvedAmount || numericAmount;
     
+    console.log('🎯 [DepositPanel] triggerSuccessCelebration called with:', {
+      finalAmount,
+      profileBalance: profile?.balance,
+      hasShownBefore: hasShownCelebration.current
+    });
+    
     showCelebration({
       amount: finalAmount,
       method: 'bank',

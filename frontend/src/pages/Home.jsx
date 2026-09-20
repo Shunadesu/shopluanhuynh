@@ -6,9 +6,7 @@ import SEOHead from '../components/SEOHead';
 import AccountCard from '../components/AccountCard';
 import { AccountCardSkeleton } from '../components/SkeletonLoader';
 import BuyNowModal from '../components/BuyNowModal';
-import DepositSuccessModal from '../components/DepositSuccessModal';
 import { useAuthStore } from '../store/authStore';
-import { useDepositCelebrationStore } from '../store/depositCelebrationStore';
 import api, { getImageUrl } from '../utils/api';
 import toast from 'react-hot-toast';
 
@@ -219,9 +217,6 @@ const Home = () => {
   const [showBuyNowModal, setShowBuyNowModal] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [buyingNow, setBuyingNow] = useState(false);
-
-  // Deposit Celebration Modal
-  const { isOpen: isCelebrationOpen, data: celebrationData, closeCelebration } = useDepositCelebrationStore();
 
   // Filter state
   const [filters, setFilters] = useState({
@@ -857,15 +852,6 @@ const Home = () => {
         loading={buyingNow}
         onClose={() => setShowBuyNowModal(false)}
         onConfirm={handleConfirmBuyNow}
-      />
-
-      {/* Deposit Success Modal - Global */}
-      <DepositSuccessModal
-        isOpen={isCelebrationOpen}
-        onClose={closeCelebration}
-        amount={celebrationData?.amount || 0}
-        method={celebrationData?.method || 'bank'}
-        newBalance={celebrationData?.newBalance}
       />
     </div>
   );
