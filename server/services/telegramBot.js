@@ -1,5 +1,5 @@
 import { Bot } from 'node-telegram-bot-api';
-import { run } from 'node-telegram-bot-api/node';
+import crypto from 'crypto';
 
 import DepositRequest from '../models/DepositRequest.js';
 import User from '../models/User.js';
@@ -8,16 +8,46 @@ import { calculateSpinsAwarded } from '../utils/spinLogic.js';
 
 let bot = null;
 let adminChatId = null;
+let webhookSecretToken = null;
 
 /**
- * Khởi tạo Telegram bot
+ * Lấy bot instance (dùng cho webhook route)
+ */
+export function getBot() {
+  return bot;
+}
+
+/**
+ * Lấy webhook secret token (dùng cho webhook route)
+ */
+export function getWebhookSecretToken() {
+  return webhookSecretToken;
+}
+
+/**
+ * Khởi tạo Telegram bot với webhook mode
  */
 export async function initTelegramBot() {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   adminChatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
+  const webhookBaseUrl = process.env.WEBHOOK_BASE_URL;
+  
+  // Generate hoặc lấy webhook secret token
+  webhookSecretToken = process.env.TELEGRAM_WEBHOOK_SECRET;
+  if (!webhookSecretToken) {
+    webhookSecretToken = crypto.randomBytes(32).toString('hex');
+    console.warn('⚠️  TELEGRAM_WEBHOOK_SECRET not set. Generated random token (will not persist after restart):');
+    console.warn(`   ${webhookSecretToken}`);
+  }
 
   if (!token || !adminChatId) {
     console.warn('⚠️  Telegram bot not configured. Set TELEGRAM_BOT_TOKEN and TELEGRAM_ADMIN_CHAT_ID in .env');
+    return;
+  }
+
+  if (!webhookBaseUrl) {
+    console.warn('⚠️  WEBHOOK_BASE_URL not set. Falling back to polling mode.');
+    await initPollingMode(token);
     return;
   }
 
@@ -54,12 +84,89 @@ ${chatId.toString() !== adminChatId ? '\n💡 Nếu bạn là Admin, hãy cập 
       console.error('❌ Telegram bot error:', err);
     });
 
-    // Start polling in background (non-blocking)
-    bot.startPolling();
+    // Setup webhook
+    const webhookUrl = `${webhookBaseUrl}/api/telegram/webhook`;
     
-    console.log('✅ Telegram bot initialized and polling started');
+    try {
+      // Lấy webhook info hiện tại
+      const currentWebhook = await bot.api.getWebhookInfo();
+      
+      if (currentWebhook.url !== webhookUrl) {
+        // Set webhook mới
+        await bot.api.setWebhook({
+          url: webhookUrl,
+          secret_token: webhookSecretToken,
+          drop_pending_updates: true,
+          allowed_updates: ['message', 'callback_query']
+        });
+        console.log(`✅ Webhook set to: ${webhookUrl}`);
+      } else {
+        console.log(`✅ Webhook already set to: ${webhookUrl}`);
+      }
+    } catch (webhookError) {
+      console.error('❌ Failed to set webhook:', webhookError.message);
+      console.warn('⚠️  Falling back to polling mode');
+      await initPollingMode(token);
+      return;
+    }
+    
+    console.log('✅ Telegram bot initialized in WEBHOOK mode');
+    console.log(`📍 Webhook URL: ${webhookUrl}`);
+    console.log(`🔐 Secret token: ${webhookSecretToken.substring(0, 8)}...`);
   } catch (error) {
     console.error('❌ Failed to initialize Telegram bot:', error.message);
+  }
+}
+
+/**
+ * Fallback: Khởi tạo bot với polling mode (khi không có webhook URL)
+ */
+async function initPollingMode(token) {
+  try {
+    if (!bot) {
+      bot = new Bot(token);
+      
+      // Handle /start command
+      bot.command('start', async (ctx) => {
+        const chatId = ctx.chat.id;
+        const username = ctx.from?.username || ctx.from?.first_name || 'User';
+        
+        const welcomeMessage = `
+👋 Xin chào <b>${username}</b>!
+
+🤖 Đây là bot thông báo nạp tiền của <b>Shop Luân Huỳnh</b>
+
+${chatId.toString() === adminChatId ? '✅ Bạn là Admin - Bạn sẽ nhận được thông báo khi có yêu cầu nạp tiền mới!' : '⚠️ Bot này chỉ dành cho Admin.'}
+
+📌 <b>Chat ID của bạn:</b> <code>${chatId}</code>
+
+${chatId.toString() !== adminChatId ? '\n💡 Nếu bạn là Admin, hãy cập nhật TELEGRAM_ADMIN_CHAT_ID trong file .env với Chat ID trên.' : ''}
+        `.trim();
+
+        await ctx.reply(welcomeMessage, { parse_mode: 'HTML' });
+        
+        console.log(`📱 User ${username} (${chatId}) started bot`);
+      });
+      
+      // Handle callback queries from inline buttons
+      bot.on('callback_query', handleCallbackQuery);
+
+      // Error handler
+      bot.catch((err) => {
+        console.error('❌ Telegram bot error:', err);
+      });
+    }
+
+    // Delete webhook trước khi start polling
+    await bot.api.deleteWebhook({ drop_pending_updates: true });
+    console.log('🗑️  Webhook deleted');
+
+    // Start polling
+    bot.startPolling();
+    
+    console.log('✅ Telegram bot initialized in POLLING mode (fallback)');
+  } catch (error) {
+    console.error('❌ Failed to initialize polling mode:', error.message);
   }
 }
 

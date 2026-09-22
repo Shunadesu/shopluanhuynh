@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { FiCreditCard, FiHash, FiKey, FiAlertCircle, FiCheck, FiPhone } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import { useDepositStore } from '../store/data/depositStore';
+import { useUserProfile } from '../hooks/useUserProfile';
+import { useDepositCelebrationStore } from '../store/depositCelebrationStore';
 
 const CARD_TYPES = [
   { value: '', label: 'Chọn loại thẻ', disabled: true },
@@ -24,6 +26,8 @@ const AMOUNTS = [
 
 export default function CardDepositPanel() {
   const createCardDeposit = useDepositStore((s) => s.createCardDeposit);
+  const { refresh: refreshProfile, profile } = useUserProfile({ enabled: false });
+  const { showCelebration } = useDepositCelebrationStore();
   
   const [cardType, setCardType] = useState('');
   const [amount, setAmount] = useState(0);
@@ -60,7 +64,19 @@ export default function CardDepositPanel() {
         cardCode: cardCode.trim(),
       });
       
-      toast.success('Đã gửi yêu cầu nạp thẻ cào!');
+      // Refresh balance để lấy số dư mới nhất
+      try {
+        await refreshProfile();
+      } catch (err) {
+        // Không chặn flow nếu refresh fail
+      }
+      
+      // Hiển thị modal thành công thông qua global store
+      showCelebration({
+        amount: amount,
+        method: 'card',
+        newBalance: profile?.balance
+      });
       
       // Reset form
       setCardType('');

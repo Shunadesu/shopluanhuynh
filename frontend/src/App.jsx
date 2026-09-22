@@ -6,10 +6,12 @@ import ContactFixed from './components/ContactFixed';
 import BottomStatusBar from './components/BottomStatusBar';
 import ProtectedRoute from './components/ProtectedRoute';
 import NotificationModal from './components/NotificationModal';
+import DepositSuccessModal from './components/DepositSuccessModal';
 import SEOHead from './components/SEOHead';
 import { useThemeStore } from './store/themeStore';
 import { useSettingsStore } from './store/data/settingsStore';
 import { useCartStore } from './store/cartStore';
+import { useDepositCelebrationStore } from './store/depositCelebrationStore';
 
 // Pages
 import Home from './pages/Home';
@@ -53,6 +55,11 @@ function RedirectWithParams({ paramName, view = 'order-detail', extraParams = {}
 function App() {
   const applyDefaultTheme = useThemeStore((s) => s.applyDefault);
   const settings = useSettingsStore((s) => s.settings);
+  
+  // Deposit Celebration Modal - Global
+  const { isOpen: isCelebrationOpen, data: celebrationData, closeCelebration } = useDepositCelebrationStore();
+  
+  console.log('🔥 [App.jsx] Celebration State:', { isCelebrationOpen, celebrationData });
 
   // Drawer state
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -213,6 +220,15 @@ function App() {
       <ContactFixed />
       <BottomStatusBar />
       <NotificationModal />
+      
+      {/* Global Deposit Success Modal */}
+      <DepositSuccessModal
+        isOpen={isCelebrationOpen}
+        onClose={closeCelebration}
+        amount={celebrationData?.amount || 0}
+        method={celebrationData?.method || 'bank'}
+        newBalance={celebrationData?.newBalance}
+      />
     </div>
   );
 }
