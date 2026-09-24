@@ -385,7 +385,7 @@ export default function Settings() {
                 value={generalForm.siteName}
                 onChange={(e) => setGeneralForm({ ...generalForm, siteName: e.target.value })}
                 className="input-field"
-                placeholder="Shopluanhuynh"
+                placeholder="LuanFCO"
               />
             </div>
 
@@ -858,7 +858,7 @@ export default function Settings() {
                 value={seoForm.seoTitle}
                 onChange={(e) => setSeoForm({ ...seoForm, seoTitle: e.target.value })}
                 className="input-field"
-                placeholder="Shop Luan Huynh - Mua Bán Tài Khoản Game Giá Rẻ"
+                placeholder="LuanFCO - Mua Bán Tài Khoản Game Giá Rẻ"
               />
               <p className="text-slate-500 text-xs mt-1">Khuyến nghị: 50-60 ký tự</p>
             </div>
@@ -916,7 +916,7 @@ export default function Settings() {
               </h3>
               <div className="bg-white rounded-lg p-4 text-black">
                 <p className="text-blue-600 text-sm truncate">
-                  {seoForm.seoTitle || 'Shop Luan Huynh - Mua Bán Tài Khoản Game Giá Rẻ'}
+                  {seoForm.seoTitle || 'LuanFCO - Mua Bán Tài Khoản Game Giá Rẻ'}
                 </p>
                 <p className="text-green-700 text-xs truncate">
                   luanfco.com
