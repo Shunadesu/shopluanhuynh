@@ -42,8 +42,8 @@ const BottomStatusBar = () => {
     };
 
     checkConnection();
-    // Check connection every 30 seconds
-    const interval = setInterval(checkConnection, 30000);
+    // Check connection every 60 seconds
+    const interval = setInterval(checkConnection, 60000);
 
     return () => clearInterval(interval);
   }, []);

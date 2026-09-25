@@ -77,7 +77,8 @@ const DepositPanel = ({ user }) => {
 
   const numericAmount = parseFloat(amount) || 0;
   const currentUsername = authUser?.username || user?.username || '';
-  const transferContent = `${currentUsername} ${amount}`;
+  // Dùng mã PNH-XXXXXX từ server response (duy nhất, không trùng)
+  const transferContent = depositInfo?.transferNote || bankInfo?.transferNote || '';
 
   // === Kích hoạt success modal ===
   const triggerSuccessCelebration = useCallback((approvedAmount) => {

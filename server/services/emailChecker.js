@@ -98,12 +98,12 @@ class EmailChecker {
 
   async autoRejectExpiredDeposits() {
     try {
-      const twentyMinutesAgo = new Date(Date.now() - 20 * 60 * 1000);
+      const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
       
       const expiredDeposits = await DepositRequest.find({
         status: 'pending',
         depositMethod: 'bank',
-        createdAt: { $lt: twentyMinutesAgo }
+        createdAt: { $lt: thirtyMinutesAgo }
       }).populate('userId', 'username');
 
       if (expiredDeposits.length === 0) {
@@ -114,7 +114,7 @@ class EmailChecker {
 
       for (const deposit of expiredDeposits) {
         deposit.status = 'rejected';
-        deposit.adminNote = 'Auto rejected - Expired after 20 minutes';
+        deposit.adminNote = 'Auto rejected - Expired after 30 minutes';
         deposit.processedAt = new Date();
         await deposit.save();
 
@@ -285,7 +285,7 @@ class EmailChecker {
       // Parse số tiền - ACB format: "10,000.00" (comma = thousands, dot = decimal)
       // Cần phân biệt: 10,000.00 = 10 nghìn vs 10.000,00 = 10 nghìn (European)
       let amountStr = amountMatch[1];
-      
+
       // ACB dùng format US: comma for thousands, dot for decimal
       // Ví dụ: "10,000.00" = 10000, "500,000.50" = 500000.5
       if (amountStr.includes(',') && amountStr.includes('.')) {
@@ -299,28 +299,23 @@ class EmailChecker {
         // ACB usually shows decimal: "10000.00"
         // Keep it as is
       }
-      
+
       const amount = parseFloat(amountStr);
-      
-      // Chuẩn hóa transferNote - loại bỏ số tiền nếu có
-      // "PNHN1234 10000" -> "PNHN1234"
+
+      // Parse code — format mới PNH-XXXXXX hoặc fallback cũ username+amount
       let transferNote = codeMatch[1].trim().toUpperCase();
-      transferNote = transferNote.replace(/\s+\d+$/, ''); // Remove trailing numbers
 
-      console.log(`💰 Found: ${transferNote} - ${amount.toLocaleString()} VND`);
+      console.log(`💰 Found code: ${transferNote} - amount: ${amount.toLocaleString()} VND`);
 
-      // Tìm deposit request theo transferNote (case-insensitive)
-      // Thử cả 2 format: "PNHN1234" và "PNHN1234 10000"
-      const transferNoteWithAmount = `${transferNote} ${Math.floor(amount)}`;
-      
-      let deposit = await DepositRequest.findOne({ 
+      // Tìm deposit theo exact match (format mới: PNH-XXXXXX)
+      let deposit = await DepositRequest.findOne({
         transferNote: new RegExp(`^${transferNote}$`, 'i'),
         status: 'pending'
       }).populate('userId');
-      
-      // Nếu không tìm thấy, thử format có số tiền
+
+      // Fallback legacy: format cũ "USERNAME AMOUNT" (đã ít dùng)
       if (!deposit) {
-        deposit = await DepositRequest.findOne({ 
+        deposit = await DepositRequest.findOne({
           transferNote: new RegExp(`^${transferNote}\\s+\\d+$`, 'i'),
           status: 'pending'
         }).populate('userId');
@@ -329,7 +324,7 @@ class EmailChecker {
       if (!deposit) {
         console.log(`❌ Deposit not found or already processed: ${transferNote}`);
         // Debug: Kiểm tra xem có deposit nào pending không
-        const allPending = await DepositRequest.find({ 
+        const allPending = await DepositRequest.find({
           status: 'pending',
           depositMethod: 'bank'
         }).select('transferNote amount userId');

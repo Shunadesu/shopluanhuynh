@@ -9,6 +9,17 @@ import emailChecker from '../services/emailChecker.js';
 
 const router = express.Router();
 
+// Generate a unique transfer note (PNH-XXXXXX) for each deposit request
+// This ensures email checker can match exactly one deposit per email
+function generateUniqueTransferNote() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // exclude I, O to avoid confusion
+  let code = 'PNH-';
+  for (let i = 0; i < 6; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
+
 // Get active bank accounts
 router.get('/bank-accounts', async (req, res) => {
   try {
@@ -42,7 +53,9 @@ router.post('/request', auth, depositLimiter, async (req, res) => {
       userId: req.user._id,
       amount,
       bankAccountId,
-      transferNote: transferNote || `NAP${Date.now()}`
+      transferNote: (transferNote && transferNote.toUpperCase().startsWith('PNH-'))
+        ? transferNote.toUpperCase()
+        : generateUniqueTransferNote(),
     });
 
     await depositRequest.save();
@@ -157,9 +170,8 @@ router.post('/random-request', auth, async (req, res) => {
     const randomIndex = Math.floor(Math.random() * bankAccounts.length);
     const selectedBank = bankAccounts[randomIndex];
 
-    // Lấy username để tạo nội dung chuyển khoản
-    const user = await User.findById(req.user._id).select('username');
-    const transferNote = `${user?.username || 'user'} ${amount}`;
+    // Use unique PNH-XXXXXX code — never collide with other deposits
+    const transferNote = generateUniqueTransferNote();
 
     // Tạo DepositRequest pending ngay
     const depositRequest = new DepositRequest({
