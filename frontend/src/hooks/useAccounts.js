@@ -3,20 +3,30 @@ import { useAccountListStore, accountListParamsKey } from '../store/data/account
 import { useAccountDetailStore } from '../store/data/accountDetailStore';
 
 export function useAccountList(params = {}) {
-  const key = useMemo(() => accountListParamsKey(params), [
-    params.search,
-    params.minPrice,
-    params.maxPrice,
-    params.page,
-    params.limit,
-    params.category,
+  // `fetchAll` là flag nội bộ — không truyền xuống backend
+  const { fetchAll = false, ...restParams } = params;
+
+  const key = useMemo(() => {
+    const baseKey = accountListParamsKey(restParams);
+    return fetchAll ? `all:${baseKey}` : baseKey;
+  }, [
+    restParams.search,
+    restParams.minPrice,
+    restParams.maxPrice,
+    restParams.page,
+    restParams.limit,
+    restParams.category,
+    fetchAll,
   ]);
   const entry = useAccountListStore((s) => s.byFilter[key]);
   const loading = useAccountListStore((s) => s.loading[key]);
 
   useEffect(() => {
     if (!entry || useAccountListStore.getState().isStale(key)) {
-      useAccountListStore.getState().fetchAccounts(params).catch(() => {});
+      const fetcher = fetchAll
+        ? useAccountListStore.getState().fetchAllAccounts
+        : useAccountListStore.getState().fetchAccounts;
+      fetcher(restParams).catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
@@ -26,7 +36,12 @@ export function useAccountList(params = {}) {
     accounts: entry?.accounts || [],
     pagination: entry?.pagination || null,
     loading: !!loading,
-    refresh: () => useAccountListStore.getState().fetchAccounts(params, true),
+    refresh: () => {
+      const fetcher = fetchAll
+        ? useAccountListStore.getState().fetchAllAccounts
+        : useAccountListStore.getState().fetchAccounts;
+      return fetcher(restParams, true);
+    },
   };
 }
 

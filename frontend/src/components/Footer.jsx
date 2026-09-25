@@ -104,7 +104,7 @@ const Footer = () => {
                   </a>
                 </li>
               )}
-              {socialLinks?.map((link) => (
+              {Array.isArray(socialLinks) && socialLinks.map((link) => (
                 <li key={link._id} className="flex items-start space-x-2 text-slate-600 dark:text-slate-400">
                   <span className="w-5 h-5 text-primary mt-1 flex-shrink-0 flex items-center justify-center">
                     <PlatformIcon platform={link.platform} />
@@ -134,7 +134,7 @@ const Footer = () => {
               © 2024 <span className="text-primary font-semibold">LuanHuynhFCO</span>. All rights reserved.
             </p>
             <div className="flex items-center space-x-2">
-              {socialLinks?.map((link) => (
+              {Array.isArray(socialLinks) && socialLinks.map((link) => (
                 <a
                   key={link._id}
                   href={link.url}

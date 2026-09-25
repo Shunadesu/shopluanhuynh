@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../utils/api';
+import api, { getImageUrl } from '../utils/api';
 import toast from 'react-hot-toast';
 import { FiPlus, FiEdit2, FiTrash2, FiImage, FiExternalLink, FiLayers } from 'react-icons/fi';
 import UploadImage from '../components/UploadImage';
@@ -199,7 +199,7 @@ export default function Sliders() {
                     <div className="w-20 h-12 rounded overflow-hidden bg-slate-700 flex-shrink-0">
                       {slider.image ? (
                         <img
-                          src={slider.image}
+                          src={getImageUrl(slider.image)}
                           alt={slider.title}
                           className="w-full h-full object-cover"
                         />
@@ -376,14 +376,14 @@ export default function Sliders() {
                 }}>
                   <div className="bg-slate-700 border border-slate-600 rounded h-16 flex items-center justify-center overflow-hidden">
                     {formData.image ? (
-                      <img src={formData.image} alt="Preview trái" className="w-full h-full object-cover opacity-60" />
+                      <img src={getImageUrl(formData.image)} alt="Preview trái" className="w-full h-full object-cover opacity-60" />
                     ) : (
                       <span className="text-xs text-slate-500">Banner trái</span>
                     )}
                   </div>
                   <div className="bg-slate-700 border border-slate-600 rounded h-16 flex items-center justify-center overflow-hidden">
                     {formData.image ? (
-                      <img src={formData.image} alt="Preview phải" className="w-full h-full object-cover opacity-60" />
+                      <img src={getImageUrl(formData.image)} alt="Preview phải" className="w-full h-full object-cover opacity-60" />
                     ) : (
                       <span className="text-xs text-slate-500">Banner phải</span>
                     )}
